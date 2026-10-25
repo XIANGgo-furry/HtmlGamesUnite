@@ -1,0 +1,20 @@
+{
+  "version": "5.5.0",
+  "tag": "v5.5.0 Official",
+  "game": "中国象棋",
+  "file": "中国象棋.html",
+  "date": "2026-10-24",
+  "size": 445740,
+  "repo": "https://github.com/XIANGgo-furry/HtmlGamesUnite",
+  "page": "https://XIANGgo-furry.github.io/HtmlGamesUnite/",
+  "download": "https://github.com/XIANGgo-furry/HtmlGamesUnite/raw/main/%E4%B8%AD%E5%9B%BD%E8%B1%A1%E6%A3%8B.html",
+  "notes": [
+    "新增「检查更新」：菜单页可随时检查，自动比对版本号",
+    "启动约 4 秒后静默检查一次，已是最新则完全不打扰",
+    "严重修复：兵 / 卒 可以后退（走法判定误用绝对值，不区分方向）",
+    "修复人机对战中 AI 走子闪现（AI 未走动画路径）",
+    "性能模式不再一刀切禁用动画，改为只缩短时长",
+    "高级比赛开关从暂停菜单移到「选择玩法」页"
+  ],
+  "minSupported": "4.16.0"
+}
