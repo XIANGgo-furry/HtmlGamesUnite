@@ -3,10 +3,7 @@
   "file": "中国围棋PLUS.html",
   "latest": "v1.11.13",
   "date": "2026-10-25",
-  "title": [
-     "迁移至 HtmlGamesUnite · 文件名改为游戏名",
-     "修复了横屏下吃子进度条显示的bug",
-  ],
+  "title": "迁移至 HtmlGamesUnite · 文件名改为游戏名",
   "items": [
     "【变更】本作迁入新仓库 HtmlGamesUnite（多游戏共用），文件名由通用名改为游戏名：中国围棋PLUS.html，便于在同一仓库中分辨各游戏。",
     "【同步】更新清单文件名同步改为 中国围棋PLUS.update.json（与 HTML 同名前缀），HTML 内读取的常量已一并修改；两者必须同名前缀且放在同一目录，否则检查更新会找不到清单。",
