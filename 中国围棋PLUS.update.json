@@ -3,7 +3,8 @@
   "file": "中国围棋PLUS.html",
   "latest": "v1.11.13",
   "date": "2026-10-25",
-  "title": ["迁移至 HtmlGamesUnite · 文件名改为游戏名",
+  "title": [
+     "迁移至 HtmlGamesUnite · 文件名改为游戏名",
      "修复了横屏下吃子进度条显示的bug",
   ],
   "items": [
