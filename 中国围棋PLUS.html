@@ -2223,6 +2223,24 @@ const CHANGELOG = [
       "【注意】文件名含中文，部署到静态站点后访问链接需做 URL 编码（浏览器通常会自动处理）。若发现「检查更新」一直报 404，多半是编码或文件名不一致导致，可改回纯英文文件名并同步修改 HTML 内的常量。",
       "说明：本次仅改文件名与清单路径，未动 AI、棋盘、规则、赛事、联机与 __GO_AI__ 接口。"
     ]
+  },
+  {
+    ver:"v1.11.13", date:"2026-10-24", title:"修复主菜单吃子上限显示 undefined",
+    items:[
+      "【修复】主菜单「快速局 / 耐力局」吃子上限提示显示为 <b>undefined</b>。原因是 v1.11.6 引入 limitFor() 兜底函数后，返回值由原来的 <code>{fast,endur}</code> 对象改为单个数字，但 syncOpts() 里仍沿用旧写法 <code>sl.fast</code> / <code>sl.endur</code>，两者均为 undefined。现改为按两种速度各查询一次。",
+      "【影响范围】仅为显示问题，实际对局规则与胜负判定不受影响——真正的上限值走的是另一处 <code>limitFor(G.N, G.speed)</code>，本来就是正确的。",
+      "【排查】已全局检查所有 limitFor 调用点与 sl.* 用法，确认仅此一处误用，无其他遗漏。"
+    ]
+  },
+  {
+    ver:"v1.11.14", date:"2026-10-25", title:"修复「检查更新」在清单缺字段时误报已是最新",
+    items:[
+      "【修复 · 假阴性】清单文件能取到但 <code>latest</code> 字段缺失或为空时，原本会显示「已是最新版本」——<b>明明没检查到却说是最新的</b>。原因是 verCmp(空, 本地版本) 返回 -1，被判定为「不比本地新」。现改为显式判空并抛错，明确提示「清单内容不完整」。",
+      "【新增】版本号格式校验：latest 必须为 <code>v1.11.10</code> 或 <code>1.11.10</code> 这类纯数字点分格式，否则报错，避免乱填导致比较结果不可预期。",
+      "【优化】失败提示现在会区分两种原因：文件取不到（提示确认文件是否存在、站点是否可访问） vs 文件读到了但内容不对（提示检查 latest 字段），不再混为一谈。",
+      "【实测 · 六种情形】① 文件 404 → 报失败 ✓　② latest 为空 → 报「清单内容不完整」✓（原误报已是最新）　③ 无 latest 字段 → 同上 ✓（原误报）　④ 返回 HTML 非 JSON → 报失败 ✓　⑤ 返回乱码 → 报失败 ✓　⑥ latest 为 v99 → 正确显示新版本 ✓。",
+      "【说明】断网、404、内容错乱原本就会正确报错，不会误报；只有「文件读到了但 latest 缺失」这一种会，现已修复。本次仅改检查更新，未动 AI、棋盘、规则、赛事、联机与 __GO_AI__ 接口。"
+    ]
   }
 ];
 
@@ -5041,10 +5059,13 @@ function syncOpts(){
   $("limVal").textContent=G.customLimit;
   $("pmLimVal").textContent=G.customLimit;
   $("pmLimTag").textContent = isC ? "("+G.customLimit+")" : "";
-  const sl=limitFor(G.N, G.speed);
+  /* 【修复】limitFor 返回的是单个数字，不是 {fast,endur} 对象。
+     原先沿用了旧写法 sl.fast / sl.endur，两者都是 undefined，
+     于是主菜单显示「快速局 undefined 子 · 耐力局 undefined 子」。
+     现改为按两种速度各查一次。 */
   $("limitTip").textContent = isC
     ? "本局吃满 "+G.customLimit+" 子即胜 · 可调 "+LIM_MIN+"–"+LIM_MAX
-    : "快速局 "+sl.fast+" 子 · 耐力局 "+sl.endur+" 子";
+    : "快速局 "+limitFor(G.N,"fast")+" 子 · 耐力局 "+limitFor(G.N,"endur")+" 子";
   // 暂停菜单：有未生效的改动时提示需重开
   const note=$("pmNote");
   if(note){
@@ -5494,7 +5515,12 @@ function checkUpdate(showAlways){
       return r.json();
     })
     .then(d=>{
-      const latest=d.latest||"";
+      const latest=(d && d.latest) ? String(d.latest).trim() : "";
+      /* 【修复】清单能取到但 latest 缺失/为空时，verCmp("","v1.11.13") 返回 -1，
+         会被当成「不比本地新」而误报「已是最新版本」——明明没检查到却说是最新的。
+         现改为显式判空并抛错，走失败分支明确告知。 */
+      if(!latest) throw new Error("清单内容不完整：缺少 latest 字段或为空");
+      if(!/^v?\d+(\.\d+)*$/i.test(latest)) throw new Error("清单里 latest 版本号格式不对："+latest);
       const cmp=verCmp(latest, cv);
       if(cmp>0){
         const items=(d.items||[]).map(t=>"<li>"+t+"</li>").join("");
@@ -5518,8 +5544,13 @@ function checkUpdate(showAlways){
     })
     .catch(e=>{
       if(showAlways){
-        upRender('<div class="up-note">检查更新失败：'+(e.message||e)+
-          '<br>请确认同目录存在 <code>'+UPDATE_JSON+'</code>，且站点可正常访问。<br>当前版本：<b>'+cv+'</b></div>', []);
+        const msg=String(e.message||e);
+        const isContent = /清单内容不完整|latest 版本号格式/.test(msg);
+        upRender('<div class="up-note">检查更新失败：'+msg+
+          (isContent
+            ? '<br>清单文件读到了，但内容不对，请检查 <code>'+UPDATE_JSON+'</code> 里的 latest 字段。'
+            : '<br>请确认同目录存在 <code>'+UPDATE_JSON+'</code>，且站点可正常访问。')+
+          '<br>当前版本：<b>'+cv+'</b></div>', []);
       }
       markUpdateBadge(false);
     });
