@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Termux - HtmlGamesUnite</title>
+<style>
+  body { background: #000; color: #0f0; font-family: monospace; padding: 10px; margin: 0; font-size: 14px; }
+  #out { white-space: pre-wrap; line-height: 1.4; }
+  .input-line { display: flex; }
+  .input-line span { margin-right: 8px; }
+  input { background: transparent; border: none; color: #0f0; font-family: monospace; font-size: 14px; outline: none; flex: 1; }
+</style>
+</head>
+<body>
+<div id="out">
+  Welcome to Termux (HtmlGamesUnite Simulator)!
+  Type 'help' to see available commands.
+  Type 'upload' to run your .sh script.
+</div>
+<div class="input-line">
+  <span>~ $</span>
+  <input type="text" id="cmd" autocomplete="off" autofocus>
+</div>
+<input type="file" id="file" style="display:none" accept=".sh,.txt">
+
+<script>
+  // 验证密码凭证
+  if (sessionStorage.getItem('auth_pass') !== 'true') {
+    document.body.innerHTML = "<h1 style='color:red;'>403 Forbidden</h1><p>非法直接访问。</p>";
+  }
+
+  const out = document.getElementById('out');
+  const cmdInput = document.getElementById('cmd');
+  const fileInput = document.getElementById('file');
+  let fakePkgs = [];
+
+  function print(text) {
+    out.innerHTML += text + "\n";
+    window.scrollTo(0, document.body.scrollHeight);
+  }
+
+  cmdInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const val = cmdInput.value.trim();
+      cmdInput.value = '';
+      if (!val) return;
+      
+      print(`~ $ ${val}`);
+      const parts = val.split(' ');
+      
+      if (val === 'help') {
+        print("支持的命令:\n  help       - 显示帮助\n  whoami     - 查看当前用户\n  upload     - 上传并运行 .sh 脚本\n  pkg update - 模拟包管理器更新\n  ls         - 列出目录");
+      } else if (val === 'whoami') {
+        print("xianggo");
+      } else if (val === 'upload') {
+        fileInput.click();
+      } else if (val.startsWith('pkg install')) {
+        const pkg = parts[2];
+        print(`Checking availability of ${pkg}...`);
+        setTimeout(() => { print(`[✓] ${pkg} 安装成功 (模拟)`); fakePkgs.push(pkg); }, 1000);
+      } else if (val === 'ls') {
+        print("bin  etc  home  usr  var  " + fakePkgs.join('  '));
+      } else {
+        print(`bash: ${parts[0]}: command not found`);
+      }
+    }
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      print(`[Termux] 正在解析 ${f.name}...`);
+      const script = ev.target.result;
+      // 简单模拟执行脚本里的 echo
+      const lines = script.split('\n');
+      let delay = 500;
+      lines.forEach(line => {
+        if (line.startsWith('echo ')) {
+          const msg = line.replace('echo ', '').replace(/['"]/g, '');
+          setTimeout(() => print(msg), delay);
+          delay += 300;
+        }
+      });
+      setTimeout(() => print(`[Termux] 脚本 ${f.name} 执行完毕。`), delay + 200);
+    };
+    reader.readAsText(f);
+  });
+</script>
+</body>
+</html>
