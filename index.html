@@ -2,38 +2,122 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05060c">
 <title>HtmlGamesUnite · 次世代</title>
 <style>
-  /* 基础样式省略，沿用你之前的深色霓虹风即可，这里重点写新加的 */
-  body { margin: 0; background: #05060c; color: #e9f1ff; font-family: system-ui, sans-serif; }
-  #app { max-width: 720px; margin: 0 auto; padding: 20px; }
-  
-  /* 弹窗样式 */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
-    display: flex; justify-content: center; align-items: center; z-index: 9999;
-    opacity: 1; transition: opacity 0.5s;
-  }
-  .modal-overlay.hidden { opacity: 0; pointer-events: none; }
-  .modal-box {
-    background: #0e1420; border: 1px solid #7fe9ff; border-radius: 16px;
-    padding: 24px; max-width: 400px; width: 90%; text-align: center;
-    box-shadow: 0 0 30px rgba(127,233,255,0.2);
-  }
-  .modal-box h2 { color: #ffc93c; margin: 0 0 12px; font-size: 20px; }
-  .modal-box p { color: #8fa0bd; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
-  .btn { background: linear-gradient(135deg, #7fe9ff, #c77dff); color: #000; font-weight: bold; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; }
+:root{
+  --bg:#05060c;--panel:#0e1420;
+  --line:rgba(127,233,255,.12);--line-hi:rgba(127,233,255,.38);
+  --cyan:#7fe9ff;--cyan-soft:rgba(127,233,255,.62);
+  --gold:#ffc93c;--purple:#c77dff;
+  --text:#e9f1ff;--text-2:#8fa0bd;--text-3:#5b6784;
+  --font:system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
+  --ease:cubic-bezier(.22,.8,.28,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  min-height:100dvh;
+  background:
+    radial-gradient(900px 520px at 50% -8%, rgba(127,233,255,.12), transparent 62%),
+    radial-gradient(760px 480px at 92% 104%, rgba(199,125,255,.10), transparent 60%),
+    radial-gradient(600px 380px at 2% 82%, rgba(255,201,60,.06), transparent 60%),
+    var(--bg);
+  color:var(--text);font-family:var(--font);line-height:1.55;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  padding:max(20px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom));
+}
+.wrap{max-width:720px;margin:0 auto;}
 
-  /* 赛季 UI */
-  #season-banner { background: linear-gradient(90deg, #c77dff, #7fe9ff); color: #000; padding: 10px; border-radius: 8px; font-weight: bold; margin-bottom: 20px; display: flex; justify-content: space-between; }
-  
-  /* WebView 警告 */
-  #webview-warn { background: #f44336; color: white; padding: 10px; font-size: 12px; text-align: center; display: none; }
+/* 赛季横幅 */
+.season-banner {
+  background: linear-gradient(90deg, rgba(199,125,255,.2), rgba(127,233,255,.2));
+  border: 1px solid var(--purple); border-radius: 12px;
+  padding: 12px; margin-bottom: 20px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 14px; font-weight: bold; color: var(--cyan);
+  box-shadow: 0 0 15px rgba(199,125,255,.2);
+}
+.season-banner span:last-child { color: var(--gold); font-size: 12px; }
 
-  /* 卡片样式（精简） */
-  .card { background: #0e1420; border: 1px solid rgba(127,233,255,0.2); padding: 16px; border-radius: 12px; margin-bottom: 12px; display: flex; gap: 16px; text-decoration: none; color: inherit; }
-  .card:hover { border-color: #7fe9ff; }
+/* WebView 警告 */
+#webview-warn { background: #f44336; color: white; padding: 10px; font-size: 13px; text-align: center; display: none; border-radius: 8px; margin-bottom: 16px;}
+
+.hero{text-align:center;padding:6px 0 20px;}
+.logo{
+  font-size:clamp(40px,10vw,62px);font-weight:800;letter-spacing:.06em;line-height:1.1;
+  background:linear-gradient(180deg,#fff 0%,var(--cyan) 46%,#3aa8c8 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 22px rgba(127,233,255,.35));
+}
+.sub{margin-top:10px;font-size:13px;color:var(--text-2);letter-spacing:.06em;}
+.welcome{margin-top:6px;font-size:12.5px;color:var(--text-3);}
+
+.grid{display:grid;grid-template-columns:1fr;gap:12px;}
+@media (min-width:600px){.grid{grid-template-columns:1fr 1fr;}}
+.card{
+  position:relative;display:flex;align-items:flex-start;gap:14px;
+  padding:16px;border-radius:16px;text-decoration:none;color:inherit;
+  background:linear-gradient(160deg,rgba(255,255,255,.035),rgba(255,255,255,.008)),var(--panel);
+  border:1px solid var(--line);overflow:hidden;
+  transition:transform .18s var(--ease),border-color .18s var(--ease),box-shadow .18s var(--ease);
+  animation:cardIn .5s var(--ease) both;animation-delay:calc(var(--i) * 55ms);
+  cursor: pointer;
+}
+.card::before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:radial-gradient(360px 200px at 0% 0%,rgba(127,233,255,.08),transparent 70%);
+  transition:opacity .22s var(--ease);
+}
+@media (hover:hover){
+  .card:hover{transform:translateY(-3px);border-color:var(--line-hi);
+    box-shadow:0 12px 28px -12px rgba(0,0,0,.7),0 0 0 1px rgba(127,233,255,.08);}
+  .card:hover::before{opacity:1;}
+  .card:hover .card-arrow{transform:translateX(3px);color:var(--cyan);}
+}
+.card:active{transform:scale(.985);border-color:var(--line-hi);}
+.card-emoji{
+  flex:none;width:52px;height:52px;display:grid;place-items:center;
+  font-size:26px;border-radius:13px;
+  background:rgba(127,233,255,.06);border:1px solid rgba(127,233,255,.12);
+}
+.card-body{flex:1;min-width:0;}
+.card-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+.card-title{font-size:16.5px;font-weight:700;letter-spacing:.02em;color:#fff;}
+.card-en{font-size:10.5px;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;}
+.card-desc{margin-top:5px;font-size:12.5px;color:var(--text-2);line-height:1.6;}
+.card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px;}
+.card-tags span{
+  font-size:10.5px;padding:2px 8px;border-radius:999px;
+  color:var(--cyan-soft);background:rgba(127,233,255,.06);
+  border:1px solid rgba(127,233,255,.12);
+}
+.card-hint{margin-top:7px;font-size:10.5px;color:var(--text-3);letter-spacing:.02em;}
+.card-arrow{
+  flex:none;align-self:center;font-size:18px;color:var(--text-3);
+  transition:transform .18s var(--ease),color .18s var(--ease);
+}
+.foot{margin-top:26px;text-align:center;font-size:11.5px;color:var(--text-3);line-height:1.8;}
+.foot a{color:var(--cyan-soft);text-decoration:none;border-bottom:1px dashed rgba(127,233,255,.3);}
+.secret-trigger { cursor: pointer; text-decoration: underline; color: var(--purple); }
+@keyframes cardIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+
+/* 弹窗与遮罩 */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+  display: flex; justify-content: center; align-items: center; z-index: 9999;
+  opacity: 1; transition: opacity 0.4s;
+}
+.modal-overlay.hidden { opacity: 0; pointer-events: none; }
+.modal-box {
+  background: #0e1420; border: 1px solid var(--cyan); border-radius: 16px;
+  padding: 24px; max-width: 400px; width: 90%; text-align: center;
+  box-shadow: 0 0 30px rgba(127,233,255,0.2);
+}
+.modal-box h2 { color: var(--gold); margin: 0 0 12px; font-size: 20px; }
+.modal-box p { color: var(--text-2); font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+.btn { background: linear-gradient(135deg, var(--cyan), var(--purple)); color: #000; font-weight: bold; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -43,31 +127,26 @@
   ⚠️ 检测到您正在 App 内置浏览器中访问，部分游戏（如音游）会有严重延迟，建议点击右上角选择“在浏览器中打开”。
 </div>
 
-<div id="app">
+<div class="wrap">
   <!-- 赛季横幅 -->
-  <div id="season-banner">
+  <div class="season-banner">
     <span>⚔️ 第 1 赛季：万象更新</span>
     <span id="season-timer">剩余 30 天</span>
   </div>
 
-  <h1 style="text-align:center; color:#7fe9ff;">HtmlGamesUnite</h1>
-  <p style="text-align:center; color:#8fa0bd; margin-bottom: 24px;">包罗万象，如水流畅</p>
+  <header class="hero">
+    <div class="logo">HtmlGamesUnite</div>
+    <p class="sub">包罗万象，如水流畅</p>
+    <p class="welcome">摸鱼时刻，随便挑一个 🐟</p>
+  </header>
 
-  <!-- 游戏列表 -->
-  <div class="card" onclick="location.href='舞立方秀.html'">
-    <div style="font-size:32px;">🎵</div>
-    <div><h3>舞立方：秀</h3><p>6K 触屏音游</p></div>
-  </div>
-  
-  <div class="card" onclick="startStory()">
-    <div style="font-size:32px;">📖</div>
-    <div><h3>主线剧情 (第 1 章)</h3><p>故事即将发生…</p></div>
-  </div>
-  
-  <!-- 隐藏入口提示 -->
-  <p style="text-align:center; margin-top:40px; font-size:12px; color:#5b6784;">
-    输入特殊代码以访问隐藏系统 <span style="cursor:pointer; text-decoration:underline;" onclick="secretCode()">[ 输入代码 ]</span>
-  </p>
+  <main class="grid" id="grid"></main>
+
+  <footer class="foot">
+    所有游戏都是单文件 HTML，离线可玩 · 无需安装 · 无需登录<br>
+    <a href="https://github.com/XIANGgo-furry/HtmlGamesUnite" target="_blank" rel="noopener">GitHub 仓库</a> <br><br>
+    <span class="secret-trigger" onclick="secretCode()">[ 特殊人员访问入口 ]</span>
+  </footer>
 </div>
 
 <!-- 首次更新弹窗 -->
@@ -75,109 +154,162 @@
   <div class="modal-box">
     <h2>下一次更新主题：值得等待</h2>
     <p>包罗万象，如水流畅。<br>故事即将发生…</p>
-    <button class="btn" onclick="closeModal()">进入世界</button>
+    <button class="btn" onclick="closeWelcomeModal()">进入世界</button>
   </div>
 </div>
 
 <script>
-// 1. 关闭弹窗
-function closeModal() {
-  document.getElementById('welcome-modal').classList.add('hidden');
-  // 检查是否看过剧情
-  if(!localStorage.getItem('story_read_v1')) {
-    setTimeout(startStory, 1000);
-  }
-}
+  /* ===== 核心：游戏清单（全部恢复） ===== */
+  const GAMES = [
+    {
+      file:'舞立方秀.html', emoji:'🎵',
+      title:'舞立方：秀', en:'DanceCube-SHOW',
+      desc:'六边形盘面的 6K 触屏音游，能导入 Malody 谱面，也能听歌自动生谱',
+      tags:['音游','节奏','触屏'], hint:'上手简单，精通难'
+    },
+    {
+      file:'MCZ打包器.html', emoji:'📦',
+      title:'MCZ 打包器', en:'MCZ Packer',
+      desc:'把谱面 + 音频 + 封面打包成 .mcz，方便分享给别人',
+      tags:['工具','配套'], hint:'打开就会用'
+    },
+    {
+      file:'中国围棋PLUS.html', emoji:'⚫',
+      title:'中国围棋 PLUS', en:'Weiqi PLUS',
+      desc:'水墨风围棋，人机 / 双人 / 联机三种模式，9–23 路可选',
+      tags:['棋类','AI','联机'], hint:'v1.11.12'
+    },
+    {
+      file:'中国象棋.html', emoji:'🀄',
+      title:'中国象棋', en:'Chinese Chess',
+      desc:'中国象棋，AI 对战、检查更新、性能模式与高级比赛开关',
+      tags:['棋类','AI'], hint:'v5.5.0 Official'
+    },
+    {
+      file:'反应力.html', emoji:'🎯',
+      title:'反应挑战', en:'Reaction Challenge',
+      desc:'圆环指针 / 五盏红灯双版本反应力测试，内置检查更新',
+      tags:['反应','小游戏'], hint:'v1.1.0'
+    },
+    {
+      // 加入剧情作为辅助入口
+      file:'javascript:startStory()', emoji:'📖',
+      title:'主线剧情：序章', en:'Story',
+      desc:'阅读赛博世界的起源故事，通过剧情解密小游戏推进',
+      tags:['剧情','解谜'], hint:'第一次进入需完成解密'
+    }
+  ];
 
-// 2. WebView 检测
-(function checkWebView() {
-  const ua = navigator.userAgent.toLowerCase();
-  const isWebView = (ua.includes('micromessenger') || ua.includes('qq/') || ua.includes('weibo'));
-  if (isWebView) {
-    document.getElementById('webview-warn').style.display = 'block';
-  }
-})();
-
-// 3. 密码解锁隐藏页面 (比如 Termux 控制台)
-function secretCode() {
-  const code = prompt("SYSTEM LOCKED.\n请输入访问代码：");
-  if (code === "XIANGgo2026") {
-    // 验证通过，存入凭证，跳转
-    sessionStorage.setItem('auth_pass', 'true');
-    location.href = 'termux.html';
-  } else if (code !== null) {
-    alert("代码错误，访问拒绝。");
-  }
-}
-
-// 4. 剧情系统与剧情小游戏
-function startStory() {
-  // 弹出一个沉浸式阅读框
-  const storyOverlay = document.createElement('div');
-  storyOverlay.className = 'modal-overlay';
-  storyOverlay.innerHTML = `
-    <div class="modal-box" style="text-align: left; max-width: 500px;">
-      <h2 style="text-align:center;">序章：赛博世界的裂缝</h2>
-      <p id="story-text" style="min-height: 80px; color: #e9f1ff;">
-        你睁开眼，发现自己身处一个由代码构筑的棋盘之上。远处的霓虹灯牌闪烁着：<br>
-        "如果你能看到这行字，说明系统已经被重构。"
-      </p>
-      <div style="display:flex; justify-content:space-between; margin-top:20px;">
-        <button class="btn" style="background:#26304a; color:#fff;" onclick="this.parentElement.parentElement.parentElement.remove()">跳过</button>
-        <button class="btn" id="story-next">继续</button>
+  // 渲染游戏列表
+  document.getElementById('grid').innerHTML = GAMES.map((g,i) => 
+    `<a class="card" href="${g.file}" style="--i:${i}">
+      <div class="card-emoji">${g.emoji}</div>
+      <div class="card-body">
+        <div class="card-head"><span class="card-title">${g.title}</span><span class="card-en">${g.en}</span></div>
+        <p class="card-desc">${g.desc}</p>
+        <div class="card-tags">${g.tags.map(t=>`<span>${t}</span>`).join('')}</div>
+        <div class="card-hint">${g.hint}</div>
       </div>
-    </div>
-  `;
-  document.body.appendChild(storyOverlay);
+      <div class="card-arrow">→</div>
+    </a>`
+  ).join('');
 
-  let step = 0;
-  document.getElementById('story-next').onclick = () => {
-    step++;
-    const textEl = document.getElementById('story-text');
-    if (step === 1) {
-      textEl.innerHTML = "前方出现了一个奇怪的终端。你需要输入正确的指令才能唤醒它。";
-    } else if (step === 2) {
-      // 仅剧情时的小游戏：猜密码
-      textEl.innerHTML = "终端上闪烁着一行提示：<br><i>Hint: 我们的世界叫什么名字？(全拼小写)</i><br><br><input id='story-input' style='width:100%; padding:8px; background:#000; border:1px solid #7fe9ff; color:#fff;' placeholder='输入指令...'>";
-      document.getElementById('story-next').innerText = "执行";
-      document.getElementById('story-next').onclick = () => {
-        const val = document.getElementById('story-input').value.trim().toLowerCase();
-        if (val === 'htmlgamesunite' || val === 'xianggo') {
-          textEl.innerHTML = "唤醒成功！世界之树重新焕发生机。<br><br>你获得了成就【世界的重构者】。";
-          document.getElementById('story-next').innerText = "完成";
-          document.getElementById('story-next').onclick = () => {
-            storyOverlay.remove();
-            localStorage.setItem('story_read_v1', '1');
-            alert("剧情已保存。游戏列表已解锁。");
-          };
-        } else {
-          alert("指令错误，终端无响应。再想想？");
+  /* ===== 1. 关闭开屏弹窗 ===== */
+  function closeWelcomeModal() {
+    document.getElementById('welcome-modal').classList.add('hidden');
+    // 如果是第一次来，或者老版本没看过剧情，弹剧情提示
+    if(!localStorage.getItem('story_read_v2')) {
+      setTimeout(() => {
+        if(confirm("检测到新的世界线。是否立即进入【主线剧情】？\n(也可以稍后点击主页的剧情卡片进入)")) {
+          startStory();
         }
-      };
-      return; // 阻止默认下一步
+      }, 800);
     }
-  };
-}
+  }
 
-// 5. 防审查/防F12系统
-(function antiInspect() {
-  // 禁用右键
-  document.addEventListener('contextmenu', e => e.preventDefault());
-  
-  // 检测 F12 / Ctrl+Shift+I / Ctrl+U
-  document.addEventListener('keydown', e => {
-    if (
-      e.key === 'F12' || 
-      (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j')) ||
-      (e.ctrlKey && (e.key === 'U' || e.key === 'u'))
-    ) {
-      e.preventDefault();
-      // 恶心人的无限 debugger
-      setInterval(() => { debugger; }, 50);
-      document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:20vh;'>ACCESS DENIED</h1><p style='text-align:center;'>试图窥探底层代码是被禁止的。</p>";
+  /* ===== 2. WebView 检测 ===== */
+  (function checkWebView() {
+    const ua = navigator.userAgent.toLowerCase();
+    const isWebView = (ua.includes('micromessenger') || ua.includes('qq/') || ua.includes('weibo') || ua.includes('baiduboxapp'));
+    if (isWebView) {
+      document.getElementById('webview-warn').style.display = 'block';
     }
-  });
-})();
+  })();
+
+  /* ===== 3. 特殊人员入口 (代码触发) ===== */
+  function secretCode() {
+    const code = prompt("SYSTEM LOCKED.\n请输入特殊访问代码：");
+    if (code === "XIANGgo2026") {
+      // 验证通过，设置凭证
+      sessionStorage.setItem('auth_pass', 'true');
+      location.href = 'termux.html';
+    } else if (code !== null && code !== "") {
+      alert("代码错误，访问记录已上报。");
+    }
+  }
+
+  /* ===== 4. 剧情模式与小游戏 ===== */
+  function startStory() {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-box" style="text-align: left; max-width: 500px;">
+        <h2 style="text-align:center;">序章：赛博世界的裂缝</h2>
+        <p id="story-text" style="min-height: 80px; color: var(--text);">
+          你睁开眼，发现自己身处一个由代码构筑的棋盘之上。远处的霓虹灯牌闪烁着：<br>
+          "如果你能看到这行字，说明系统已经被重构。"
+        </p>
+        <div style="display:flex; justify-content:space-between; margin-top:20px;">
+          <button class="btn" style="background:#26304a; color:#fff;" onclick="this.parentElement.parentElement.parentElement.remove()">跳过</button>
+          <button class="btn" id="story-next">继续</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    let step = 0;
+    document.getElementById('story-next').onclick = () => {
+      step++;
+      const textEl = document.getElementById('story-text');
+      if (step === 1) {
+        textEl.innerHTML = "前方出现了一个奇怪的终端。你需要输入正确的指令才能唤醒它。";
+      } else if (step === 2) {
+        textEl.innerHTML = "终端上闪烁着一行提示：<br><i>Hint: 我们的合集叫什么名字？(全拼小写)</i><br><br><input id='story-input' style='width:100%; padding:10px; background:#000; border:1px solid #7fe9ff; color:#fff; border-radius:6px;' placeholder='输入指令...'>";
+        document.getElementById('story-next').innerText = "执行";
+        document.getElementById('story-next').onclick = () => {
+          const val = document.getElementById('story-input').value.trim().toLowerCase();
+          if (val === 'htmlgamesunite' || val === 'xianggo') {
+            textEl.innerHTML = "唤醒成功！世界之树重新焕发生机。<br><br>你获得了成就【世界的重构者】。";
+            document.getElementById('story-next').innerText = "完成";
+            document.getElementById('story-next').onclick = () => {
+              overlay.remove();
+              localStorage.setItem('story_read_v2', '1');
+              alert("剧情已保存。世界已解锁。");
+            };
+          } else {
+            alert("指令错误，终端无响应。再想想？");
+          }
+        };
+        return;
+      }
+    };
+  }
+
+  /* ===== 5. 防审查机制 (F12/右键拦截) ===== */
+  (function antiInspect() {
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j')) ||
+        (e.ctrlKey && (e.key === 'U' || e.key === 'u'))
+      ) {
+        e.preventDefault();
+        setInterval(() => { debugger; }, 50);
+        document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:20vh; font-family:sans-serif;'>ACCESS DENIED</h1><p style='text-align:center; color:#fff; font-family:sans-serif;'>试图窥探底层代码是被禁止的。</p>";
+      }
+    });
+  })();
 </script>
 </body>
 </html>
