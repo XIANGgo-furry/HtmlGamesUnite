@@ -1,0 +1,105 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>测试中</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;max-width:680px;margin:0 auto;padding:24px 16px 60px;line-height:1.6;color:#222;background:#f6f7f9}
+input,button{font-size:16px;width:100%;padding:11px;margin:8px 0;border:1px solid #dcdfe4;border-radius:10px;font-family:inherit}
+button{cursor:pointer;background:#222;color:#fff;border:0;font-weight:600}
+h1{font-size:22px;margin:4px 0 6px}
+.about{color:#666;font-size:14px;margin:0 0 18px}
+.tag{display:inline-block;font-size:12px;color:#8a5b00;background:#fff2d6;border:1px solid #ffd98a;padding:2px 9px;border-radius:99px;margin-bottom:10px}
+#bar{position:sticky;top:0;z-index:2;background:#f6f7f9;padding:6px 0 2px}
+#q{margin:0;background:#fff}
+#chips{display:flex;gap:8px;overflow-x:auto;padding:12px 0 4px;scrollbar-width:none}
+#chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;width:auto;margin:0;padding:6px 14px;border-radius:99px;border:1px solid #dcdfe4;background:#fff;color:#555;font-size:14px;font-weight:400}
+.chip.on{background:#222;color:#fff;border-color:#222}
+.meta{display:flex;align-items:center;justify-content:space-between;margin:10px 0 12px;color:#888;font-size:14px}
+#sort{width:auto;margin:0;padding:6px 12px;background:#fff;color:#555;border:1px solid #dcdfe4;border-radius:8px;font-size:14px;font-weight:400}
+#list{display:grid;gap:10px}
+.card{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #e6e8ec;border-radius:14px;padding:12px;text-decoration:none;color:inherit;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.cover{flex:0 0 58px;width:58px;height:58px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;font-weight:700;overflow:hidden}
+.info{min-width:0;flex:1}
+.nm{font-weight:600;font-size:16px;word-break:break-word}
+.cat{display:inline-block;margin-top:3px;font-size:12px;color:#666;background:#f0f1f4;padding:2px 8px;border-radius:6px}
+.arrow{color:#bbb;font-size:18px;flex:0 0 auto}
+.empty{text-align:center;color:#999;padding:36px 0}
+</style>
+<div id="app">
+  <span class="tag">🧪 测试中 · 可能有 bug</span>
+  <h1>测试页面</h1>
+  <p class="about">正在调试的 HTML 都放这儿，点开直接玩。新增页面：编辑本文件顶部 <b>RAW</b> 里加一行即可。</p>
+  <div id="bar"><input id="q" placeholder="搜索名称 / 分类" autocomplete="off"></div>
+  <div id="chips"></div>
+  <div class="meta"><span id="count"></span><button id="sort" onclick="toggleSort()">A → Z</button></div>
+  <div id="list"></div>
+</div>
+<script>
+/* ↓↓↓ 加测试页面就在这里加一行：名称 | 分类 | 图标 | 文件名（后三项可留空）↓↓↓ */
+const RAW = `
+午夜保安室 | 恐怖 | 🌙 | 午夜保安室.html
+舞立方：秀 | 音游 | 🎵 | 舞立方秀_触屏版.html
+中国围棋PLUS | 棋类 | ⚫ | 中国围棋PLUS.html
+中国象棋 | 棋类 | ♟️ | 中国象棋.html
+反应挑战 | 反应 | ⚡ | 反应力.html
+`;
+/* ↑↑↑ 加完保存并提交，GitHub Pages 会自动更新，别的都不用动 ↑↑↑ */
+
+const $=id=>document.getElementById(id);
+const clr=el=>{while(el.firstChild)el.removeChild(el.firstChild)};
+let items=[],curCat='',sortMode='name';
+
+function parse(t){
+  const out=[];
+  t.split('\n').forEach(line=>{
+    let s=line.trim();if(!s)return;s=s.replace(/｜/g,'|');
+    if(s.includes('|')){
+      const p=s.split('|').map(v=>v.trim());
+      out.push({name:p[0]||'未命名',cat:p[1]||'未分类',emoji:p[2]||'',url:p[3]||''});
+    }else out.push({name:s,cat:'未分类',emoji:'',url:''});
+  });
+  return out;
+}
+function hue(s){let h=0;for(const c of s)h=(h*31+c.codePointAt(0))>>>0;return h%360}
+function coverOf(g){
+  const h=hue(g.name),d=document.createElement('div');d.className='cover';
+  d.style.background=`linear-gradient(135deg,hsl(${h} 68% 60%),hsl(${(h+55)%360} 68% 46%))`;
+  d.textContent=g.emoji||[...g.name][0].toUpperCase();return d;
+}
+function draw(){
+  const kw=($('q').value||'').trim().toLowerCase();
+  let arr=items.filter(g=>(!curCat||g.cat===curCat)&&
+    (g.name+' '+g.cat).toLowerCase().includes(kw));
+  arr=arr.slice().sort((a,b)=>sortMode==='cat'
+    ? a.cat.localeCompare(b.cat,'zh')||a.name.localeCompare(b.name,'en',{sensitivity:'base',numeric:true})
+    : a.name.localeCompare(b.name,'en',{sensitivity:'base',numeric:true}));
+  $('count').textContent=`共 ${arr.length} 个`;
+  $('sort').textContent=sortMode==='name'?'A → Z':'按分类';
+  const list=$('list');clr(list);
+  if(!arr.length){const e=document.createElement('div');e.className='empty';e.textContent='没找到匹配的页面';list.appendChild(e);return}
+  arr.forEach(g=>{
+    const card=document.createElement(g.url?'a':'div');card.className='card';
+    if(g.url){card.href=g.url;card.rel='noopener'}
+    card.appendChild(coverOf(g));
+    const info=document.createElement('div');info.className='info';
+    const nm=document.createElement('div');nm.className='nm';nm.textContent=g.name;
+    const cat=document.createElement('span');cat.className='cat';cat.textContent=g.cat;
+    info.append(nm,cat);card.appendChild(info);
+    if(g.url){const ar=document.createElement('span');ar.className='arrow';ar.textContent='›';card.appendChild(ar)}
+    list.appendChild(card);
+  });
+}
+function toggleSort(){sortMode=sortMode==='name'?'cat':'name';draw()}
+items=parse(RAW);
+const chips=$('chips');clr(chips);
+['全部',...new Set(items.map(g=>g.cat))].forEach(c=>{
+  const b=document.createElement('button');
+  b.className='chip'+(c==='全部'?' on':'');b.textContent=c;
+  b.onclick=()=>{curCat=c==='全部'?'':c;
+    [...chips.children].forEach(x=>x.classList.toggle('on',x===b));draw()};
+  chips.appendChild(b);
+});
+$('q').oninput=draw;
+draw();
+</script>

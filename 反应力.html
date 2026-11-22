@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>反应挑战 · 双版本</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    background:radial-gradient(120% 80% at 50% 0%,#16203a 0%,#0b1020 60%,#070a14 100%);
+    color:#e5e7eb;
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    user-select:none;-webkit-user-select:none;overflow:hidden;
+  }
+  #app{width:100%;max-width:430px;max-height:100%;padding:12px 16px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;overflow-y:auto}
+  .page{width:100%;display:none;flex-direction:column;align-items:center;gap:12px}
+  .page.show{display:flex}
+  .top{width:100%;display:flex;align-items:center;justify-content:space-between;min-height:30px}
+  .back{padding:6px 10px;font-size:13px;color:#8b98b3;background:none;border:0;cursor:pointer;margin-left:-10px}
+  .mute{padding:6px 10px;font-size:15px;background:none;border:0;cursor:pointer;opacity:.75}
+  header{width:100%}
+  .row{display:flex;align-items:center;gap:10px}
+  .bar{flex:1;height:18px;border-radius:99px;background:#1b2337;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
+  #barFill{height:100%;width:100%;border-radius:99px;background:hsl(66,80%,50%);transition:width .08s linear}
+  #pct{width:52px;text-align:right;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+  .meta{display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:#94a3b8}
+  .meta b{color:#e5e7eb;font-size:13px}
+  .tip{font-size:12px;color:#7c8aa5;margin:0;text-align:center;line-height:1.6}
+
+  /* ---------- 版本选择 ---------- */
+  #home h1{margin:4px 0 0;font-size:22px;letter-spacing:.5px}
+  #home .sub{margin:0;font-size:12px;color:#7c8aa5}
+  .card{
+    width:100%;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:15px 16px;
+    background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+    display:flex;gap:13px;align-items:center;cursor:pointer;transition:transform .12s,border-color .12s;
+  }
+  .card:active{transform:scale(.98);border-color:rgba(255,255,255,.22)}
+  .card .ico{
+    width:54px;height:54px;flex:none;border-radius:16px;display:flex;align-items:center;justify-content:center;
+    font-size:25px;background:#101828;border:1px solid rgba(255,255,255,.07);
+  }
+  .card h3{margin:0 0 4px;font-size:16px}
+  .card p{margin:0;font-size:12px;color:#8b98b3;line-height:1.6}
+  .tag{display:inline-block;margin-right:6px;padding:2px 7px;border-radius:99px;font-size:10px;background:rgba(74,222,128,.14);color:#4ade80}
+  .tag.r{background:rgba(239,68,68,.16);color:#f87171}
+
+  /* ---------- 模式切换 ---------- */
+  .modes{display:flex;gap:7px;width:100%}
+  .mode{
+    flex:1;padding:9px 2px 8px;border-radius:13px;text-align:center;cursor:pointer;
+    background:#131a2c;border:1px solid rgba(255,255,255,.07);transition:.12s;
+  }
+  .mode b{display:block;font-size:13px;color:#cbd5e1}
+  .mode span{display:block;font-size:10px;color:#6b7a94;margin-top:2px}
+  .mode.sel{background:linear-gradient(180deg,rgba(74,222,128,.16),rgba(34,197,94,.06));border-color:rgba(74,222,128,.5)}
+  .mode.sel b{color:#4ade80}
+
+  /* ---------- 生命 / 连击 ---------- */
+  .lifeRow{display:flex;align-items:center;gap:10px;width:100%}
+  .hearts{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+  .heart{width:16px;height:16px;border-radius:5px;background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,.45);transition:.15s}
+  .heart.off{background:#232b3d;box-shadow:none}
+  .combo{font-size:13px;font-weight:700;color:#fbbf24;min-width:74px;text-align:right;font-variant-numeric:tabular-nums}
+  .combo.zero{color:#4b5563}
+
+  /* ---------- 圆盘（两个版本共用外观） ---------- */
+  #stage,#stage2{position:relative;width:100%;display:flex;justify-content:center}
+  canvas{display:block;border-radius:50%;touch-action:manipulation}
+  .disc{
+    position:relative;border-radius:50%;
+    background:radial-gradient(circle at 50% 38%,#11151f 0%,#0a0d16 62%,#06080f 100%);
+    box-shadow:inset 0 2px 22px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.06);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5%;
+    touch-action:manipulation;
+  }
+  .disc .lights{width:74%;display:flex;justify-content:space-between;gap:3%}
+  .light{
+    flex:1;aspect-ratio:1/1.15;border-radius:14%;background:#14171f;border:2px solid #262b36;
+    display:flex;align-items:center;justify-content:center;transition:background .07s linear,border-color .07s linear;
+  }
+  .light i{
+    width:68%;height:68%;border-radius:50%;background:#2a1113;
+    transition:background .07s linear,box-shadow .07s linear;
+  }
+  .light.on{border-color:#7f1d1d;background:#1b0e10}
+  .light.on i{
+    background:radial-gradient(circle at 35% 30%,#ff8a8a,#ef4444 45%,#8b0f12 100%);
+    box-shadow:0 0 10px 3px rgba(239,68,68,.9),0 0 26px 9px rgba(239,68,68,.45);
+  }
+  .readout{height:34%;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;padding:0 12%}
+  .readout .big{font-size:clamp(26px,8.6vmin,40px);font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1;text-align:center}
+  .readout .msg{font-size:12px;color:#94a3b8;text-align:center;line-height:1.6;min-height:2.4em}
+
+  .overlay{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    background:rgba(7,10,20,.88);backdrop-filter:blur(3px);border-radius:50%;text-align:center;padding:20px;cursor:pointer;
+  }
+  .overlay.hide{display:none}
+  .overlay h1{margin:0;font-size:20px}
+  .overlay p{margin:0;font-size:13px;color:#9aa7bd;line-height:1.7}
+  .pill{margin-top:4px;padding:10px 24px;border-radius:99px;font-size:15px;font-weight:700;color:#04120a;
+    background:linear-gradient(180deg,#4ade80,#22c55e);box-shadow:0 6px 18px rgba(34,197,94,.35)}
+  .pill.grey{background:#1f2942;color:#cbd5e1;box-shadow:none}
+
+  /* ---------- 更新按钮 / 提示条 ---------- */
+  .ver{font-size:11px;color:#5b6880;font-variant-numeric:tabular-nums;letter-spacing:.3px}
+  .upd{
+    position:relative;display:flex;align-items:center;gap:6px;
+    padding:6px 12px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;
+    background:rgba(74,222,128,.10);border:1px solid rgba(74,222,128,.32);color:#4ade80;
+  }
+  .upd:active{transform:translateY(1px)}
+  .upd.newer{background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.45);color:#fbbf24}
+  .upd .dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:0;transition:opacity .2s}
+  .upd.newer .dot{opacity:1;animation:blink 1.1s ease-in-out infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  #toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);
+    max-width:86vw;padding:10px 16px;border-radius:12px;font-size:13px;line-height:1.5;text-align:center;
+    background:rgba(20,26,42,.96);border:1px solid rgba(255,255,255,.12);color:#e5e7eb;
+    box-shadow:0 8px 26px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.22s;z-index:99;
+  }
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+
+  /* ---------- 版本三：靶场速射 ---------- */
+  #range{
+    position:relative;width:100%;border-radius:18px;overflow:hidden;
+    background:radial-gradient(circle at 50% 40%,#141c30 0%,#0b1020 70%,#070a14 100%);
+    border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 2px 24px rgba(0,0,0,.6);
+    touch-action:none;   /* 移动端禁滚动/双击缩放，保证点靶精准 */
+  }
+  #rangeCanvas{display:block;width:100%;height:100%}
+  #range.grabbable{cursor:grab}
+  #range.grabbable.dragging{cursor:grabbing}
+  #fireBtn{
+    position:absolute;right:14px;bottom:14px;z-index:6;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+    width:76px;height:76px;border-radius:50%;cursor:pointer;
+    background:radial-gradient(circle at 35% 28%,#f87171,#991b1b 70%);
+    border:2px solid rgba(255,255,255,.38);color:#fff;
+    box-shadow:0 8px 22px rgba(239,68,68,.5),inset 0 2px 6px rgba(255,255,255,.18);
+    font:800 13px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    touch-action:none;user-select:none;-webkit-user-select:none;
+  }
+  #fireBtn:active{transform:scale(.93)}
+  #fireBtn .ico{font-size:19px;line-height:1}
+  @media (min-width:760px){ #fireBtn{width:64px;height:64px} }
+  #rangeOverlay{
+    position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:8px;background:rgba(7,10,20,.86);text-align:center;padding:20px;cursor:pointer;
+  }
+  #rangeOverlay.hide{display:none}
+  #rangeOverlay h1{margin:0;font-size:20px}
+  #rangeOverlay p{margin:0;font-size:13px;color:#9aa7bd;line-height:1.7}
+  .badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;
+    background:rgba(74,222,128,.14);color:#4ade80;margin-bottom:2px}
+
+  /* 开始前必读弹窗（双端适配说明） */
+  #deviceModal{
+    position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;
+    background:rgba(4,6,12,.78);backdrop-filter:blur(4px);padding:20px;
+  }
+  #deviceModal.show{display:flex}
+  .dmBox{
+    width:100%;max-width:360px;max-height:86vh;overflow-y:auto;border-radius:20px;padding:22px 20px 18px;
+    background:linear-gradient(160deg,#182138,#0e1424);border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 18px 50px rgba(0,0,0,.6);
+  }
+  .dmBox h2{margin:0 0 6px;font-size:19px}
+  .dmBox .dmDev{
+    display:flex;align-items:center;gap:10px;margin:12px 0;padding:12px;border-radius:13px;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  }
+  .dmBox .dmDev .ico{font-size:26px;line-height:1}
+  .dmBox .dmDev b{display:block;font-size:14px}
+  .dmBox .dmDev span{font-size:11px;color:#8b98b3}
+  .dmBox ul{margin:0 0 4px;padding-left:18px;font-size:12.5px;color:#a8b4c9;line-height:1.9}
+  .dmBox ul b{color:#e5e7eb}
+  .dmBox .dmNote{margin:10px 0 0;font-size:11px;color:#6b7a94;line-height:1.6}
+  .dmDrag{
+    margin:12px 0 2px;padding:11px 12px;border-radius:13px;
+    background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.2);
+  }
+  .dmDrag > span{display:block;font-size:11px;color:#8b98b3;margin-bottom:8px}
+  .dmOpts{display:flex;gap:6px}
+  .dmOpt{
+    flex:1;padding:8px 4px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;
+    background:#131a2c;border:1px solid rgba(255,255,255,.08);color:#94a3b8;
+    transition:.12s;text-align:center;
+  }
+  .dmOpt.sel{background:rgba(74,222,128,.16);border-color:rgba(74,222,128,.5);color:#4ade80}
+  .dmDrag .dmNote{margin:8px 0 0;font-size:10.5px;color:#7c8aa5}
+  .dmTune{
+    margin:8px 0 2px;padding:11px 12px;border-radius:13px;
+    background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.18);
+  }
+  .dmTune .head{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#8b98b3}
+  .dmTune .head b{color:#fbbf24;font-size:13px;font-variant-numeric:tabular-nums}
+  .dmTune input[type=range]{
+    width:100%;margin:9px 0 2px;accent-color:#4ade80;height:18px;cursor:pointer;
+  }
+  .dmScale{display:flex;justify-content:space-between;font-size:10px;color:#5b6880}
+  .dmRow{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:11px;color:#8b98b3}
+  .dmRow .dmOpt{flex:none;width:52px;padding:6px 0;font-size:11px}
+  .dmTune .dmNote{margin:8px 0 0;font-size:10.5px;color:#7c8aa5;line-height:1.6}
+  .dmBox .pill{width:100%;margin-top:16px;text-align:center;cursor:pointer}
+  .dmBox .pill.ghost{margin-top:8px;padding:9px;font-size:13px}
+
+  /* ---------- 常驻视角轮盘 ---------- */
+  #joy{
+    position:absolute;left:14px;bottom:14px;z-index:6;
+    width:104px;height:104px;border-radius:50%;touch-action:none;
+    background:radial-gradient(circle at 50% 45%,rgba(30,41,66,.78),rgba(12,17,30,.86));
+    border:2px solid rgba(255,255,255,.16);
+    box-shadow:0 6px 20px rgba(0,0,0,.45),inset 0 0 18px rgba(96,165,250,.10);
+    user-select:none;-webkit-user-select:none;cursor:grab;
+  }
+  #joy:active{cursor:grabbing}
+  #joy.off{display:none}
+  #joy::before,#joy::after{
+    content:'';position:absolute;background:rgba(255,255,255,.10);pointer-events:none;
+  }
+  #joy::before{left:50%;top:10px;bottom:10px;width:1px;transform:translateX(-50%)}
+  #joy::after{top:50%;left:10px;right:10px;height:1px;transform:translateY(-50%)}
+  #joyRing{
+    position:absolute;inset:12px;border-radius:50%;border:1px dashed rgba(255,255,255,.14);pointer-events:none;
+  }
+  #joyKnob{
+    position:absolute;left:50%;top:50%;width:38px;height:38px;margin:-19px 0 0 -19px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#86efac,#22c55e 65%,#15803d);
+    border:2px solid rgba(255,255,255,.55);box-shadow:0 3px 12px rgba(34,197,94,.55);
+    pointer-events:none;transition:transform .12s ease-out;
+  }
+  #joyLabel{
+    position:absolute;left:0;right:0;bottom:-19px;text-align:center;
+    font-size:10px;color:rgba(255,255,255,.42);pointer-events:none;white-space:nowrap;
+  }
+  @media (min-width:760px){ #joy{width:88px;height:88px} #joyKnob{width:32px;height:32px;margin:-16px 0 0 -16px} }
+
+  /* ---------- 启动加载屏 ---------- */
+  #boot{
+    position:fixed;inset:0;z-index:200000;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(120% 90% at 50% 35%,#16203a 0%,#0b1020 58%,#05070e 100%);
+    transition:opacity .38s ease;
+  }
+  #boot.out{opacity:0;pointer-events:none}
+  .bootBox{width:100%;max-width:330px;padding:0 26px;text-align:center}
+  .bootRing{
+    width:86px;height:86px;margin:0 auto 20px;border-radius:50%;position:relative;
+    background:conic-gradient(from 0deg,#22c55e,#60a5fa,#22c55e);
+    box-shadow:0 0 34px rgba(34,197,94,.28);
+    animation:spin 1.5s linear infinite;
+  }
+  .bootRing::after{
+    content:'';position:absolute;inset:12px;border-radius:50%;background:#0b1020;
+  }
+  .bootRing i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-style:normal;font-size:13px;font-weight:800;color:#4ade80;z-index:1}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .bootTitle{font-size:17px;font-weight:700;letter-spacing:.5px}
+  .bootStep{margin-top:6px;font-size:12px;color:#8b98b3;height:18px;transition:opacity .18s}
+  .bootTrack{margin-top:18px;height:6px;border-radius:99px;background:#1b2337;overflow:hidden}
+  .bootFill{height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#22c55e,#60a5fa)}
+  .bootPct{margin-top:9px;font-size:11px;color:#5b6880;font-variant-numeric:tabular-nums}
+  .bootHint{margin-top:20px;font-size:11px;color:#4b5563;line-height:1.6}
+
+  .rounds{display:flex;gap:6px;width:100%}
+  .rd{flex:1;height:8px;border-radius:99px;background:#1b2337}
+  .rd.hit{background:#22c55e}
+  .rd.jump{background:#ef4444}
+  .rd.slow{background:#f59e0b}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ 版本选择 ============ -->
+  <div class="page show" id="home">
+    <div class="top">
+      <span class="ver" id="verTag">v1.0.0</span>
+      <button class="upd" id="updBtn">离线版<span class="dot" id="updDot"></span></button>
+    </div>
+    <h1 style="margin-top:2px">反应挑战</h1>
+    <p class="sub">选择一个版本开始</p>
+
+    <div class="card" id="pickRing">
+      <div class="ico">🎯</div>
+      <div>
+        <h3>圆环指针 <span class="tag">三种模式</span></h3>
+        <p>白色<b>球指针</b>沿轨道奔跑，跑进<b style="color:#4ade80">绿色加粗区</b>时点击圆盘。休闲 / 生存 / 极限三档。</p>
+      </div>
+    </div>
+
+    <div class="card" id="pickF1">
+      <div class="ico">🏁</div>
+      <div>
+        <h3>五盏红灯 <span class="tag r">F1 起跑</span></h3>
+        <p>五盏灯<b>等间隔</b>依次点亮并保持常亮，随后在<b style="color:#f87171">随机时刻</b>同时熄灭——灯灭即起跑。</p>
+      </div>
+    </div>
+
+    <div class="card" id="pickRange">
+      <div class="ico">🔫</div>
+      <div>
+        <h3>靶场速射 <span class="tag" style="background:rgba(96,165,250,.16);color:#60a5fa">伪3D 超广角</span></h3>
+        <p><b>伪3D 超广角</b>，所有靶始终在画面里。<b>轮盘按住持续转 / 直接拖</b>把靶拉进准星再开枪，灵敏度可调。休闲 / 生存 / 极限三档。</p>
+      </div>
+    </div>
+
+    <p class="tip">三个版本都支持手机触屏与电脑鼠标 · 靶场为伪3D 超广角 · 启动与进场都有加载</p>
+  </div>
+
+  <!-- ============ 版本一：圆环指针 ============ -->
+  <div class="page" id="game1">
+    <div class="top">
+      <button class="back" id="back1">‹ 返回</button>
+      <button class="mute" id="mute1">🔊</button>
+    </div>
+
+    <div class="modes" id="modes">
+      <div class="mode" data-m="casual"><b>休闲</b><span>10 次机会 · 连击</span></div>
+      <div class="mode sel" data-m="survival"><b>生存</b><span>进度条持续下降</span></div>
+      <div class="mode" data-m="extreme"><b>极限</b><span>更快更小更狠</span></div>
+    </div>
+
+    <header>
+      <div class="row" id="hudBar">
+        <div class="bar"><div id="barFill"></div></div>
+        <span id="pct">100%</span>
+      </div>
+      <div class="lifeRow" id="hudLife" style="display:none">
+        <div class="hearts" id="hearts"></div>
+        <div class="combo zero" id="combo">连击 0</div>
+      </div>
+      <div class="meta">
+        <span><span id="mALabel">命中</span> <b id="hits">0</b></span>
+        <span>区域 <b id="arc">70°</b></span>
+        <span>速度 <b id="spd">1.0×</b></span>
+        <span>最佳 <b id="best">0</b></span>
+      </div>
+    </header>
+
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div class="overlay" id="ov">
+        <h1 id="ovT">生存模式</h1>
+        <p id="ovD"></p>
+        <div class="pill" id="btn">点击开始</div>
+      </div>
+    </div>
+
+    <p class="tip" id="tip1"></p>
+  </div>
+
+  <!-- ============ 版本二：五盏红灯 ============ -->
+  <div class="page" id="game2">
+    <div class="top">
+      <button class="back" id="back2">‹ 返回</button>
+      <button class="mute" id="mute2">🔊</button>
+    </div>
+
+    <div class="meta" style="margin-top:0;width:100%">
+      <span>轮次 <b id="rd">1/5</b></span>
+      <span>平均 <b id="avg">—</b></span>
+      <span>抢跑 <b id="fs">0</b></span>
+      <span>最佳 <b id="best2">—</b></span>
+    </div>
+
+    <div id="stage2">
+      <div class="disc" id="disc">
+        <div class="lights" id="lights">
+          <div class="light"><i></i></div>
+          <div class="light"><i></i></div>
+          <div class="light"><i></i></div>
+          <div class="light"><i></i></div>
+          <div class="light"><i></i></div>
+        </div>
+        <div class="readout">
+          <div class="big" id="big">—</div>
+          <div class="msg" id="msg"></div>
+        </div>
+      </div>
+      <div class="overlay" id="ov2">
+        <h1 id="ov2T">五盏红灯</h1>
+        <p id="ov2D">五盏红灯<b>等间隔</b>依次点亮并保持常亮<br>随后在<b style="color:#f87171">随机时刻</b>同时熄灭<br>灯灭即起跑 · 提前点击 = 抢跑</p>
+        <div class="pill" id="btn2">点击开始</div>
+      </div>
+    </div>
+
+    <div class="rounds" id="rounds">
+      <div class="rd"></div><div class="rd"></div><div class="rd"></div><div class="rd"></div><div class="rd"></div>
+    </div>
+
+    <p class="tip">点击圆盘开始 · 灯灭瞬间点击圆盘掐表 · 超过 1.5 秒 = 超时</p>
+  </div>
+
+  <!-- ============ 版本三：靶场速射（移动端 + 桌面端） ============ -->
+  <div class="page" id="game3">
+    <div class="top">
+      <button class="back" id="back3">‹ 返回</button>
+      <button class="mute" id="mute3">🔊</button>
+    </div>
+
+    <div class="modes" id="modes3">
+      <div class="mode sel" data-m="casual"><b>休闲</b><span>10 命 · 连击回血</span></div>
+      <div class="mode" data-m="survival"><b>生存</b><span>进度条持续下降</span></div>
+      <div class="mode" data-m="extreme"><b>极限</b><span>靶小 · 停留短 · 衰减快</span></div>
+    </div>
+
+    <header>
+      <div class="row" id="hudBar3" style="display:none">
+        <div class="bar"><div id="barFill3"></div></div>
+        <span id="pct3">100%</span>
+      </div>
+      <div class="lifeRow" id="hudLife3">
+        <div class="hearts" id="hearts3"></div>
+        <div class="combo zero" id="combo3">连击 0</div>
+      </div>
+      <div class="meta">
+        <span><span id="label3">得分</span> <b id="hits3">0</b></span>
+        <span>靶径 <b id="size3">—</b></span>
+        <span>同屏 <b id="cnt3">1</b></span>
+        <span>最佳 <b id="best3">0</b></span>
+      </div>
+    </header>
+
+    <div id="range">
+      <canvas id="rangeCanvas"></canvas>
+      <div id="joy" aria-label="视角轮盘">
+        <div id="joyRing"></div><div id="joyKnob"></div><span id="joyLabel">按住转视角</span>
+      </div>
+      <button id="fireBtn" aria-label="开火"><span class="ico">🔥</span><span>开火</span></button>
+      <div id="rangeOverlay">
+        <span class="badge" id="roBadge">休闲模式</span>
+        <h1 id="roT">靶场速射</h1>
+        <p id="roD"></p>
+        <div class="pill" id="btn3">点击开始</div>
+      </div>
+    </div>
+
+    <p class="tip" id="tip3">左下轮盘按住持续转 · 也能直接拖场地 · 灵敏度可调 · 轻点 / 开火 / 空格 = 开枪</p>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<!-- 启动 / 进场加载屏 -->
+<div id="boot">
+  <div class="bootBox">
+    <div class="bootRing"><i id="bootPctIn">0%</i></div>
+    <div class="bootTitle" id="bootTitle">反应力 · 加载中</div>
+    <div class="bootStep" id="bootStep">初始化渲染管线…</div>
+    <div class="bootTrack"><div class="bootFill" id="bootFill"></div></div>
+    <div class="bootPct" id="bootPct">预计算场景与尺寸</div>
+    <div class="bootHint" id="bootHint">首次打开会预热画布与靶场穹顶，稍等一下下</div>
+  </div>
+</div>
+
+<!-- 开始前必读：双端适配说明弹窗 -->
+<div id="deviceModal">
+  <div class="dmBox">
+    <h2>开打前先看一眼 👀</h2>
+    <p style="margin:0;font-size:12px;color:#8b98b3">本局已按你的设备自动适配</p>
+    <div class="dmDev">
+      <div class="ico" id="dmIco">📱</div>
+      <div>
+        <b id="dmName">移动端 · 触屏</b>
+        <span id="dmDesc">按住拖动移动靶子，松手轻点开火</span>
+      </div>
+    </div>
+    <ul>
+      <li><b>伪3D 超广角</b>：所有靶始终在画面里，远处的被压到边缘变小</li>
+      <li><b>准星固定在正中央</b>，不跟手指 / 鼠标跑</li>
+      <li><b>左下角轮盘</b>：按住往某方向推，视角就<b>持续转</b>，不用一直反复拖</li>
+      <li><b>拖动场地</b> 也能直接移靶，两种方式随时混用</li>
+      <li>瞄准后<b>再开枪</b>：轻点 / 右下「开火」/ 空格</li>
+      <li>屏幕<b>顶部雷达条</b>标出全部靶位，快消失的会变红</li>
+      <li>漏靶 / 走火扣命并断连，横竖屏切换自动重排</li>
+      <li id="dmAim">靶子尺寸已按设备适配</li>
+    </ul>
+    <div class="dmDrag" id="dmDrag">
+      <span>转动方向（觉得别扭就换一个，会记住）</span>
+      <div class="dmOpts">
+        <button class="dmOpt sel" data-d="follow">靶跟手（推荐）</button>
+        <button class="dmOpt" data-d="fps">视角跟手</button>
+      </div>
+      <p class="dmNote" id="dmDragHint">往右拖 / 推，靶就往右走</p>
+    </div>
+    <div class="dmTune">
+      <div class="head"><span>视角灵敏度</span><b id="sensVal">1.0×</b></div>
+      <input type="range" id="sensRange" min="0.4" max="2.5" step="0.1" value="1">
+      <div class="dmScale"><span>0.4× 稳</span><span>1.0× 默认</span><span>2.5× 猛</span></div>
+      <div class="dmRow">
+        <span style="flex:1">常驻轮盘</span>
+        <button class="dmOpt sel" id="joyToggle" data-on="1">开</button>
+      </div>
+      <p class="dmNote">轮盘推得越远转得越快；桌面端方向键 / WASD 也能持续转。设置会记住。</p>
+    </div>
+    <p class="dmNote" id="dmExtra">已禁用页面滚动与双击缩放，避免误触。</p>
+    <div class="pill" id="dmGo">我明白了，开始</div>
+    <div class="pill ghost" id="dmBack">先返回</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const TAU = Math.PI * 2;
+  const norm = a => ((a % TAU) + TAU) % TAU;
+  const clamp = (v,a,b) => v < a ? a : v > b ? b : v;
+  const $ = id => document.getElementById(id);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  /* ================= 音效 ================= */
+  const SFX = {
+    ctx:null, on:true,
+    init(){
+      if (!this.ctx){
+        try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+      }
+      if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    },
+    beep(freq, dur, type, gain){
+      if (!this.on || !this.ctx) return;
+      try{
+        const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+        o.type = type || 'square';
+        o.frequency.value = freq;
+        o.connect(g); g.connect(this.ctx.destination);
+        const t = this.ctx.currentTime;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(gain || 0.07, t + 0.012);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.start(t); o.stop(t + dur + 0.02);
+      }catch(e){}
+    },
+    light(){ this.beep(660, 0.09, 'square', 0.05); },
+    out(){ this.beep(300, 0.10, 'square', 0.06); },   // 熄灭：短促闷响，非绿色提示音
+    hit(){ this.beep(880, 0.07, 'triangle', 0.07); this.beep(1320, 0.06, 'triangle', 0.05); },
+    bad(){ this.beep(150, 0.22, 'sawtooth', 0.07); }
+  };
+
+  /* ================= 版本信息 & 更新 ================= */
+
+  /* ★★★ 发新版（站点集成版，不再需要任何 json 清单）★★★
+   *
+   * 所有游戏都集成在 https://xianggo-furry.github.io/HtmlGamesUnite/
+   * 网页打开永远是最新的，所以版本比对 / 更新清单已移除。
+   *
+   * 【发新版只做两件事】
+   *   1. 把改好的 反应力.html 覆盖上传到仓库 HtmlGamesUnite
+   *      （顺手更新 index.html 导航 / README.md / games.json 里的说明文字）
+   *   2. 改下面 BUILD 的 v 和 date —— 只用于首页显示版本号，不必跟谁同步
+   *
+   * 【加载】页面启动、进入靶场各有一段 runBoot 加载动画，期间后台已完成
+   *      设备判定 / 画布尺寸 / 穹顶点位预计算，不是纯假进度条。
+   *
+   * 【靶场】伪3D 超广角穹顶投影：sin 有界，所有靶永远在屏幕内；
+   *      顶部雷达条再兜一层提示，快消失的靶变红。拖动改 cam.yaw / cam.pitch。
+   *      拖动方向可在开始前弹窗切换，默认「靶跟手」（往右拖靶往右走），
+   *      另一档是「视角跟手转」（FPS 景物反向），偏好存 localStorage。
+   *      左下常驻轮盘：按住推向某方向即持续转视角，不必反复拖；
+   *      灵敏度 0.4~2.5× 同时作用于拖动与轮盘，轮盘开关和方向键/WASD 都存本地。
+   *
+   * 【离线包】右上按钮仅作为蓝奏云离线版入口，点击会复制密码并打开下载页。
+   *      蓝奏云：https://xianggo.lanzout.com/b01d7c15fg     密码：3x
+   * ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★ */
+
+  const BUILD = { v:'1.6.0', date:'2026-11-22', code:2026112205 };
+
+  // 离线包地址与提取密码
+  const UPDATE_URL = 'https://xianggo.lanzout.com/b01d7c15fg';
+  const UPDATE_PWD = '3x';
+
+  // 站点版不再做自动版本检测：留空即走「手动打开离线包」路径。
+  // 若哪天又需要离线自动检测，填一个带 CORS 的清单地址即可，下面逻辑仍保留。
+  const MANIFEST_URL = '';
+  const MANIFEST_BACKUP = [];
+
+  const toastEl = $('toast');
+  let toastTimer = 0;
+  function toast(msg, ms){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms || 2600);
+  }
+
+  function copyText(t){
+    try{
+      if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
+    }catch(e){}
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = t;
+      ta.style.cssText = 'position:fixed;opacity:0;left:-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }catch(e){}
+  }
+
+  function cmpVer(a, b){
+    const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
+    for (let i = 0; i < 3; i++){
+      const x = pa[i] || 0, y = pb[i] || 0;
+      if (x !== y) return x > y ? 1 : -1;
+    }
+    return 0;
+  }
+
+  function markNewer(info){
+    const b = $('updBtn');
+    b.classList.add('newer');
+    if (info && info.v) b.firstChild.nodeValue = '有新版本 ' + info.v;
+    else b.firstChild.nodeValue = '有新版本';
+  }
+
+  async function checkUpdate(silent){
+    const b = $('updBtn');
+    if (!MANIFEST_URL){
+      if (!silent) openUpdate();
+      return;
+    }
+    const urls = [MANIFEST_URL].concat(MANIFEST_BACKUP || []);
+    let info = null, lastErr = null;
+    for (const u of urls){
+      if (!u) continue;
+      try{
+        const r = await fetch(u + (u.indexOf('?') < 0 ? '?t=' : '&t=') + Date.now(), { cache:'no-store' });
+        if (!r.ok) throw new Error('http ' + r.status);
+        info = await r.json();
+        if (info && (info.v || info.code)) break;   // 拿到有效清单就停
+        info = null;
+      }catch(e){ lastErr = e; }
+    }
+    try{
+      if (!info) throw lastErr || new Error('网络受限');
+      const newer = (info.code && info.code > BUILD.code) ||
+                    (!info.code && info.v && cmpVer(info.v, BUILD.v) > 0);
+      if (newer){
+        remoteInfo = info;
+        markNewer(info);
+        toast(info.note ? '发现新版本 ' + info.v + '：' + info.note : '发现新版本 ' + info.v + '，点击按钮更新', 4200);
+      } else if (!silent){
+        toast('已是最新版本 ' + BUILD.v);
+      }
+    }catch(e){
+      if (!silent){
+        toast('无法自动检测（' + (e.message || '网络受限') + '），已打开下载页');
+        openUpdate();
+      }
+    }
+  }
+
+  let remoteInfo = null;
+  function openUpdate(){
+    const url = (remoteInfo && remoteInfo.url) || UPDATE_URL;
+    const pwd = (remoteInfo && remoteInfo.pwd) || UPDATE_PWD;
+    copyText(pwd);
+    toast('提取密码已复制：' + pwd + ' · 正在打开下载页…', 3600);
+    try { window.open(url, '_blank', 'noopener'); }
+    catch(e){ location.href = url; }
+  }
+
+  /* ================= 启动加载屏 ================= */
+  let booting = false;
+  function runBoot(title, steps, done, dur){
+    const boot = $('boot');
+    booting = true;
+    $('bootTitle').textContent = title;
+    $('bootHint').textContent = dur > 1000
+      ? '首次打开会预热画布与靶场穹顶，稍等一下下'
+      : '正在载入场景，马上开打';
+    boot.classList.remove('out');
+    boot.style.display = 'flex';
+    const total = dur || 1300;
+    const t0 = performance.now();
+    let lastStep = -1;
+    function frame(now){
+      const k = clamp((now - t0) / total, 0, 1);
+      const eased = 1 - Math.pow(1 - k, 2.1);
+      const pct = Math.round(eased * 100);
+      $('bootFill').style.width = pct + '%';
+      $('bootPctIn').textContent = pct + '%';
+      const si = Math.min(steps.length - 1, Math.floor(k * steps.length));
+      if (si !== lastStep){
+        lastStep = si;
+        $('bootStep').textContent = steps[si] + '…';
+        $('bootPct').textContent = '步骤 ' + (si+1) + ' / ' + steps.length;
+      }
+      if (k < 1){ requestAnimationFrame(frame); return; }
+      boot.classList.add('out');
+      setTimeout(() => {
+        boot.style.display = 'none';
+        booting = false;
+        if (done) done();
+      }, 380);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ================= 页面切换 ================= */
+  const pages = { home:$('home'), g1:$('game1'), g2:$('game2'), g3:$('game3') };
+  function show(name){
+    for (const k in pages) pages[k].classList.toggle('show', k === name);
+    if (name !== 'g1') M1.pause();
+    if (name !== 'g2') M2.abort();
+    if (name !== 'g3') M3.pause();
+    // 离开靶场：清轮盘与方向键，避免后台偷偷转视角
+    if (name !== 'g3'){
+      M3.joy.id = null; M3.joy.x = 0; M3.joy.y = 0;
+      for (const k in keyVec) keyVec[k] = false;
+    }
+    // 射击版桌面端放宽容器，手机端保持窄栏
+    $('app').style.maxWidth = (name === 'g3') ? '900px' : '';
+    if (name === 'g3') M3.fit();
+  }
+  $('pickRing').onclick  = () => { SFX.init(); show('g1'); };
+  $('pickF1').onclick    = () => { SFX.init(); show('g2'); };
+  $('pickRange').onclick = () => { SFX.init(); show('g3'); };
+  $('back1').onclick = () => show('home');
+  $('back2').onclick = () => show('home');
+  $('back3').onclick = () => show('home');
+
+  // 更新按钮
+  $('verTag').textContent = 'v' + BUILD.v + ' · ' + BUILD.date;
+  $('updBtn').onclick = () => {
+    if (remoteInfo) openUpdate();
+    else checkUpdate(false);
+  };
+  if (MANIFEST_URL) setTimeout(() => checkUpdate(true), 600);
+  function bindMute(id){
+    const el = $(id);
+    el.onclick = () => { SFX.on = !SFX.on; el.textContent = SFX.on ? '🔊' : '🔇'; };
+  }
+  bindMute('mute1'); bindMute('mute2'); bindMute('mute3');
+
+  /* ================= 版本一：圆环指针 ================= */
+  const cv = $('cv'), ctx = cv.getContext('2d');
+  const barFill = $('barFill'), pctEl = $('pct'), hitsEl = $('hits'),
+        arcEl = $('arc'), spdEl = $('spd'), bestEl = $('best'), mALabel = $('mALabel'),
+        hudBar = $('hudBar'), hudLife = $('hudLife'),
+        heartsEl = $('hearts'), comboEl = $('combo'),
+        ov = $('ov'), ovT = $('ovT'), ovD = $('ovD'), tip1 = $('tip1');
+
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  let size = 320, cx = 160, cy = 160, R = 130, trackW = 26;
+
+  const D2R = Math.PI / 180;
+  const MODES = {
+    casual: {
+      name:'休闲模式',
+      desc:'没有进度条，给你 <b>10 次机会</b>。<br>空点一次扣一次机会并<b>断连</b>，连击每满 5 次回 1 次机会。',
+      tip:'指针弧滑进绿区时点击圆盘 · 机会用完即结束',
+      lives:10, maxLives:10, comboBonus:5,
+      speed:1.05, arc:72, minArc:16, maxSpeed:5.5,
+      speedUp:1.10, arcDown:0.90,
+      decay:0, decayGrow:0, decayMax:0,
+      gain:0, penalty:0, scorePerHit:10
+    },
+    survival: {
+      name:'生存模式',
+      desc:'白色弧线指针沿轨道滑行。<br>滑进<b style="color:#4ade80">绿色加粗区</b>时点击：进度 +15、区域移位收窄、指针反向提速。<br>进度条随时间持续下降，归零即结束。',
+      tip:'指针弧滑进绿区时点击圆盘 · 区域越窄、指针越快',
+      lives:0, maxLives:0, comboBonus:0,
+      speed:1.25, arc:70, minArc:12, maxSpeed:8,
+      speedUp:1.15, arcDown:0.87,
+      decay:6, decayGrow:0.25, decayMax:20,
+      gain:15, penalty:12, scorePerHit:0
+    },
+    extreme: {
+      name:'极限模式',
+      desc:'开局就<b>更快更小</b>，衰减更凶。<br>命中 +12，空点 <b>-20</b>，速度 ×1.22。',
+      tip:'指针弧滑进绿区时点击圆盘 · 一次空点就致命',
+      lives:0, maxLives:0, comboBonus:0,
+      speed:2.0, arc:50, minArc:9, maxSpeed:11,
+      speedUp:1.22, arcDown:0.85,
+      decay:9, decayGrow:0.35, decayMax:26,
+      gain:12, penalty:20, scorePerHit:0
+    }
+  };
+  let mode = 'survival';
+  const CFG = () => MODES[mode];
+
+  const M1 = {
+    running:false,
+    angle:-Math.PI/2, dir:1, speed:1.25,
+    arcStart:0, arcWidth:70*D2R,
+    progress:100, hits:0, misses:0, time:0,
+    lives:10, combo:0, maxCombo:0, score:0,
+    flash:0, flashKind:'hit', floaters:[],
+
+    pause(){ this.running = false; },
+
+    spawnArc(){
+      const pad = 0.75;
+      for (let i = 0; i < 80; i++){
+        const s = Math.random() * TAU;
+        const gap = norm(s - this.angle);
+        if (gap > pad && gap < TAU - pad - this.arcWidth){ this.arcStart = s; return; }
+      }
+      this.arcStart = norm(this.angle + Math.PI);
+    },
+    inArc(a){ return norm(a - this.arcStart) <= this.arcWidth; },
+
+    // 指针为球，判定看球心：球心落在绿区内即命中
+    addFloater(text, color){
+      this.floaters.push({ text, color, life:1,
+        x: cx + R * Math.cos(this.angle), y: cy + R * Math.sin(this.angle) - trackW });
+    },
+
+    start(){
+      const c = CFG();
+      this.running = true;
+      this.angle = -Math.PI/2; this.dir = 1; this.speed = c.speed;
+      this.arcWidth = c.arc * D2R;
+      this.progress = 100; this.hits = 0; this.misses = 0; this.time = 0;
+      this.lives = c.lives; this.combo = 0; this.maxCombo = 0; this.score = 0;
+      this.flash = 0; this.floaters.length = 0;
+      this.spawnArc();
+      this.syncHUD();
+    },
+
+    judge(){
+      if (!this.running) return;
+      const c = CFG();
+      if (this.inArc(this.angle)){
+        this.hits++;
+        this.combo++;
+        if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+        if (c.scorePerHit) this.score += c.scorePerHit * (1 + (this.combo - 1) * 0.1);
+        if (c.gain) this.progress = Math.min(100, this.progress + c.gain);
+        this.speed = Math.min(c.maxSpeed, this.speed * c.speedUp);
+        this.dir *= -1;
+        this.arcWidth = Math.max(c.minArc * D2R, this.arcWidth * c.arcDown);
+        this.spawnArc();
+        this.flash = 1; this.flashKind = 'hit';
+        this.addFloater(c.gain ? '+' + c.gain : '+' + Math.round(c.scorePerHit * (1 + (this.combo-1)*0.1)), '#4ade80');
+        if (c.lives && this.combo > 0 && this.combo % c.comboBonus === 0 && this.lives < c.maxLives){
+          this.lives++;
+          this.addFloater('+1♥', '#f472b6');
+          SFX.beep(1560, 0.12, 'triangle', 0.06);
+        }
+        SFX.hit();
+      } else {
+        this.misses++;
+        this.combo = 0;
+        if (c.penalty) this.progress = Math.max(0, this.progress - c.penalty);
+        if (c.lives) this.lives--;
+        this.flash = 1; this.flashKind = 'miss';
+        this.addFloater(c.penalty ? '-' + c.penalty : '-1♥', '#f87171');
+        SFX.bad();
+        if (c.lives && this.lives <= 0){ this.syncHUD(); this.gameOver(); return; }
+        if (!c.lives && this.progress <= 0){ this.syncHUD(); this.gameOver(); return; }
+      }
+      this.syncHUD();
+    },
+
+    step(dt){
+      if (!this.running) return;
+      const c = CFG();
+      this.time += dt;
+      this.angle += this.dir * this.speed * dt;
+      if (c.decay > 0){
+        const decay = Math.min(c.decayMax, c.decay + this.hits * c.decayGrow);
+        this.progress -= decay * dt;
+        if (this.progress <= 0){ this.progress = 0; this.syncHUD(); this.gameOver(); return; }
+      }
+      this.syncHUD();
+    },
+
+    syncHUD(){
+      const c = CFG();
+      hitsEl.textContent = c.lives ? this.score.toFixed(0) : this.hits;
+      arcEl.textContent = Math.round(this.arcWidth * 180 / Math.PI) + '°';
+      spdEl.textContent = (this.speed / c.speed).toFixed(1) + '×';
+      if (c.lives){
+        let html = '';
+        for (let i = 0; i < c.maxLives; i++) html += '<div class="heart' + (i < this.lives ? '' : ' off') + '"></div>';
+        heartsEl.innerHTML = html;
+        comboEl.textContent = '连击 ' + this.combo;
+        comboEl.classList.toggle('zero', this.combo === 0);
+      } else {
+        barFill.style.width = this.progress + '%';
+        barFill.style.background = 'hsl(' + (this.progress * 1.2) + ',80%,50%)';
+        pctEl.textContent = Math.round(this.progress) + '%';
+      }
+    },
+
+    gameOver(){
+      this.running = false;
+      const c = CFG();
+      let stat, val, line2;
+      if (c.lives){
+        stat = this.score.toFixed(0); val = '得分';
+        line2 = '命中 ' + this.hits + ' 次 · 空点 ' + this.misses + ' 次<br>最高连击 ' + this.maxCombo +
+                ' · 用时 ' + this.time.toFixed(1) + ' 秒';
+        if (this.score > best('casual')) best('casual', Math.round(this.score));
+      } else {
+        stat = this.hits; val = '命中';
+        line2 = '存活 ' + this.time.toFixed(1) + ' 秒 · 空点 ' + this.misses + ' 次<br>' +
+                '最高连击 ' + this.maxCombo + ' · 最终速度 ' + (this.speed / c.speed).toFixed(1) + '×';
+        if (this.hits > best(mode)) best(mode, this.hits);
+      }
+      ovT.textContent = '结束';
+      ovD.innerHTML = val + ' <b style="color:#fff">' + stat + '</b> · ' + c.name + '<br>' + line2 +
+                      '<br>最佳 <b style="color:#4ade80">' + best(mode) + '</b>';
+      $('btn').textContent = '点击再来一局';
+      ov.classList.remove('hide');
+      SFX.bad();
+    },
+
+    draw(){
+      ctx.clearRect(0, 0, size, size);
+      ctx.beginPath();
+      ctx.arc(cx, cy, R + trackW * 0.5, 0, TAU);
+      ctx.fillStyle = 'rgba(255,255,255,.025)';
+      ctx.fill();
+
+      for (let i = 0; i < 24; i++){
+        const a = i * TAU / 24;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * (R - trackW * .62), cy + Math.sin(a) * (R - trackW * .62));
+        ctx.lineTo(cx + Math.cos(a) * (R - trackW * .48), cy + Math.sin(a) * (R - trackW * .48));
+        ctx.strokeStyle = 'rgba(255,255,255,.10)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // 轨道底
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, TAU);
+      ctx.strokeStyle = '#1e2740';
+      ctx.lineWidth = trackW;
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,.05)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // 绿色加粗目标区
+      ctx.save();
+      ctx.shadowColor = this.flashKind === 'miss' ? '#ef4444' : '#22c55e';
+      ctx.shadowBlur = this.flash > 0 ? 10 + this.flash * 26 : 12;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, this.arcStart, this.arcStart + this.arcWidth);
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = trackW * (1.45 + this.flash * 0.15);
+      ctx.lineCap = 'butt';
+      ctx.stroke();
+      ctx.restore();
+
+      if (this.flash > 0){
+        ctx.beginPath();
+        ctx.arc(cx, cy, R, this.arcStart, this.arcStart + this.arcWidth);
+        ctx.strokeStyle = (this.flashKind === 'hit' ? 'rgba(74,222,128,' : 'rgba(248,113,113,') + (this.flash * .8) + ')';
+        ctx.lineWidth = trackW * (1.5 + (1 - this.flash) * 1.6);
+        ctx.stroke();
+      }
+
+      // ---- 指针：轨道上的一颗球 ----
+      const inZone = this.inArc(this.angle);
+      const px = cx + Math.cos(this.angle) * R, py = cy + Math.sin(this.angle) * R;
+      ctx.save();
+      ctx.shadowColor = inZone ? '#ffffff' : 'rgba(255,255,255,.7)';
+      ctx.shadowBlur = inZone ? 24 : 10;
+      ctx.beginPath();
+      ctx.arc(px, py, trackW * (inZone ? 0.56 : 0.47), 0, TAU);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.restore();
+
+      // 中央数字
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const c = CFG();
+      ctx.fillStyle = 'rgba(255,255,255,.9)';
+      ctx.font = '700 ' + Math.round(size * 0.15) + 'px -apple-system,"PingFang SC",sans-serif';
+      ctx.fillText(c.lives ? String(this.score.toFixed(0)) : String(this.hits), cx, cy + size * 0.16);
+      ctx.fillStyle = 'rgba(255,255,255,.35)';
+      ctx.font = '500 ' + Math.round(size * 0.042) + 'px -apple-system,"PingFang SC",sans-serif';
+      ctx.fillText(c.lives ? 'SCORE' : 'HITS', cx, cy + size * 0.225);
+
+      for (const f of this.floaters){
+        ctx.globalAlpha = clamp(f.life, 0, 1);
+        ctx.fillStyle = f.color;
+        ctx.font = '700 ' + Math.round(size * 0.07) + 'px -apple-system,"PingFang SC",sans-serif';
+        ctx.fillText(f.text, f.x, f.y - (1 - f.life) * 34);
+        ctx.globalAlpha = 1;
+      }
+    }
+  };
+
+  const bestCache = {};
+  function best(k, v){
+    if (v === undefined){
+      if (bestCache[k] === undefined){
+        let x = 0;
+        try { x = parseFloat(localStorage.getItem('ring_best_' + k) || '0') || 0; } catch(e){}
+        bestCache[k] = x;
+      }
+      return bestCache[k];
+    }
+    bestCache[k] = v;
+    try { localStorage.setItem('ring_best_' + k, String(v)); } catch(e){}
+    return v;
+  }
+
+  function setMode(m){
+    mode = m;
+    Array.prototype.forEach.call(document.querySelectorAll('#modes .mode'), el => {
+      el.classList.toggle('sel', el.dataset.m === m);
+    });
+    const c = CFG();
+    const casual = !!c.lives;
+    hudBar.style.display = casual ? 'none' : 'flex';
+    hudLife.style.display = casual ? 'flex' : 'none';
+    tip1.textContent = c.tip;
+    ovT.textContent = c.name;
+    ovD.innerHTML = c.desc;
+    $('btn').textContent = '点击开始';
+    mALabel.textContent = casual ? '得分' : '命中';
+    bestEl.textContent = casual ? best('casual') : best(m);
+    M1.running = false;
+    M1.start();
+    M1.running = false;
+    M1.syncHUD();
+    ov.classList.remove('hide');
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('#modes .mode'), el => {
+    el.onclick = () => { SFX.init(); setMode(el.dataset.m); };
+  });
+
+  function resize(){
+    const w = Math.min(window.innerWidth - 32, 420);
+    const h = window.innerHeight - (window.innerWidth < 380 ? 250 : 230);
+    size = Math.round(clamp(Math.min(w, h), 220, 420));
+    cv.style.width = size + 'px';
+    cv.style.height = size + 'px';
+    cv.width = Math.round(size * DPR);
+    cv.height = Math.round(size * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    cx = cy = size / 2;
+    R = size / 2 - 30;
+    trackW = clamp(size * 0.085, 18, 34);
+    ov.style.width = size + 'px';
+    ov.style.height = size + 'px';
+    const d = $('disc');
+    d.style.width = size + 'px';
+    d.style.height = size + 'px';
+    const o2 = $('ov2');
+    o2.style.width = size + 'px';
+    o2.style.height = size + 'px';
+    M3.fit();                    // 桌面 / 手机、横竖屏切换都重算靶场
+  }
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', () => setTimeout(() => M3.fit(), 220));
+
+  // 点击遮罩任意位置即开始（按钮与遮罩合一）
+  ov.addEventListener('pointerdown', e => {
+    e.preventDefault(); SFX.init();
+    ov.classList.add('hide');
+    M1.start();
+  });
+  cv.addEventListener('pointerdown', e => { e.preventDefault(); SFX.init(); M1.judge(); });
+
+  /* ================= 版本二：五盏红灯 ================= */
+  const lights = Array.prototype.slice.call(document.querySelectorAll('#lights .light'));
+  const bigEl = $('big'), msgEl = $('msg'),
+        rdEl = $('rd'), avgEl = $('avg'), fsEl = $('fs'), best2El = $('best2'),
+        rds = Array.prototype.slice.call(document.querySelectorAll('#rounds .rd')),
+        disc = $('disc'), ov2 = $('ov2'), ov2T = $('ov2T'), ov2D = $('ov2D');
+
+  let best2 = Infinity;
+  try { const v = parseFloat(localStorage.getItem('f1_best')); if (v > 0) best2 = v; } catch(e){}
+  if (best2 < Infinity) best2El.textContent = Math.round(best2) + 'ms';
+
+  const TOTAL = 5;
+  const TIMEOUT = 1500;
+  const LIGHT_GAP = 800;     // 固定：点灯间隔（真实 F1 为 1000ms）
+  const HOLD_MIN  = 900;     // 随机：全亮后保持时间下限
+  const HOLD_RAND = 1900;    // 随机：随机区间
+
+  const M2 = {
+    round:0, results:[], falseStarts:0,
+    state:'idle',      // idle | lighting | wait | go | done
+    t0:0, token:0, stopped:false,
+
+    abort(){
+      this.state = 'idle'; this.token++; this.stopped = true;
+      lights.forEach(l => l.classList.remove('on'));
+      bigEl.textContent = '—'; bigEl.style.color = '#475569';
+      msgEl.textContent = '';
+    },
+    reset(){
+      this.round = 0; this.results = []; this.falseStarts = 0;
+      rds.forEach(r => r.className = 'rd');
+      fsEl.textContent = '0'; avgEl.textContent = '—'; rdEl.textContent = '1/' + TOTAL;
+      this.abort();
+      this.stopped = false;
+    },
+    setBig(txt, color){ bigEl.textContent = txt; bigEl.style.color = color || '#e5e7eb'; },
+
+    async run(){
+      if (this.stopped) return;
+      const my = ++this.token;
+      const alive = () => !this.stopped && this.token === my;
+
+      // ① 固定间隔依次点亮，随后保持常亮（不闪烁）
+      this.state = 'lighting';
+      this.setBig(this.round + 1 + '/' + TOTAL, '#94a3b8');
+      msgEl.textContent = '五盏红灯等间隔依次点亮';
+      for (let i = 0; i < 5; i++){
+        if (!alive()) return;
+        lights[i].classList.add('on');
+        SFX.light();
+        await sleep(LIGHT_GAP);
+      }
+      if (!alive()) return;
+
+      // ② 全亮常亮，随机时刻熄灭
+      this.state = 'wait';
+      this.setBig('—', '#475569');
+      msgEl.textContent = '全亮 · 熄灭时刻随机';
+      const hold = HOLD_MIN + Math.random() * HOLD_RAND;
+      await sleep(hold);
+      if (!alive()) return;
+
+      // ③ 同时熄灭（不亮任何绿灯，不闪）
+      lights.forEach(l => l.classList.remove('on'));
+      this.state = 'go';
+      this.t0 = performance.now();
+      this.setBig('—', '#475569');
+      msgEl.textContent = '';
+      SFX.out();
+
+      await sleep(TIMEOUT);
+      if (!alive()) return;
+      if (this.state === 'go') this.settle(null);
+    },
+
+    tap(){
+      if (this.state === 'go'){
+        this.settle(performance.now() - this.t0);
+      } else if (this.state === 'lighting' || this.state === 'wait'){
+        this.falseStart(this.state === 'wait');
+      } else if (this.state === 'idle'){
+        this.reset(); this.run();
+      }
+      // 'done' / 'penalty' 状态下的点击一律忽略
+    },
+
+    settle(rt){
+      const i = this.round;
+      if (rt === null){
+        rds[i].className = 'rd slow';
+        this.results.push({ rt:null });
+        this.setBig('超时', '#f59e0b');
+        msgEl.textContent = '超过 1.5 秒未反应';
+        SFX.bad();
+      } else {
+        rds[i].className = rt < 300 ? 'rd hit' : 'rd slow';
+        this.results.push({ rt });
+        if (rt < best2){
+          best2 = rt; best2El.textContent = Math.round(rt) + 'ms';
+          try { localStorage.setItem('f1_best', String(Math.round(rt))); } catch(e){}
+        }
+        this.setBig(Math.round(rt) + ' ms', '#ffffff');
+        msgEl.textContent = rt < 250 ? '超神反应' : rt < 320 ? '不错的起步' : '再快一点';
+        SFX.hit();
+      }
+      this.state = 'done';
+      this.round++;
+
+      if (this.round >= TOTAL){
+        rdEl.textContent = TOTAL + '/' + TOTAL;
+        const my3 = this.token;
+        setTimeout(() => { if (!this.stopped && this.token === my3) this.finish(); }, 900);
+      } else {
+        rdEl.textContent = (this.round + 1) + '/' + TOTAL;
+        const my2 = this.token;
+        setTimeout(() => { if (!this.stopped && this.token === my2) this.run(); }, 1100);
+      }
+      this.updateAvg();
+    },
+
+    falseStart(inWait){
+      this.falseStarts++;
+      this.token++;
+      this.state = 'penalty';   // 等待自动重跑，期间的点击忽略
+      lights.forEach(l => l.classList.remove('on'));
+      this.setBig('抢跑', '#ef4444');
+      msgEl.textContent = (inWait ? '灯还没灭就动了' : '灯未全亮就抢跑') + '，本轮作废';
+      this.updateAvg();
+      SFX.bad();
+      setTimeout(() => {
+        if (this.stopped) return;
+        this.setBig('—', '#475569');
+        msgEl.textContent = '本轮作废，重新开始…';
+        setTimeout(() => { if (!this.stopped) this.run(); }, 900);
+      }, 1200);
+    },
+
+    updateAvg(){
+      const ok = this.results.filter(r => r.rt !== null).map(r => r.rt);
+      avgEl.textContent = ok.length ? Math.round(ok.reduce((a,b)=>a+b,0) / ok.length) + 'ms' : '—';
+      fsEl.textContent = this.falseStarts;
+    },
+
+    finish(){
+      this.state = 'idle';
+      const ok = this.results.filter(r => r.rt !== null).map(r => r.rt);
+      const avg = ok.length ? ok.reduce((a,b)=>a+b,0) / ok.length : 0;
+      const rank = !ok.length ? '全部失败'
+                 : avg < 250 ? '🏆 世界级起步'
+                 : avg < 320 ? '🥈 职业车手水平'
+                 : avg < 420 ? '🥉 业余好手'
+                 : '🚗 还需练习';
+      ov2T.textContent = '结束';
+      this.setBig(ok.length ? Math.round(avg) + ' ms' : '—', '#ffffff');
+      ov2D.innerHTML = rank + '<br>平均 <b style="color:#fff">' + (ok.length ? Math.round(avg) + 'ms' : '无有效成绩') +
+                       '</b> · 抢跑 <b style="color:#f87171">' + this.falseStarts + '</b> 次' +
+                       '<br>最佳 <b style="color:#4ade80">' + (best2 < Infinity ? Math.round(best2) + 'ms' : '—') + '</b>';
+      $('btn2').textContent = '点击再来一轮';
+      ov2.classList.remove('hide');
+      msgEl.textContent = '';
+    }
+  };
+
+  // 点击遮罩 / 圆盘：开始与掐表合一
+  ov2.addEventListener('pointerdown', e => {
+    e.preventDefault(); SFX.init();
+    ov2.classList.add('hide');
+    M2.reset(); M2.run();
+  });
+  disc.addEventListener('pointerdown', e => { e.preventDefault(); SFX.init(); M2.tap(); });
+
+  /* ================= 版本三：靶场速射（移动端 + 桌面端） ================= */
+  function detectDevice(){
+    const touch  = (navigator.maxTouchPoints || 0) > 0 || 'ontouchstart' in window;
+    const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    return (touch && (coarse || window.innerWidth < 760)) ? 'mobile' : 'desktop';
+  }
+
+  const MODES3 = {
+    casual: {
+      name:'休闲模式',
+      desc:'<b>超广角穹顶</b>：所有靶始终在画面里，远处的被压到边缘变小。<br>轮盘按住<b>持续转</b>或直接拖，把靶拉进准星再开枪，不用反复拖。<br>10 条命，连击每满 5 次回 1 命。',
+      tip:'轮盘 = 持续转 · 拖动 = 移靶 · 靶永远看得见（看顶部雷达）· 轻点 / 开火 / 空格 = 开枪',
+      lives:10, maxLives:10, comboBonus:5,
+      baseLife:4.2, minLife:2.0, lifeStep:0.030,
+      gap:0.60, minGap:0.28, gapStep:0.006,
+      countEvery:10, maxCount:2,
+      decay:0, decayGrow:0, decayMax:0, gain:0, penalty:0, scorePerHit:10
+    },
+    survival: {
+      name:'生存模式',
+      desc:'进度条随时间持续下降，命中 <b>+12</b>，漏靶 / 走火 <b>-10</b>。<br>同屏最多 3 靶，全在超广角视野内，靠轮盘 / 拖动逐个点。',
+      tip:'轮盘 = 持续转 · 拖动 = 移靶 · 靶永远看得见（看顶部雷达）· 轻点 / 开火 / 空格 = 开枪',
+      lives:0, maxLives:0, comboBonus:0,
+      baseLife:3.4, minLife:1.6, lifeStep:0.032,
+      gap:0.52, minGap:0.22, gapStep:0.007,
+      countEvery:8, maxCount:3,
+      decay:6, decayGrow:0.25, decayMax:20, gain:12, penalty:10, scorePerHit:0
+    },
+    extreme: {
+      name:'极限模式',
+      desc:'开局<b>靶更小、停留更短</b>，衰减更凶。<br>命中 <b>+10</b>，漏靶 / 走火 <b>-20</b>，很快同屏 3 靶。',
+      tip:'轮盘 = 持续转 · 拖动 = 移靶 · 靶永远看得见（看顶部雷达）· 轻点 / 开火 / 空格 = 开枪',
+      lives:0, maxLives:0, comboBonus:0,
+      baseLife:2.7, minLife:1.2, lifeStep:0.034,
+      gap:0.44, minGap:0.18, gapStep:0.008,
+      countEvery:6, maxCount:3,
+      decay:9, decayGrow:0.35, decayMax:26, gain:10, penalty:20, scorePerHit:0
+    }
+  };
+  let mode3 = 'casual';
+  const CFG3 = () => MODES3[mode3];
+
+  const rangeEl = $('range'), rCanvas = $('rangeCanvas'), rCtx = rCanvas.getContext('2d');
+  const barFill3 = $('barFill3'), pct3 = $('pct3'), hearts3 = $('hearts3'), combo3 = $('combo3'),
+        hits3 = $('hits3'), size3 = $('size3'), cnt3 = $('cnt3'), best3El = $('best3'), label3 = $('label3'),
+        hudBar3 = $('hudBar3'), hudLife3 = $('hudLife3'), tip3 = $('tip3'),
+        rangeOverlay = $('rangeOverlay'), roBadge = $('roBadge'), roT = $('roT'), roD = $('roD'), btn3 = $('btn3'),
+        deviceModal = $('deviceModal');
+
+  let rw = 0, rh = 0;
+  const RADAR_H = 30;
+  const YAW_LIM = 0.80, PITCH_LIM = 0.42;     // 靶子方位范围
+  const CAM_YAW = 0.80, CAM_PITCH = 0.42;     // 视角转动上限（保证所有靶仍在画面内）
+  const JOY_SPEED = 0.55;                     // 轮盘满推时的角速度（rad/秒，再乘灵敏度）
+
+  // 灵敏度 / 轮盘开关：存本地，开始前弹窗可调
+  let sens = 1.0, joyOn = true;
+  try {
+    const s = parseFloat(localStorage.getItem('range_sens'));
+    if (s >= 0.4 && s <= 2.5) sens = s;
+  } catch(e){}
+  try { joyOn = localStorage.getItem('range_joy_on') !== '0'; } catch(e){}
+  const keyVec = { l:false, r:false, u:false, d:false };
+
+  const M3 = {
+    running:false, finished:false, isMobile:true,
+    cam:{ yaw:0, pitch:0 }, drag:null, muzzle:0,
+    joy:{ id:null, x:0, y:0 },
+    targets:[], bursts:[], floaters:[], grid:[],
+    hits:0, misses:0, combo:0, maxCombo:0, score:0,
+    lives:10, progress:100, time:0, spawnTimer:0, lastPenalty:-1,
+
+    pause(){ this.running = false; },
+
+    resetState(){
+      this.running = false; this.finished = false;
+      this.targets.length = 0; this.bursts.length = 0; this.floaters.length = 0;
+      this.hits = 0; this.misses = 0; this.combo = 0; this.maxCombo = 0; this.score = 0;
+      this.lives = CFG3().lives; this.progress = 100; this.time = 0;
+      this.spawnTimer = 0; this.lastPenalty = -1; this.muzzle = 0; this.drag = null;
+      this.cam.yaw = 0; this.cam.pitch = 0;
+      this.joy.id = null; this.joy.x = 0; this.joy.y = 0;
+      for (const k in keyVec) keyVec[k] = false;
+      updateJoyKnob();
+    },
+
+    // 轮盘 / 方向键的持续转动，放进每帧 step，不再需要手指反复拖
+    autoRotate(dt){
+      const ax = clamp(this.joy.x + (keyVec.r?1:0) - (keyVec.l?1:0), -1, 1);
+      const ay = clamp(this.joy.y + (keyVec.d?1:0) - (keyVec.u?1:0), -1, 1);
+      if (!ax && !ay) return;
+      const sign = dragMode === 'fps' ? 1 : -1;
+      this.cam.yaw   = clamp(this.cam.yaw   + sign * ax * JOY_SPEED * sens * dt, -CAM_YAW, CAM_YAW);
+      this.cam.pitch = clamp(this.cam.pitch - sign * ay * JOY_SPEED * sens * dt, -CAM_PITCH, CAM_PITCH);
+    },
+
+    baseR(){
+      return clamp(Math.min(rw, rh) * (this.isMobile ? 0.088 : 0.055),
+                   this.isMobile ? 25 : 17, this.isMobile ? 52 : 38)
+             * Math.max(0.55, 1 - this.hits * 0.010);
+    },
+    lifeFor(){ const c = CFG3(); return Math.max(c.minLife, c.baseLife - this.hits * c.lifeStep); },
+    gapFor(){  const c = CFG3(); return Math.max(c.minGap,  c.gap      - this.hits * c.gapStep); },
+    wantCount(){ const c = CFG3(); return Math.min(c.maxCount, 1 + Math.floor(this.hits / c.countEvery)); },
+
+    // 伪3D / 超广角：等距球面投影，sin 有界 => 所有靶永远落在屏幕内
+    proj(t){
+      const cx = rw/2, cy = rh/2 + RADAR_H/2;
+      const K = Math.min(rw * 0.44, (rh - RADAR_H) * 0.52);
+      const ry = t.yaw - this.cam.yaw, rp = t.pitch - this.cam.pitch;
+      const sx = cx + K * Math.sin(ry);
+      const sy = cy - K * 0.78 * Math.sin(rp);
+      const appear = clamp(t.age / 0.18, 0, 1);
+      const k = clamp(t.life / t.maxLife, 0, 1);
+      const depth = 0.74 + t.dist * 0.62;                    // 远处小、近处大
+      const edge  = 0.70 + 0.30 * Math.cos(Math.min(Math.abs(ry), 1.4)); // 边缘压缩
+      const rr = clamp(this.baseR() / depth * edge * (0.62 + 0.38*k) * (0.55 + 0.45*appear), 9, 60);
+      return { sx, sy, rr, ry, rp, k, cx, cy, K };
+    },
+
+    fit(){
+      const mobile = detectDevice() === 'mobile';
+      rw = Math.round(Math.min(window.innerWidth - 32, 900));
+      rh = Math.round(clamp(window.innerHeight - (mobile ? 265 : 245), 300, 600));
+      rangeEl.style.width = rw + 'px';
+      rangeEl.style.height = rh + 'px';
+      rCanvas.width = Math.round(rw * DPR);
+      rCanvas.height = Math.round(rh * DPR);
+      rCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      this.isMobile = mobile;
+      rangeEl.classList.toggle('grabbable', !mobile);
+      updateJoyKnob();
+      // 预生成穹顶装饰点（启动时预热用）
+      this.grid.length = 0;
+      for (let i = 0; i < 46; i++){
+        this.grid.push({ yaw:(Math.random()*2-1)*1.5, pitch:(Math.random()*2-1)*0.8, d:Math.random() });
+      }
+      if (pages.g3.classList.contains('show')) this.draw();
+    },
+
+    spawn(){
+      if (!rw || !rh) return;
+      let yaw, pitch, tries = 0;
+      do {
+        yaw   = (Math.random()*2-1) * YAW_LIM;
+        pitch = (Math.random()*2-1) * PITCH_LIM;
+        tries++;
+      } while (tries < 60 && Math.hypot(yaw - this.cam.yaw, pitch - this.cam.pitch) < 0.26
+               && this.targets.some(t => Math.hypot(t.yaw-yaw, t.pitch-pitch) < 0.22));
+      const L = this.lifeFor();
+      this.targets.push({ yaw, pitch, dist:Math.random(), life:L, maxLife:L, age:0 });
+    },
+
+    floater(text, color, sx, sy){ this.floaters.push({ text, color, x:sx, y:sy, life:1 }); },
+
+    hit(t){
+      const c = CFG3(), q = this.proj(t);
+      this.hits++; this.combo++;
+      if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+      if (c.scorePerHit) this.score += c.scorePerHit * (1 + (this.combo - 1) * 0.1);
+      if (c.gain) this.progress = Math.min(100, this.progress + c.gain);
+      if (c.lives && this.combo > 0 && this.combo % c.comboBonus === 0 && this.lives < c.maxLives){
+        this.lives++;
+        this.floater('+1♥', '#f472b6', q.sx, q.sy - 28);
+      }
+      this.bursts.push({ x:q.sx, y:q.sy, life:1, color:'#4ade80' });
+      this.floater(c.gain ? '+' + c.gain : '+' + Math.round(c.scorePerHit * (1 + (this.combo-1)*0.1)),
+                   '#4ade80', q.sx, q.sy - 14);
+      this.targets.splice(this.targets.indexOf(t), 1);
+      this.spawnTimer = 0;
+      SFX.hit();
+      this.syncHUD();
+    },
+
+    penalize(){
+      const c = CFG3();
+      if (this.time - this.lastPenalty < 0.22) return;
+      this.lastPenalty = this.time;
+      this.misses++; this.combo = 0;
+      if (c.penalty) this.progress = Math.max(0, this.progress - c.penalty);
+      if (c.lives) this.lives--;
+      this.floater(c.penalty ? '-' + c.penalty : '-1♥', '#f87171', rw/2, rh/2 - 34);
+      SFX.bad();
+      this.syncHUD();
+      if (c.lives && this.lives <= 0){ this.gameOver(); return; }
+      if (!c.lives && this.progress <= 0){ this.gameOver(); }
+    },
+
+    fire(){
+      if (!this.running) return;
+      this.muzzle = 1;
+      let best = null, bd = Infinity;
+      for (const t of this.targets){
+        const q = this.proj(t);
+        const d = Math.hypot(q.sx - q.cx, q.sy - q.cy);
+        if (d <= Math.max(20, q.rr * 0.92) && d < bd){ best = t; bd = d; }
+      }
+      if (best) this.hit(best);
+      else {
+        this.bursts.push({ x:rw/2, y:rh/2 + RADAR_H/2, life:0.8, color:'#f87171' });
+        this.penalize();
+      }
+    },
+
+    step(dt){
+      if (!this.running) return;
+      const c = CFG3();
+      this.autoRotate(dt);          // 轮盘 / 方向键持续转视角
+      this.time += dt;
+      if (this.muzzle > 0) this.muzzle = Math.max(0, this.muzzle - dt * 4);
+      if (c.decay > 0){
+        this.progress -= Math.min(c.decayMax, c.decay + this.hits * c.decayGrow) * dt;
+        if (this.progress <= 0){ this.progress = 0; this.syncHUD(); this.gameOver(); return; }
+        this.syncHUD();
+      }
+      for (let i = this.targets.length - 1; i >= 0; i--){
+        const t = this.targets[i];
+        t.age += dt; t.life -= dt;
+        if (t.life <= 0){
+          const q = this.proj(t);
+          this.targets.splice(i, 1);
+          this.bursts.push({ x:q.sx, y:q.sy, life:0.7, color:'#f59e0b' });
+          this.penalize();
+          if (!this.running) return;
+        }
+      }
+      this.spawnTimer -= dt;
+      if (this.targets.length < this.wantCount() && this.spawnTimer <= 0){
+        this.spawn();
+        this.spawnTimer = this.gapFor();
+        this.syncHUD();
+      }
+      for (let i = this.bursts.length - 1; i >= 0; i--){
+        this.bursts[i].life -= dt * 2.2;
+        if (this.bursts[i].life <= 0) this.bursts.splice(i, 1);
+      }
+      for (let i = this.floaters.length - 1; i >= 0; i--){
+        this.floaters[i].life -= dt * 1.4;
+        if (this.floaters[i].life <= 0) this.floaters.splice(i, 1);
+      }
+    },
+
+    syncHUD(){
+      const c = CFG3();
+      hits3.textContent = c.lives ? this.score.toFixed(0) : this.hits;
+      size3.textContent = Math.round(this.baseR() * 2) + 'px';
+      cnt3.textContent = this.targets.length + '/' + this.wantCount();
+      if (c.lives){
+        let html = '';
+        for (let i = 0; i < c.maxLives; i++) html += '<div class="heart' + (i < this.lives ? '' : ' off') + '"></div>';
+        hearts3.innerHTML = html;
+        combo3.textContent = '连击 ' + this.combo;
+        combo3.classList.toggle('zero', this.combo === 0);
+      } else {
+        barFill3.style.width = this.progress + '%';
+        barFill3.style.background = 'hsl(' + (this.progress * 1.2) + ',80%,50%)';
+        pct3.textContent = Math.round(this.progress) + '%';
+      }
+    },
+
+    gameOver(){
+      this.running = false; this.finished = true;
+      this.targets.length = 0; this.drag = null;
+      this.joy.id = null; this.joy.x = 0; this.joy.y = 0;
+      updateJoyKnob();
+      for (const k in keyVec) keyVec[k] = false;
+      const c = CFG3();
+      const key = 'range_best_' + mode3;
+      const val = c.lives ? Math.round(this.score) : this.hits;
+      let b = 0;
+      try { b = parseFloat(localStorage.getItem(key) || '0') || 0; } catch(e){}
+      if (val > b){ b = val; try { localStorage.setItem(key, String(b)); } catch(e){} }
+      best3El.textContent = b;
+      roT.textContent = '结束';
+      roD.innerHTML = (c.lives ? '得分' : '命中') + ' <b style="color:#fff">' + val + '</b> · ' + c.name +
+                      '<br>漏靶 / 走火 ' + this.misses + ' 次 · 最高连击 ' + this.maxCombo +
+                      '<br>靶径 ' + Math.round(this.baseR()*2) + 'px · 最佳 <b style="color:#4ade80">' + b + '</b>';
+      btn3.textContent = '点击再来一局';
+      rangeOverlay.classList.remove('hide');
+      SFX.bad();
+    },
+
+    start(){
+      this.resetState();
+      this.running = true;
+      this.syncHUD();
+      this.spawn();
+      rangeOverlay.classList.add('hide');
+    },
+
+    // 伪3D 透视地面：地平线 + 向消失点收敛的网格，随视角滚动
+    drawGround(K, cx, cy){
+      const horizon = cy + rh * 0.10 + this.cam.pitch * K * 0.5;
+      rCtx.save();
+      rCtx.beginPath(); rCtx.rect(0, RADAR_H, rw, rh - RADAR_H);
+      rCtx.clip();
+      const g = rCtx.createLinearGradient(0, horizon, 0, rh);
+      g.addColorStop(0, 'rgba(96,165,250,.10)');
+      g.addColorStop(1, 'rgba(96,165,250,.015)');
+      rCtx.fillStyle = g; rCtx.fillRect(0, horizon, rw, rh - horizon);
+      rCtx.strokeStyle = 'rgba(255,255,255,.075)'; rCtx.lineWidth = 1;
+      for (let n = 1; n <= 9; n++){
+        const y = horizon + (rh - horizon) * Math.pow(n/9, 2.1);
+        rCtx.beginPath(); rCtx.moveTo(0, y); rCtx.lineTo(rw, y); rCtx.stroke();
+      }
+      const off = (-this.cam.yaw * K) % 64;
+      for (let n = -8; n <= 8; n++){
+        const bx = cx + n * 64 + off;
+        const tx = cx + (bx - cx) * 0.16;
+        rCtx.beginPath(); rCtx.moveTo(tx, horizon); rCtx.lineTo(bx, rh); rCtx.stroke();
+      }
+      rCtx.restore();
+    },
+
+    // 顶部超广角雷达：所有靶永远有一个点，快消失变红
+    drawRadar(K){
+      rCtx.fillStyle = 'rgba(8,12,22,.92)';
+      rCtx.fillRect(0, 0, rw, RADAR_H);
+      rCtx.strokeStyle = 'rgba(255,255,255,.10)';
+      rCtx.beginPath(); rCtx.moveTo(0, RADAR_H-.5); rCtx.lineTo(rw, RADAR_H-.5); rCtx.stroke();
+      for (const t of this.targets){
+        const ry = t.yaw - this.cam.yaw;
+        const rx = rw/2 + (ry / 1.30) * (rw/2 - 12);
+        const k = clamp(t.life / t.maxLife, 0, 1);
+        rCtx.beginPath(); rCtx.arc(rx, RADAR_H/2, k < 0.32 ? 5 : 4, 0, TAU);
+        rCtx.fillStyle = k < 0.32 ? '#f87171' : '#fbbf24';
+        rCtx.fill();
+      }
+      rCtx.fillStyle = 'rgba(255,255,255,.85)';
+      rCtx.fillRect(rw/2 - 1, 4, 2, RADAR_H - 8);
+      rCtx.fillStyle = 'rgba(255,255,255,.42)';
+      rCtx.font = '600 10px -apple-system,"PingFang SC",sans-serif';
+      rCtx.textAlign = 'left'; rCtx.textBaseline = 'middle';
+      rCtx.fillText('全场雷达', 10, RADAR_H/2);
+    },
+
+    draw(){
+      if (!rw || !rh) return;
+      rCtx.clearRect(0, 0, rw, rh);
+      rCtx.fillStyle = '#0a0e1b'; rCtx.fillRect(0, 0, rw, rh);
+      const cx = rw/2, cy = rh/2 + RADAR_H/2;
+      const K = Math.min(rw * 0.44, (rh - RADAR_H) * 0.52);
+
+      // 穹顶渐变（伪3D 天空）
+      const sky = rCtx.createLinearGradient(0, RADAR_H, 0, rh);
+      sky.addColorStop(0, '#101a30'); sky.addColorStop(0.55, '#0c1224'); sky.addColorStop(1, '#070a14');
+      rCtx.fillStyle = sky; rCtx.fillRect(0, RADAR_H, rw, rh - RADAR_H);
+      for (const g of this.grid){
+        const ry = g.yaw - this.cam.yaw, rp = g.pitch - this.cam.pitch;
+        if (Math.abs(ry) > 1.5) continue;
+        const sx = cx + K * Math.sin(ry), sy = cy - K*0.78*Math.sin(rp);
+        rCtx.beginPath(); rCtx.arc(sx, sy, 1 + g.d*1.2, 0, TAU);
+        rCtx.fillStyle = 'rgba(255,255,255,' + (0.05 + g.d*0.10) + ')'; rCtx.fill();
+      }
+      this.drawGround(K, cx, cy);
+
+      let locked = false;
+      const list = this.targets.map(t => ({ t, q:this.proj(t) })).sort((a,b) => b.t.dist - a.t.dist);
+      for (const { t, q } of list){
+        if (Math.hypot(q.sx - cx, q.sy - cy) <= Math.max(20, q.rr*0.92)) locked = true;
+        // 光柱 + 地面影子（伪3D 纵深）
+        const groundY = Math.min(rh - 8, q.sy + q.rr + 46 + t.dist*34);
+        const lg = rCtx.createLinearGradient(q.sx, q.sy, q.sx, groundY);
+        lg.addColorStop(0, 'rgba(239,68,68,.22)'); lg.addColorStop(1, 'rgba(239,68,68,0)');
+        rCtx.fillStyle = lg;
+        rCtx.fillRect(q.sx - 2, q.sy + q.rr, 4, groundY - q.sy - q.rr);
+        rCtx.beginPath(); rCtx.ellipse(q.sx, groundY, q.rr*0.72, 3.5, 0, 0, TAU);
+        rCtx.fillStyle = 'rgba(0,0,0,.35)'; rCtx.fill();
+
+        rCtx.save();
+        rCtx.shadowColor = q.k < 0.35 ? '#f87171' : '#ef4444';
+        rCtx.shadowBlur = q.k < 0.35 ? 22 : 12;
+        rCtx.beginPath(); rCtx.arc(q.sx, q.sy, q.rr, 0, TAU);
+        rCtx.fillStyle = 'rgba(239,68,68,.16)'; rCtx.fill();
+        rCtx.lineWidth = 2.5; rCtx.strokeStyle = '#ffffff'; rCtx.stroke();
+        rCtx.beginPath(); rCtx.arc(q.sx, q.sy, q.rr*0.62, 0, TAU);
+        rCtx.lineWidth = 1.5; rCtx.strokeStyle = 'rgba(255,255,255,.55)'; rCtx.stroke();
+        rCtx.beginPath(); rCtx.arc(q.sx, q.sy, q.rr*0.34, 0, TAU);
+        rCtx.fillStyle = '#ef4444'; rCtx.fill();
+        rCtx.beginPath(); rCtx.arc(q.sx, q.sy, q.rr*0.13, 0, TAU);
+        rCtx.fillStyle = '#ffffff'; rCtx.fill();
+        rCtx.restore();
+        rCtx.beginPath();
+        rCtx.arc(q.sx, q.sy, q.rr + 8, -Math.PI/2, -Math.PI/2 + TAU*q.k);
+        rCtx.strokeStyle = q.k < 0.35 ? '#f87171' : '#4ade80';
+        rCtx.lineWidth = 3; rCtx.lineCap = 'round'; rCtx.stroke();
+      }
+
+      for (const b of this.bursts){
+        rCtx.globalAlpha = clamp(b.life, 0, 1)*0.9;
+        rCtx.beginPath(); rCtx.arc(b.x, b.y, (1-b.life)*66+6, 0, TAU);
+        rCtx.strokeStyle = b.color; rCtx.lineWidth = 3; rCtx.stroke(); rCtx.globalAlpha = 1;
+      }
+      rCtx.textAlign = 'center'; rCtx.textBaseline = 'middle';
+      for (const f of this.floaters){
+        rCtx.globalAlpha = clamp(f.life, 0, 1);
+        rCtx.fillStyle = f.color;
+        rCtx.font = '700 ' + Math.round(clamp(rw*0.045, 16, 26)) + 'px -apple-system,"PingFang SC",sans-serif';
+        rCtx.fillText(f.text, f.x, f.y - (1-f.life)*36);
+        rCtx.globalAlpha = 1;
+      }
+      if (this.muzzle > 0){
+        rCtx.fillStyle = 'rgba(255,255,255,' + (this.muzzle*0.10) + ')';
+        rCtx.fillRect(0, RADAR_H, rw, rh - RADAR_H);
+      }
+
+      // 固定准星
+      rCtx.save();
+      rCtx.strokeStyle = locked ? '#4ade80' : 'rgba(255,255,255,.9)';
+      rCtx.lineWidth = 2;
+      rCtx.shadowColor = locked ? '#4ade80' : 'rgba(255,255,255,.5)';
+      rCtx.shadowBlur = locked ? 12 : 4;
+      rCtx.beginPath(); rCtx.arc(cx, cy, 20, 0, TAU); rCtx.stroke();
+      rCtx.beginPath();
+      rCtx.moveTo(cx-36,cy); rCtx.lineTo(cx-13,cy);
+      rCtx.moveTo(cx+13,cy); rCtx.lineTo(cx+36,cy);
+      rCtx.moveTo(cx,cy-36); rCtx.lineTo(cx,cy-13);
+      rCtx.moveTo(cx,cy+13); rCtx.lineTo(cx,cy+36);
+      rCtx.stroke();
+      rCtx.beginPath(); rCtx.arc(cx, cy, 3, 0, TAU);
+      rCtx.fillStyle = locked ? '#4ade80' : '#ffffff'; rCtx.fill();
+      rCtx.restore();
+      if (locked && this.running){
+        rCtx.fillStyle = '#4ade80';
+        rCtx.font = '700 12px -apple-system,"PingFang SC",sans-serif';
+        rCtx.fillText('LOCK · 开火', cx, cy - 46);
+      }
+
+      this.drawRadar(K);
+      rCtx.fillStyle = 'rgba(255,255,255,.30)';
+      rCtx.font = '600 12px -apple-system,"PingFang SC",sans-serif';
+      rCtx.textAlign = 'left'; rCtx.textBaseline = 'top';
+      rCtx.fillText('拖动 / 轮盘 = 移靶 · 灵敏度 ' + sens.toFixed(1) + '×', 12, RADAR_H + 10);
+    }
+  };
+
+  function best3Val(k){
+    let b = 0;
+    try { b = parseFloat(localStorage.getItem('range_best_' + k) || '0') || 0; } catch(e){}
+    return b;
+  }
+  function setMode3(m){
+    mode3 = m;
+    Array.prototype.forEach.call(document.querySelectorAll('#modes3 .mode'), el => {
+      el.classList.toggle('sel', el.dataset.m === m);
+    });
+    const c = CFG3(), casual = !!c.lives;
+    hudBar3.style.display = casual ? 'none' : 'flex';
+    hudLife3.style.display = casual ? 'flex' : 'none';
+    label3.textContent = casual ? '得分' : '命中';
+    roBadge.textContent = c.name; roT.textContent = c.name;
+    roD.innerHTML = c.desc; tip3.textContent = c.tip;
+    btn3.textContent = '点击开始';
+    best3El.textContent = best3Val(m);
+    M3.resetState(); M3.fit(); M3.syncHUD();
+    rangeOverlay.classList.remove('hide');
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('#modes3 .mode'), el => {
+    el.onclick = () => { SFX.init(); setMode3(el.dataset.m); };
+  });
+
+  // ---- 拖动方向偏好 ----
+  // follow（默认，推荐）：靶跟手 —— 往右拖靶就往右走，直接把边缘的靶「拉」进准星
+  // fps：视角跟手转 —— 往右拖视角右转、景物向左滑，标准瞄准镜手感
+  let dragMode = 'follow';
+  try { dragMode = localStorage.getItem('range_drag_mode') || 'follow'; } catch(e){}
+  if (dragMode !== 'follow' && dragMode !== 'fps') dragMode = 'follow';
+  function applyDragMode(){
+    Array.prototype.forEach.call(document.querySelectorAll('#dmDrag .dmOpt'), el => {
+      el.classList.toggle('sel', el.dataset.d === dragMode);
+    });
+    $('dmDragHint').textContent = dragMode === 'follow'
+      ? '往右拖，靶就往右走 —— 把左边的靶直接拉进准星'
+      : '往右拖，视角往右转、景物向左滑 —— FPS 瞄准镜手感';
+    try { localStorage.setItem('range_drag_mode', dragMode); } catch(e){}
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('#dmDrag .dmOpt'), el => {
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault(); e.stopPropagation();
+      dragMode = el.dataset.d;
+      applyDragMode();
+    });
+  });
+
+  // ---- 灵敏度 / 轮盘开关 ----
+  const joyEl = $('joy'), joyKnob = $('joyKnob');
+  function updateJoyKnob(){
+    const max = (joyEl.offsetWidth || 104) / 2 - 22;
+    joyKnob.style.transform = 'translate(' + (M3.joy.x * max).toFixed(1) + 'px,' +
+                                             (M3.joy.y * max).toFixed(1) + 'px)';
+  }
+  function applySens(){
+    $('sensRange').value = String(sens);
+    $('sensVal').textContent = sens.toFixed(1) + '×';
+    try { localStorage.setItem('range_sens', String(sens)); } catch(e){}
+  }
+  function applyJoyOn(){
+    joyEl.classList.toggle('off', !joyOn);
+    const b = $('joyToggle');
+    b.textContent = joyOn ? '开' : '关';
+    b.dataset.on = joyOn ? '1' : '0';
+    b.classList.toggle('sel', joyOn);
+    if (!joyOn){
+      M3.joy.id = null; M3.joy.x = 0; M3.joy.y = 0;
+      updateJoyKnob();
+    }
+    try { localStorage.setItem('range_joy_on', joyOn ? '1' : '0'); } catch(e){}
+  }
+  $('sensRange').addEventListener('input', e => {
+    sens = clamp(parseFloat(e.target.value) || 1, 0.4, 2.5);
+    applySens();
+  });
+  $('joyToggle').addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation();
+    joyOn = !joyOn;
+    applyJoyOn();
+  });
+
+  // ---- 轮盘：按住往某方向推 = 持续转，松开即停 ----
+  function joyVec(e){
+    const r = joyEl.getBoundingClientRect();
+    const max = r.width / 2 - 14;
+    const dx = e.clientX - (r.left + r.width/2);
+    const dy = e.clientY - (r.top + r.height/2);
+    const len = Math.hypot(dx, dy) || 1;
+    const k = Math.min(1, len / max);
+    return { x: dx/len * k, y: dy/len * k };
+  }
+  joyEl.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation(); SFX.init();
+    M3.joy.id = e.pointerId;
+    const v = joyVec(e); M3.joy.x = v.x; M3.joy.y = v.y;
+    updateJoyKnob();
+    try { joyEl.setPointerCapture(e.pointerId); } catch(err){}
+  });
+  joyEl.addEventListener('pointermove', e => {
+    if (M3.joy.id !== e.pointerId) return;
+    const v = joyVec(e); M3.joy.x = v.x; M3.joy.y = v.y;
+    updateJoyKnob();
+  });
+  function joyEnd(e){
+    if (M3.joy.id !== e.pointerId) return;
+    M3.joy.id = null; M3.joy.x = 0; M3.joy.y = 0;
+    updateJoyKnob();
+  }
+  joyEl.addEventListener('pointerup', joyEnd);
+  joyEl.addEventListener('pointercancel', joyEnd);
+
+  // ---- 开始前必读弹窗 ----
+  function openDeviceModal(){
+    const mobile = detectDevice() === 'mobile';
+    $('dmIco').textContent  = mobile ? '📱' : '🖱️';
+    $('dmName').textContent = mobile ? '移动端 · 触屏' : '桌面端 · 鼠标';
+    $('dmDesc').textContent = mobile ? '一根手指拖靶，另一根点「开火」' : '按住左键拖动，空格开火';
+    $('dmAim').innerHTML    = mobile
+      ? '靶子已按屏幕<b>放大</b>；准星固定在正中央，不跟手指跑'
+      : '准星固定在正中央；<b>拖动</b>移靶，轻点 / 空格开火';
+    $('dmExtra').textContent = mobile
+      ? '已禁用页面滚动与双击缩放；横竖屏切换会自动重排。'
+      : '窗口缩放自动重排；按 Esc 返回。';
+    applyDragMode();
+    applySens();
+    applyJoyOn();
+    deviceModal.classList.add('show');
+  }
+  function confirmDevice(){
+    deviceModal.classList.remove('show');
+    SFX.init();
+    runBoot('进入靶场', ['构建超广角穹顶','生成靶位','校准准星与轮盘','预热渲染管线'], M3.start.bind(M3), 760);
+  }
+  rangeOverlay.addEventListener('pointerdown', e => { e.preventDefault(); SFX.init(); openDeviceModal(); });
+  $('dmGo').addEventListener('pointerdown', e => { e.preventDefault(); confirmDevice(); });
+  $('dmBack').addEventListener('pointerdown', e => { e.preventDefault(); deviceModal.classList.remove('show'); });
+
+  // ---- 输入：拖动 = 移动靶子（方向由 dragMode 决定），轻点 = 开枪 ----
+  function localPt(e){
+    const rect = rCanvas.getBoundingClientRect();
+    return { x:e.clientX - rect.left, y:e.clientY - rect.top };
+  }
+  rCanvas.addEventListener('pointerdown', e => {
+    e.preventDefault(); SFX.init();
+    const p = localPt(e);
+    M3.drag = { id:e.pointerId, x:p.x, y:p.y, sx:p.x, sy:p.y, moved:false };
+    try { rCanvas.setPointerCapture(e.pointerId); } catch(err){}
+    rangeEl.classList.add('dragging');
+  });
+  rCanvas.addEventListener('pointermove', e => {
+    if (!M3.drag || e.pointerId !== M3.drag.id) return;
+    const p = localPt(e);
+    const dx = p.x - M3.drag.x, dy = p.y - M3.drag.y;
+    M3.drag.x = p.x; M3.drag.y = p.y;
+    if (Math.hypot(p.x - M3.drag.sx, p.y - M3.drag.sy) > 8) M3.drag.moved = true;
+    if (M3.drag.moved){
+      // 两轴方向统一：follow = 靶跟手；fps = 视角跟手转（景物反向）
+      const sign = dragMode === 'fps' ? 1 : -1;
+      const K = Math.min(rw*0.44, (rh-RADAR_H)*0.52);
+      M3.cam.yaw   = clamp(M3.cam.yaw   + sign * dx / K * sens, -CAM_YAW, CAM_YAW);
+      M3.cam.pitch = clamp(M3.cam.pitch - sign * dy / (K*0.78) * sens, -CAM_PITCH, CAM_PITCH);
+    }
+  });
+  function endDrag(e){
+    if (!M3.drag || e.pointerId !== M3.drag.id) return;
+    const d = M3.drag; M3.drag = null;
+    rangeEl.classList.remove('dragging');
+    if (!d.moved) M3.fire();
+  }
+  rCanvas.addEventListener('pointerup', endDrag);
+  rCanvas.addEventListener('pointercancel', () => { M3.drag = null; rangeEl.classList.remove('dragging'); });
+  $('fireBtn').addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation(); SFX.init(); M3.fire();
+  });
+
+  /* ================= 主循环 ================= */
+  let last = 0;
+  function loop(t){
+    if (!last) last = t;
+    const dt = Math.min((t - last) / 1000, 0.05);
+    last = t;
+
+    M1.step(dt);
+    if (M1.flash > 0) M1.flash = Math.max(0, M1.flash - dt * 2.2);
+    for (let i = M1.floaters.length - 1; i >= 0; i--){
+      M1.floaters[i].life -= dt * 1.4;
+      if (M1.floaters[i].life <= 0) M1.floaters.splice(i, 1);
+    }
+    if (pages.g1.classList.contains('show')) M1.draw();
+    M3.step(dt);
+    if (pages.g3.classList.contains('show')) M3.draw();
+
+    requestAnimationFrame(loop);
+  }
+
+  // 方向键 / WASD：桌面端按住持续转视角
+  const DIRKEY = {
+    arrowleft:'l', a:'l', arrowright:'r', d:'r',
+    arrowup:'u', w:'u', arrowdown:'d', s:'d'
+  };
+  function dirKey(e){ return DIRKEY[(e.key || '').toLowerCase()] || null; }
+  function canRotate(){
+    return pages.g3.classList.contains('show') && !deviceModal.classList.contains('show') && !booting;
+  }
+  window.addEventListener('keydown', e => {
+    const dk = dirKey(e);
+    if (dk && canRotate()){
+      e.preventDefault(); keyVec[dk] = true; return;
+    }
+    if (booting) return;              // 加载期间忽略按键
+    SFX.init();
+    const isConfirm = (e.code === 'Space' || e.key === ' ' || e.key === 'Enter');
+    // 弹窗优先：空格/回车确认，Esc 关闭
+    if (deviceModal.classList.contains('show')){
+      if (e.key === 'Escape'){ e.preventDefault(); deviceModal.classList.remove('show'); return; }
+      if (isConfirm){ e.preventDefault(); confirmDevice(); }
+      return;
+    }
+    if (e.key === 'Escape' && pages.g3.classList.contains('show')){
+      e.preventDefault(); show('home'); return;
+    }
+    if (!isConfirm) return;
+    e.preventDefault();
+    if (pages.g1.classList.contains('show')){
+      if (ov.classList.contains('hide')) M1.judge();
+      else { ov.classList.add('hide'); M1.start(); }
+    } else if (pages.g2.classList.contains('show')){
+      if (ov2.classList.contains('hide')) M2.tap();
+      else { ov2.classList.add('hide'); M2.reset(); M2.run(); }
+    } else if (pages.g3.classList.contains('show')){
+      if (M3.running) M3.fire();          // 空格 = 开枪
+      else openDeviceModal();             // 未开始 / 结束后 = 弹说明再重开
+    }
+  });
+  window.addEventListener('keyup', e => {
+    const dk = dirKey(e);
+    if (dk) keyVec[dk] = false;
+  });
+  window.addEventListener('blur', () => { for (const k in keyVec) keyVec[k] = false; });
+
+  resize();
+  setMode('survival');
+  setMode3('casual');
+  requestAnimationFrame(loop);
+  // 启动时先加载：预热画布 / 设备判定 / 尺寸 / 穹顶点位（后台已算好，加载条走完即进首页）
+  runBoot('反应力 · 启动中', ['检测设备与输入方式','初始化渲染管线','构建超广角穹顶','校准场景尺寸','预热音效通道'], null, 1500);
+})();
+</script>
+</body>
+</html>
