@@ -136,6 +136,18 @@
   #scareCanvas.on { display: block; }
   body.scareOn #app { filter: brightness(.25) contrast(1.6); }
 
+  /* ---------- 锁定页 ---------- */
+  #lockPage {
+    position: fixed; inset: 0; z-index: 99999; background: #0a0204;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    color: #ffb3a7; font-family: system-ui, sans-serif; text-align: center;
+  }
+  #lockPage .box { max-width: 460px; border: 1px solid #7a2020; background: #160607; border-radius: 12px; padding: 26px 22px; box-shadow: 0 0 80px #ff000033; }
+  #lockPage h2 { margin: 0 0 10px; font-size: 21px; letter-spacing: 1px; }
+  #lockPage p { font-size: 13px; line-height: 1.8; color: #d99a92; }
+  #lockPage code { color: #ff7a6b; font-size: 12px; }
+  #lockPage button { margin-top: 16px; padding: 11px 22px; background: #3a0d0d; color: #ffb3a7; border: 1px solid #8a2b2b; border-radius: 8px; cursor: pointer; font-size: 13px; }
+
   body.shake { animation: shk .055s infinite; }
   body.shake #app { animation: shk2 .07s infinite; }
   @keyframes shk { 0%{transform:translate(4px,2px)} 25%{transform:translate(-6px,-4px)} 50%{transform:translate(3px,6px)} 75%{transform:translate(-5px,-2px)} 100%{transform:translate(5px,-4px)} }
@@ -180,6 +192,184 @@
 
 <canvas id="scareCanvas"></canvas>
 
+<script>
+/* =========================================================================
+   反调试 / 反第三方工具模块
+   覆盖：快捷键、菜单键、右键、查看源码、保存、查找、刷新、控制台读取陷阱、
+        停靠与独立窗口 DevTools 检测、断点暂停检测、自动化/注入特征、
+        iframe 嵌套、全局状态诱饵、界面篡改校验。
+   一旦命中：立即终止本局、锁定界面、清空运行时 DOM、持续干扰调试器。
+   ========================================================================= */
+(function () {
+  'use strict';
+  try { window.onerror = function () { return true; }; } catch (e) {}
+
+  var locked = false;
+  var LOCK_HTML =
+    '<div id="lockPage"><div class="box">' +
+    '<h2>⚠ 本局已终止</h2>' +
+    '<p>检测到开发者工具、调试器或第三方注入访问。<br>为保护本局完整性，游戏已被锁定，所有操作已失效。</p>' +
+    '<p><code id="lockReason"></code></p>' +
+    '<p class="ok">请关闭相关工具后重新载入页面。<br>任何控制台读写、断点调试与页面源码查看都会再次触发锁定。</p>' +
+    '<button onclick="location.reload()">重新载入</button>' +
+    '</div></div>';
+
+  function paintLock(reason) {
+    try {
+      document.body.innerHTML = LOCK_HTML;
+      var r = document.getElementById('lockReason');
+      if (r) r.textContent = '触发原因：' + reason;
+    } catch (e) {}
+  }
+
+  function punish(reason) {
+    if (locked) return;
+    locked = true;
+    try { document.dispatchEvent(new CustomEvent('gamelock', { detail: reason })); } catch (e) {}
+    try { paintLock(reason); } catch (e) {}
+    // 界面防拆：遮罩被删就补回来
+    try {
+      setInterval(function () {
+        if (!document.getElementById('lockPage')) paintLock(reason);
+      }, 300);
+    } catch (e) {}
+    // 调试器持续干扰（未打开 DevTools 时为空操作）
+    try {
+      setInterval(function () { /* eslint-disable no-debugger */ debugger; }, 60);
+    } catch (e) {}
+    // 控制台方法置空，阻止在控制台里调用游戏内部
+    try {
+      ['log', 'debug', 'info', 'table', 'dir', 'group', 'profile', 'trace', 'warn', 'error'].forEach(function (k) {
+        try { console[k] = function () {}; } catch (e) {}
+      });
+    } catch (e) {}
+  }
+
+  /* ---- 1. 鼠标 / 菜单 / 剪贴板 ---- */
+  ['contextmenu', 'selectstart', 'dragstart', 'copy', 'cut', 'paste'].forEach(function (ev) {
+    document.addEventListener(ev, function (e) { e.preventDefault(); e.stopPropagation(); return false; }, true);
+  });
+  document.addEventListener('mousedown', function (e) {
+    if (e.button === 2) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+
+  /* ---- 2. 键盘快捷键 ---- */
+  function keyGuard(e) {
+    var k = String(e.key || '').toLowerCase();
+    var code = String(e.code || '');
+    var ctrl = e.ctrlKey || e.metaKey;
+    var shift = e.shiftKey;
+    var hit = false;
+    if (k === 'f12' || code === 'F12') hit = true;
+    if (k === 'f5' || code === 'F5') hit = true;
+    if (k === 'f3' || code === 'F3') hit = true;
+    if (k === 'contextmenu' || code === 'ContextMenu') hit = true;
+    if (shift && (k === 'f10' || code === 'F10')) hit = true;
+    // Win: Ctrl+Shift+I/J/C/K/M   Mac: Cmd+Opt+I/J/C/K
+    if (((ctrl && shift) || (e.metaKey && e.altKey)) && ['i', 'j', 'c', 'k', 'm', 'u', 'e', 's'].indexOf(k) >= 0) hit = true;
+    // 查看源码 / 保存 / 打印 / 全选 / 查找 / 刷新
+    if (ctrl && ['u', 's', 'p', 'a', 'f', 'g', 'r', 'o'].indexOf(k) >= 0) hit = true;
+    if (hit) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      punish('开发者工具 / 源码查看快捷键');
+      return false;
+    }
+  }
+  document.addEventListener('keydown', keyGuard, true);
+  document.addEventListener('keyup', keyGuard, true);
+  document.addEventListener('keypress', keyGuard, true);
+
+  /* ---- 3. 停靠式 DevTools 尺寸检测 ---- */
+  function sizeCheck() {
+    if (locked) return;
+    try {
+      if (!window.outerWidth || !window.innerWidth) return;
+      var dw = window.outerWidth - window.innerWidth;
+      var dh = window.outerHeight - window.innerHeight;
+      if (dw > 165 || dh > 165) {
+        punish('开发者工具面板（停靠窗口）');
+      }
+    } catch (e) {}
+  }
+  window.addEventListener('resize', sizeCheck);
+  setInterval(sizeCheck, 350);
+
+  /* ---- 4. 控制台读取陷阱（可覆盖独立窗口 DevTools） ---- */
+  function consoleTrap() {
+    if (locked) return;
+    try {
+      var img = new Image();
+      Object.defineProperty(img, 'id', {
+        get: function () { punish('控制台读取页面对象'); return ''; },
+        configurable: false
+      });
+      console.log('%c ', 'color:transparent', img);
+    } catch (e) {}
+    try {
+      var trap = {};
+      trap.toString = function () { punish('控制台样式解析'); return ''; };
+      console.log('%c', trap);
+    } catch (e) {}
+  }
+  setInterval(consoleTrap, 1600);
+
+  /* ---- 5. 断点暂停检测 ---- */
+  setInterval(function () {
+    if (locked) return;
+    var t0 = performance.now();
+    /* eslint-disable no-debugger */ debugger;
+    if (performance.now() - t0 > 260) punish('调试断点暂停');
+  }, 1100);
+
+  /* ---- 6. 自动化 / 注入 / 嵌套特征 ---- */
+  function envCheck() {
+    if (locked) return;
+    try {
+      var ua = navigator.userAgent || '';
+      if (/HeadlessChrome|PhantomJS|Electron|Selenium|Playwright|Puppeteer|PostmanRuntime|python-requests|curl|Scrapy|HTTPie/i.test(ua)) {
+        punish('自动化 / 无头浏览器环境'); return;
+      }
+      if (navigator.webdriver === true) { punish('WebDriver 自动化标记'); return; }
+      var flags = ['domAutomation', '__webdriver_evaluate', '_Selenium_IDE_Recorder', 'callPhantom',
+                   '_phantom', '__nightmare', 'Cypress', '__playwright_evaluation_script__',
+                   'GM_info', 'GM_getValue', 'GM_xmlhttpRequest', 'GM_setValue'];
+      for (var i = 0; i < flags.length; i++) {
+        if (flags[i] in window) { punish('第三方脚本注入标记'); return; }
+      }
+      if ('unsafeWindow' in window && window.unsafeWindow !== window) {
+        punish('用户脚本沙箱'); return;
+      }
+      if (window.top !== window.self) { punish('页面被嵌入第三方框架'); return; }
+      // 无头环境常见特征
+      if (!navigator.languages || navigator.languages.length === 0) { punish('异常浏览器环境'); return; }
+    } catch (e) {}
+  }
+  envCheck();
+  setInterval(envCheck, 1200);
+
+  /* ---- 7. 全局状态诱饵：控制台读写即锁定 ---- */
+  ['game', 'gameState', 'state', 'power', 'anims', 'cheat', 'win', 'fnaf', 'debugGame'].forEach(function (name) {
+    try {
+      Object.defineProperty(window, name, {
+        get: function () { punish('控制台读取全局状态'); return undefined; },
+        set: function () { punish('控制台修改全局状态'); },
+        configurable: false
+      });
+    } catch (e) {}
+  });
+
+  /* ---- 8. 界面完整性校验（防止通过检查元素篡改后继续） ---- */
+  setInterval(function () {
+    if (locked) return;
+    try {
+      if (!document.getElementById('stage') || !document.getElementById('controls')) {
+        punish('页面结构被外部修改');
+      }
+    } catch (e) {}
+  }, 900);
+})();
+</script>
 
 <script>
 /* =========================================================================
@@ -1243,6 +1433,11 @@
     );
   }
 
+  /* ---------- 锁定回调 ---------- */
+  document.addEventListener('gamelock', function () {
+    state = 'locked';
+    endScareFx();
+  });
 
   /* ---------- 逻辑更新 ---------- */
   function moveInterval() {

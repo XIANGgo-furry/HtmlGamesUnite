@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="build" content="2026-10-17-EVO-v5.6.0 Official"><title>中国象棋 v5.6.0 Official · 材质版</title><style>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>HtmlGamesUnite · 中国象棋</title><style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;background:#05030c;font-family:"KaiTi",serif;color:#c9f7ff;overflow:hidden}
   #app{position:fixed;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;z-index:1}
@@ -706,7 +706,7 @@ body.md #proHud span{background:var(--md-surface);color:var(--md-txt);border:1px
   .mask.closing .sheet{transform:translateY(14px) scale(.97);opacity:0;transition:transform .20s ease,opacity .20s ease}
   .mask.center{align-items:center}
   #guideSheet{max-width:400px}
-  /* [修复·关键] sheet 不再锁高/overflow:hidden（会把内部滚动条裁死、触摸也不响应），
+  /* [修复·关键] sheet 不再锁高/overflow:hidden（会把内层滚动条裁死、触摸也不响应），
      改为内容自然撑开，滚动交给 .mask */
   .sheet{width:100%;max-width:520px;border-radius:3px;padding:16px;background:linear-gradient(160deg,rgba(12,26,38,.97),rgba(10,6,22,.97));
     max-height:none;overflow:visible;display:block;
@@ -1005,7 +1005,7 @@ body.md #proHud span{background:var(--md-surface);color:var(--md-txt);border:1px
   #bgfx{position:fixed;top:0;right:0;bottom:0;left:0;pointer-events:none;z-index:0;overflow:hidden}
   /* ===== [v4.7 背景重构] =====
      旧方案：3 个 DOM 光球 + filter:blur(28px) + CSS 动画 → 每帧 GPU 模糊 + 合成，中低端机明显掉帧
-     新方案：单个低分辨率 Canvas（内部 0.3 倍屏，CSS 拉满）
+     新方案：单个低分辨率 Canvas（内建 0.3 倍屏，CSS 拉满）
              · 光球用「64px 小图放大绘制」天然柔化，零 filter 开销
              · 尘埃粒子同样 canvas 绘制
              · 限帧 30fps（性能模式 20fps），页面隐藏自动暂停
@@ -1038,7 +1038,15 @@ body.md #proHud span{background:var(--md-surface);color:var(--md-txt);border:1px
     72%{opacity:1}100%{opacity:0;transform:scale(1.05)}}
   body.wood .turnshout{background:none;-webkit-background-clip:initial;background-clip:initial;color:#7a2210;
     filter:none;font-family:"LiSu","隶书",serif;letter-spacing:14px}
-</style></head><body><noscript>
+<style>
+#back{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:8px;z-index:10000;
+min-width:44px;min-height:44px;padding:10px 14px;border:0;border-radius:10px;
+background:rgba(0,0,0,.55);color:#fff;font-size:15px;text-decoration:none;
+display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+html,body{touch-action:manipulation}
+</style></head><body>
+<a id="back" href="index.html">← 返回</a>
+<noscript>
   <div style="position:fixed;top:0;right:0;bottom:0;left:0;z-index:99999;background:#0a0814;color:#39ffea;
     display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:sans-serif">
     <div style="font-size:22px;margin-bottom:14px">⚠ JavaScript 未启用</div>
@@ -1092,12 +1100,11 @@ body.md #proHud span{background:var(--md-surface);color:var(--md-txt);border:1px
     <div class="menu-btns">
       <button id="btnGuide">玩法说明</button>
       <button id="btnAbout2">关于本作</button>
-      <button id="btnUpd">本版更新</button>
       <button id="btnGacha">🎴 抽卡</button>
       <button id="btnColl">🖼 收藏</button>
       <button id="btnBackVer">◀ 返回版本</button>
-      <button id="btnFb">问题反馈</button>
-      <button id="btnChkUpd">🔄 检查更新</button>
+      <button id="btnFb" style="display:none">问题反馈</button>
+      <button id="btnUpd" style="display:none">本版更新</button>
     </div>
     <div class="hint">点封面进对局 · 人机对战会先让你选难度</div>
   </section>
@@ -1212,7 +1219,7 @@ body.md #proHud span{background:var(--md-surface);color:var(--md-txt);border:1px
       <!-- ===== STEP 2：服务器地址（双方共用） ===== -->
       <div class="wiz-pane" id="wizSrv" style="display:none">
         <div class="wiz-hint">输入运行服务器的电脑地址，填一次会自动记住</div>
-        <input class="net-in" id="srvAddr" placeholder="如 http://192.168.1.5:8787" spellcheck="false">
+        <input class="net-in" id="srvAddr" placeholder="如 192.168.1.5:8787" spellcheck="false">
         <div class="net-row">
           <button class="net-b" id="dlSrv">&#x2B07; 服务器程序</button>
           <button class="net-b" id="dlHelp">&#x2B07; 使用说明</button>
@@ -1332,7 +1339,7 @@ body.md #proHud span{background:var(--md-surface);color:var(--md-txt);border:1px
           </div>
           <div class="scan-fb">
             <div class="wiz-hint" style="margin-bottom:5px">扫不了？手动填这两项</div>
-            <input class="net-in" id="scanAddr" placeholder="服务器地址，如 http://192.168.1.5:8787" spellcheck="false">
+            <input class="net-in" id="scanAddr" placeholder="服务器地址，如 192.168.1.5:8787" spellcheck="false">
             <div class="net-row">
               <input class="net-in room" id="scanRoom" placeholder="6 位房间号" maxlength="6" inputmode="numeric" spellcheck="false">
               <button class="net-b pri" id="scanApply">填入</button>
@@ -1436,12 +1443,6 @@ body.md #proHud span{background:var(--md-surface);color:var(--md-txt);border:1px
     </div>
   </div>
 
-  <div class="mask" id="updMask"><div class="sheet" id="updSheet">
-    <h3>本 版 更 新 · <span class="evo" id="updVerTag">v5.6.0 Official</span></h3>
-    <div class="tip-body" id="updBody"></div>
-    <button class="ok" id="updOk">开始游戏</button>
-  </div></div>
-
   <div class="mask" id="pauseMask">
     <div class="sheet pause-sheet">
       <div class="pause-head"><span class="pause-ico">⏸</span> 已 暂 停</div>
@@ -1481,98 +1482,30 @@ body.md #proHud span{background:var(--md-surface);color:var(--md-txt);border:1px
 
   <div class="mask" id="fbMask"><div class="sheet" id="fbSheet">
     <h3>问题反馈</h3>
-    <p style="margin:6px 0 8px">遇到 bug、卡死、联机连不上、卡牌失效？描述一下，点「发送」会唤起你的邮件应用，
-      收件人已填好 <b style="color:#39ffea">xianggo-furry@foxmail.com</b>，并自动附带版本与运行环境。</p>
-    <textarea class="net-ta" id="fbTxt" placeholder="例：出「疾步」卡后没反应 / 联机一直连不上…" spellcheck="false" style="height:110px"></textarea>
+    <p style="margin:6px 0 8px">遇到 bug 或卡死？描述一下，点「复制内容」把信息复制走即可自行反馈。<br>本页不会向任何地址发送数据。</p>
+    <textarea class="net-ta" id="fbTxt" placeholder="例：翻棋翻子后没显示…" spellcheck="false" style="height:110px"></textarea>
     <div class="net-row">
-      <button class="net-b" id="fbSend" style="border-color:#ff2bd6;color:#ffb6ec">发送反馈</button>
-      <button class="net-b" id="fbCopy">复制内容</button>
+      <button class="net-b" id="fbSend" style="border-color:#ff2bd6;color:#ffb6ec">复制内容</button>
+      <button class="net-b" id="fbCopy">复制</button>
       <button class="net-b" id="fbHelp">查看说明</button>
     </div>
     <button class="ok" id="fbOk">关闭</button>
   </div></div>
 
-
-  <!-- ===== [v5.5.0] 检查更新 ===== -->
-  <div class="mask" id="updChkMask"><div class="sheet" id="updChkSheet" style="max-width:360px">
-    <h3 style="margin:0 0 8px;text-align:center;font-size:17px;letter-spacing:2px">🔄 检 查 更 新</h3>
-    <div id="updChkBody" style="font-size:12.5px;line-height:1.75;min-height:60px"></div>
-    <div style="display:flex;gap:8px;margin-top:12px">
-      <button class="ok ghost" id="updChkGo" style="display:none;flex:1">前往下载</button>
-      <button class="ok" id="updChkOk" style="flex:1">知道了</button>
-    </div>
-  </div></div>
-
   <div class="mask" id="aboutMask"><div class="sheet" id="aboutSheet">
   <h3>关于本作</h3>
-  <div class="sig yb"><b>🧑‍💻 CODE · 代码生成：元宝 Yuanbao</b><br>腾讯AI助手。规则引擎（马蹩腿/象塞眼/炮翻山/送将拦截）、卡牌战术系统、Negamax+αβ AI、Canvas霓虹粒子特效与UI。</div>
-  <div class="sig me" id="creditSig"><b>🎴 IDEA · 玩法提示：XIANGgoFURRY</b><br>本作架构师。提出：EVO只加卡牌不强化棋子、绿点/红点走法提示、封面用图非纯文字、原版须霓虹赛博、去除悔棋、新增玩法说明页、红黑专属手牌槽且卡牌只对己方生效、修复吃将不弹胜利、可吃提示改为不遮挡棋子的红环、全面赛博朋克视觉重构。</div>
-  <div class="qqtag"><span class="qq-ico">◈</span> QQ <b id="qqNo">3316705737</b></div>
+  <p style="font-size:12.5px;line-height:1.8;opacity:.8;margin:8px 0">单文件 · 零依赖 · 离线可玩。<br>棋盘、走子、AI 与全部玩法都在本页内完成，不联网也能下。</p>
+  <div class="sig me" id="creditSig" style="font-size:12px;opacity:.75">🎴 IDEA · 玩法提示：XIANGgoFURRY</div>
   <div class="abtabs">
-    <button class="abtab on" id="abTabDev">开发人员</button>
-    <button class="abtab" id="abTabLog">更新日志</button>
-    <button class="abtab" id="btnUpd2">本版更新</button>
+    <button class="abtab on" id="abTabDev">关于</button>
+    <button class="abtab" id="abTabLog" style="display:none">说明</button>
+    <button class="abtab" id="btnUpd2" style="display:none">本版更新</button>
   </div>
-  <div id="abPaneLog" style="display:none">
-  <h4>更新日志</h4>
-  <div class="log">
-    <div class="log-item"><b>v5.6.0</b> <span class="new">[变更]</span> <span>已移除页面调试防护，F12 / 右键 / 查看源码恢复正常，方便自行排查问题</span></div>
-    <div class="log-item"><b>v5.5.0</b> <span class="new">[新增]</span> <span><b>检查更新</b>：菜单页新增「🔄 检查更新」，从仓库读取 <code>象棋version.json</code> 与本地版本号比对，发现新版会列出更新说明与下载入口；启动约 4 秒后<b>静默检查</b>一次，仅在确有新版时才弹窗（已是最新则完全不打扰）</span></div>
-    <div class="log-item"><b>v5.4.2</b> <span class="fix">[严重修复]</span> <span><b>兵/卒可以后退</b>（规则错误）：走法判定用了行号差的<b>绝对值</b>，不区分方向，导致兵卒能往回走。已改为带方向的比较，兵卒<b>永不后退</b>，并禁止斜走</span></div>
-    <div class="log-item"><b>v5.4.1</b> <span class="fix">[修复]</span> <span><b>AI 走子始终闪现</b>：AI 直接改棋盘数组、从不调用 animStart，导致人机对战中黑方走子没有任何动画。已补上与玩家走子相同的滑动动画</span> <span class="fix">[修复]</span> <span><b>性能模式一刀切禁用动画</b>：设备被判为低端（或自动开启性能模式）时动画被完全关闭，全程闪现。改为只<b>缩短</b>时长（260ms→130ms），不再禁用</span> <span class="fix">[调整]</span> <span><b>高级比赛开关迁移</b>：从暂停菜单移到<b>第三层「选择玩法」页面</b>，进对局前以「标准 / 高级比赛」卡片选择；翻棋模式自动禁用该选项</span></div>
-    <div class="log-item"><b>v5.4.0</b> <span class="fix">[修复]</span> <span><b>棋盘没重置、点一次才刷新</b>：限时赛事开始/重开、切换玩法、重开对局时只调 init() 未调 draw()，也未清吃子数与倒计时。新增统一入口 <b>resetFull()</b>（含 resize/draw/capReset/timerArm/清动画/撤赛事残留），所有开新局路径统一走它</span> <span class="new">[新增]</span> <span><b>棋子移动动画</b>：走子时棋子沿直线滑行，easeOutCubic 缓动（性能模式下自动关闭）</span> <span class="new">[新增]</span> <span><b>高级比赛（职业赛制）</b>：长将判负、重复局面判和、自然限着 60 回合、基本用时 + 读秒；暂停菜单 ⚖ 开关，仅经典玩法的人机/双人生效</span> <span class="new">[新增]</span> <span><b>AI 引擎扩展点</b>：支持外部注入走子函数（隐藏入口，不在界面暴露）</span></div>
-    <div class="log-item"><b>v5.3.2</b> <span class="fix">[修复·严重]</span> <span><b>卡死在启动页无法进入</b>（守卫死锁）：原 bootDone 为凑满 2.2 秒最小展示时长，会自我延期 setTimeout(bootDone)；但全局 bootDone 已被 v5.2.0 的预加载包装覆盖，包装首行 <b>if(BOOT_STARTED) return</b> 立刻吞掉这次重试 —— 收尾逻辑永远不再执行，加载页就此卡死。改为调用保存的原始引用 BOOT_DONE_CORE 绕过包装，并新增不依赖任何 Promise/守卫的<b>终极保险 bootForce</b>（5s / 9s 双重强制收尾）</span></div>
-    <div class="log-item"><b>v5.3.1</b> <span class="fix">[修复·根因]</span> <span><b>动态背景仍是白色</b>：材质主题给 <b>.page</b> 刷了不透明的 <b>--md-bg(#fafafa)</b> 全屏铺底，它在 #app(z-index:1) 内，而背景层 #bgfx 是 z-index:0 —— <b>被整个盖死</b>。v5.3.0 只调了透明度与联动，未触及这层遮挡，故无效。现已改为 transparent</span> <span class="new">[改进]</span> <span>背景可见度提升：色斑 alpha 0.30→0.46、涟漪 0.16→0.26、微粒更明显；并清除标题残留的青色辉光（为深色底设计，浅底上显脏）</span></div>
-    <div class="log-item"><b>v5.3.0</b> <span class="new">[新增]</span> <span><b>Material 动态背景</b>：5 团 Material 调色板色斑（Indigo/Pink/Teal/DeepPurple/Amber）缓慢漂移 + 呼吸，配 22 粒中性微粒与 <b>涟漪扩散圆环</b>（呼应 Material ripple）</span> <span class="fix">[修复]</span> <span><b>背景不跟随主题</b>：setTheme 从未调用 BgFx.setStyle，切到材质主题后背景仍是霓虹光球；且 <b>#bgfx 被压到 opacity .5</b>，浅底上几乎看不见 —— 这就是「背景好干净」的根因，现已联动并恢复全不透明</span></div>
-    <div class="log-item"><b>v5.2.1</b> <span class="fix">[修复]</span> <span><b>CSS 选择器画错</b>：侧栏真实类名是 <b>.side-col</b>，材质主题误写为 .side-panel，导致两侧吃子数/倒计时面板完全没被材质化；另删除不存在的 .md-btn 死选择器</span> <span class="new">[改进]</span> <span><b>加载图标改为安卓同款</b>：一段圆弧（非整圆环），容器匀速旋转 + 弧长伸缩(trim)，圆头末端，全程单色</span> <span class="fix">[修复]</span> <span><b>清除 EVO 残留</b>：菜单标语 CYBER·CARD·TACTICS、卡牌战术版标签、手牌计数「⚡EVO」、三个弹窗标题、反馈邮件主题、封面霓虹 EVO 文字绘制全部清理</span> <span class="fix">[修复]</span> <span><b>去除故障化特效</b>：Glitch 色差抖动动画(gl/gl1/gl2)移除；Material 与水墨主题下关闭全屏 CRT 扫描线与赛博霓虹网格</span></div>
-    <div class="log-item"><b>v5.2.0</b> <span class="new">[新增]</span> <span><b>Material Design 主题</b>——Google 材质设计：浅色底 + 纸片层级(elevation) + 圆角卡片 + <b>涟漪触摸反馈</b> + Snackbar，可在暂停菜单「🎨 主题」中与水墨互切</span> <span class="new">[新增]</span> <span><b>启动资源预加载</b>——字体 / 全部封面 / 棋子位图缓存 / 棋盘首帧 / 背景系统，带真实进度条，加载完再进入</span> <span class="fix">[改进]</span> <span><b>加载圆环重做</b>——全程同一种颜色，头部不透明、顺时针递减、尾部全透明；老 WebView 无 mask 时自动降级中心遮片</span></div>
-    <div class="log-item"><b>v5.1.0</b> <span class="new">[新增]</span> <span><b>收藏系统：抽卡</b>——纯外观收藏，<b>零对局影响</b>。19 件藏品：棋子皮肤5 / 棋盘4 / 称号7 / 木纹3，稀有度 N·R·SR·SSR</span> <span class="new">[新增]</span> <span><b>玉令</b>：对局(胜+3负+1) / 每日登录+5 / 成就 / 赛事夺冠+15；保底 10抽SR+、50抽SSR；重复自动折算玉令</span> <span class="new">[新增]</span> <span><b>9 个成就</b>：首胜、五连捷、赛事首冠、身经百战、衣冠楚楚、棋盘收藏家、传说降临、称号大成、博物洽闻</span> <span class="new">[新增]</span> <span><b>存档同步（手机 ↔ 电脑）</b>：导出/导入存档码（XQ1- 前缀），支持<b>二维码</b>跨设备扫码导入；电脑 file:// 下自动降级 execCommand 复制、localStorage 不可用时降级内存存储</span></div>
-    <div class="log-item"><b>v5.0</b> <span class="new">[新增]</span> <span><b>AI 全面重做：真正的搜索型引擎</b>——minimax + alpha-beta 剪枝 + 静态搜索(quiescence) + 迭代加深 + MVV-LVA 走法排序 + 时间预算。AI 不再只看一步，而是<b>往前推算多步</b>，能识别白吃、躲开攻击、正确应将</span> <span class="new">[新增]</span> <span><b>「顶尖」难度</b>：深度 6 层 + 静态搜索 4 层 + 4 秒思考预算，全力计算每一步（等待稍久，棋力最强）</span> <span class="fix">[修复]</span> <span>alpha-beta 窗口污染 bug：根节点用窄窗口会让非最优走法返回边界值（虚高），曾导致 AI 把「送吃的将军」当成好棋而放弃白吃</span> <span class="new">[新增]</span> <span>启动时显示「<b>XIANGgo&amp;元宝AI</b> / <b>呈现</b>」署名画面（最短展示 2.2 秒）</span> <span class="new">[新增]</span> <span>经典版标注「推荐」，回归原汁原味</span> <span class="new">[新增]</span> <span><b>全局改版：木质水墨风</b>——全站统一为檀木底 + 水墨字，霓虹/故障/扫描线等赛博元素全部移除</span> <span class="new">[新增]</span> <span><b>限时赛事 · GRAND PRIX</b>（A9 大奖赛风格）：三站淘汰赛 预选赛→半决赛→总决赛，每站限时，超时即淘汰，含<b>荣誉榜</b>与<b>领奖台</b></span> <span class="fix">[修复]</span> <span><b>移除 EVO 卡牌版本</b>（应作者要求回归原汁原味），卡牌系统不再出现</span></div>
-    <div class="log-item"><b>v4.16</b> <span class="new">[新增]</span> <span><b>摄像头扫码（App 内直接扫）</b>：客方点「📷 扫一扫」即可<b>在页面内</b>调用摄像头扫描主机屏幕上的二维码，<b>不用跳出页面、不用系统相机/微信扫一扫</b>。为此<b>从零手写了一个纯 JS 二维码解码器</b>（零依赖、ES5）：积分图自适应二值化 → 定位图案检测 → 单应变换采样 → 格式信息 BCH 校验 → 去交织 → Reed-Solomon 纠错。实测通过：正/斜 ±30°、缩放 3~12 倍、噪点 ±40、透视畸变、版本 1~9 长链接，非二维码图安全返回 null</span> <span class="new">[新增]</span> <span>扫码失败时的<b>兜底填空项</b>：扫描器底部可手动填「服务器地址 + 6 位房间号」。摄像头不可用时会明确说明原因（权限被拒 / 无摄像头 / 非 HTTPS 环境 / 被占用）</span> <span class="new">[新增]</span> <span><b>主机侧显示「对方连接信息」</b>：房间号、我的角色、对方是否已加入、直连状态、数据通道状态，实时更新并区分成功/失败配色</span></div>
-    <div class="log-item"><b>v4.15</b> <span class="new">[新增]</span> <span><b>联机能力自检</b>：进入联机页自动检测 6 项能力并列出结果——<b>WebRTC</b>、<b>数据通道</b>(createDataChannel)、<b>协商能力</b>(createOffer)、<b>服务器推送</b>(EventSource)、<b>网络请求</b>(fetch)、<b>异步支持</b>(Promise)。全部通过显示绿色「联机可用」；缺关键项则显示红色结论并<b>点名缺少哪一项</b>。区分致命/非致命：缺 WebRTC 或数据通道判定不可用（代码无法补救，需换浏览器或更新 WebView），缺 SSE/fetch 仅提示房间号配对不可用，仍可用手动复制码</span> <span class="new">[新增]</span> <span>「&#x21BB; 重测」按钮可随时重新检测；扫码进入联机页时同样会自动检测</span></div>
-    <div class="log-item"><b>v4.14</b> <span class="new">[重构]</span> <span><b>联机页改为 3 步向导</b>：原先是「配对方式 × 主机/客方 × 网络模式 + 二维码 + 下载」<b>四层嵌套平铺</b>，一屏内十几个按钮，很容易看晕。现改为向导式：<b>① 选角色（两张大卡片）→ ② 填服务器地址 → ③ 创建/加入房间</b>，<b>一次只显示一个面板</b>，顶部有步骤条显示进度，支持「上一步」返回</span> <span class="new">[新增]</span> <span>「开始对局」按钮只在第 3 步出现，不再一进来就堆在眼前；网络模式（局域网直连/跨网）与手动复制码方案收进底部<b>「⚙ 高级设置」折叠区</b>，默认收起</span> <span class="new">[保持]</span> <span>扫码进入时会自动定位到「加入房间」第 3 步，无需手动点</span></div>
-    <div class="log-item"><b>v4.13</b> <span class="fix">[修复·关键]</span> <span><b>老 WebView 无法运行 JS</b>：主脚本含大量 ES6 语法（const/let/箭头函数 745+263 处）与 async/await，Android System WebView 内核过旧时<b>整个脚本解析失败</b> → 界面正常但按钮全失灵。现已将主脚本<b>完整转译为 ES5</b>（Chrome 30+ 即可运行），并移除全部 async/await（改 Promise 链）</span> <span class="new">[新增]</span> <span><b>启动自检探针</b>：用纯 ES5 独立编写，即使主脚本挂掉也能运行。3.5 秒后若主脚本未启动，自动弹出诊断报告：显示 Chrome 内核版本、ES6 支持情况、协议、浏览器类型，并给出针对性解决建议（更新 Android System WebView / Via 的 JS 开关 / file 协议限制等）</span></div>
-    <div class="log-item"><b>v4.12</b> <span class="fix">[修复]</span> <span><b>横屏弹窗内容显示不全</b>：横屏时屏幕高度仅 390~450px，弹窗按原尺寸顶出屏幕，关闭按钮被推到可视区外。新增 <code>@media (max-height:560px)</code> 紧凑模式（压缩内边距/字号/行高/二维码），并让<b>关闭按钮 sticky 吸底常驻</b>，任何屏高都点得到</span> <span class="new">[新增]</span> <span><b>JS 自检提示</b>：新增 <code>&lt;noscript&gt;</code> 提示（JS 被禁用时明确告知要用浏览器打开，不要用文件管理器/文本编辑器/微信查看器）与运行时错误可见面板（脚本中途报错会显示错误内容而非白屏）</span></div>
-    <div class="log-item"><b>v4.11</b> <span class="fix">[修复·联机]</span> <span>ICE 策略重写：原先<b>硬编码 Google STUN</b>（<code>stun:stun.l.google.com:19302</code>），国内大概率超时 → ICE 收集卡住、连接明显变慢甚至失败。而<b>同一局域网下 STUN 完全多余</b>（本机候选本就能直达）。现新增「🏠 局域网直连 / 🌐 跨网模式」切换：<b>局域网档 iceServers 为空</b>（秒连、不依赖外网），跨网档才启用 STUN 并换成国内可达的多备源</span> <span class="new">[新增]</span> <span><b>连接失败诊断</b>：不再只说"连不上"，会区分当前模式并给出具体排查建议（同 WiFi 检查 / 校园网 <b>AP 隔离</b> 提示）</span> <span class="fix">[修复]</span> <span>网络模式 UI 初始化触发 TDZ（<code>NET_MODE</code> 声明在下方却被提前读取）→ 按钮高亮与说明不显示</span></div>
-    <div class="log-item"><b>v4.10</b> <span class="new">[新增]</span> <span><b>横屏引导页</b>：启动后先检测方向，竖屏时显示引导页（旋转手机动画 + 「请横屏对弈 / 中国象棋 EVO 为横屏而生 / 转动手机，棋盘与计时方得完整舒展」）。<b>转成横屏会自动进入</b>，无需点按钮；也提供「仍要竖屏游玩」强制跳过（不卡死）。经典版同步换成檀木金水墨配色</span> <span class="fix">[修复]</span> <span>启动流程中 <code>curPage</code> 被预设为 verSel，导致 <code>show(verSel)</code> 命中提前 return → 横屏启动时引导页与版本页<b>都不显示</b>（白屏）。已改为初始 null</span></div>
-    <div class="log-item"><b>v4.9</b> <span class="new">[新增]</span> <span><b>启动加载动画</b>：首屏显示渐变色旋转环（conic-gradient），元素就绪后淡出移除，避免白屏与卡顿观感；木質版自动换成檀木金配色</span> <span class="new">[新增]</span> <span><b>横竖屏检测</b>：宽&lt;长判为竖屏、反之横屏（含 orientationchange 监听），竖屏时侧栏自动收窄给棋盘让位</span> <span class="new">[新增]</span> <span><b>两侧吃子数</b>：左右侧栏各自显示「吃 N」，实时统计双方吃掉的对方棋子数</span> <span class="new">[新增]</span> <span><b>侧栏回合倒计时</b>：倒计时（含进度条）显示在<b>当前回合方</b>那一侧的吃子数下方，最后 5 秒变粉闪烁；非回合方自动隐藏</span> <span class="new">[调整]</span> <span>倒计时<b>强制开启</b>：取消「关闭」档，档位 30/60/90 秒，默认 60 秒</span> <span class="fix">[修复]</span> <span>背景光球漂移速度过慢（每秒仅移动约 0.5% 屏宽，肉眼看不出在动）→ 提速 ×5，呼吸幅度 0.14→0.22</span></div>
-    <div class="log-item"><b>v4.8</b> <span class="new">[新增]</span> <span><b>回合倒计时</b>：轮到谁走就开始计时，归零自动把行动权交给对方（本回合跳过）。档位 关闭/30秒/60秒/90秒，点顶栏 <code>⏱</code> 或暂停菜单循环切换并自动记忆；最后 5 秒变粉闪烁；<b>弹窗打开时冻结计时</b>；联机模式不计时（避免双方状态不同步）；翻棋同样生效</span> <span class="new">[改版]</span> <span><b>手牌移到棋盘左右两侧</b>：原先「上手牌+棋盘+下手牌」纵向三段叠加，竖屏时棋盘被压得很小。现改为 <code>[黑方手牌] 棋盘 [红方手牌]</code> 横向排列，利用横屏时左右两侧的空白区域。实测竖屏 390×844 棋盘 266px、横屏 844×390 棋盘 338px，<b>横屏明显更宽敞</b>；首次进对局若检测到竖屏会提示横屏</span></div>
-    <div class="log-item"><b>v4.7.1</b> <span class="fix">[修复·严重]</span> <span>翻棋<b>翻子后不显示</b>：需再点一次才出现。根因是 <code>updateEvo()</code> 仍遍历旧版半盘变量 <code>fboard</code>（翻棋改为原位打乱后已废弃），每回合抛 ReferenceError → <b>① draw() 被中断，棋子仍显示背面 ② flipEndTurn 在第一句就崩，回合根本没切换、人机模式下 AI 永不启动 ③ 顶栏 🎴 暗子计数不更新</b>。现统一改用 <code>board</code>（10×9），并对翻棋回合流程与重绘加异常保护</span></div>
-    <div class="log-item"><b>v4.7</b> <span class="fix">[修复·背景]</span> <span>尘埃粒子此前只有 CSS 定义、DOM 中从未创建 → 实际上从未显示过；经典版（木质水墨）被 <code>display:none</code> 整个关掉背景</span> <span class="new">[重构·性能]</span> <span>动态背景改为<b>低分辨率 Canvas</b>（内部仅屏幕 0.3 倍，CSS 拉伸，天然柔化）：光球用 64px 小图放大绘制，<b>彻底去掉 filter:blur</b>；限帧 30fps（性能模式 20fps）；页面切到后台自动暂停；经典版启用<b>水墨风格</b>动态背景</span> <span class="fix">[修复]</span> <span>性能模式阈值过激（≤4核/≤3GB 就关闭全部特效）→ 放宽到 ≤2核/≤2GB/DPR&gt;3.2，中高端机不再被误判；性能模式下背景仍保留（只降帧率与粒子数），不再全关</span> <span class="new">[性能]</span> <span>resize 防抖 120ms，拖动窗口不再高频重算</span></div>
-    <div class="log-item"><b>v4.6</b> <span class="new">[新增]</span> <span>二维码联机：主机创建房间后自动生成二维码（内容为 服务器地址/?room=房间号），对方用手机相机或微信扫一下即可打开页面并<b>自动填好房间号</b>，只差点击「加入房间」。二维码生成器为纯 JS 零依赖实现（byte mode，版本1-10，纠错 M），已与 Python qrcode 逐模块比对验证一致</span></div>
-    <div class="log-item"><b>v4.5</b> <span class="new">[融合]</span> <span>服务器程序<b>内置进 HTML</b>：只需一个文件，联机页「⬇ 下载服务器程序」即可导出 signal-server.js，「⬇ 使用说明」导出保姆级步骤；不再需要单独保存服务器包</span> <span class="new">[移动端]</span> <span>联机页全面适配手机：输入框/文本域统一 16px（防 iOS 聚焦自动放大）、按钮与页签最小高度 44px（标准触摸目标）、房间号框 26px 大字、行间距加大</span></div>
-    <div class="log-item"><b>v4.4</b> <span class="new">[新增]</span> <span>联机「6 位房间号」配对：配套零依赖 Node 信令服务器（SSE 转发，无需 npm 安装），主机创建房间得到 6 位数字、连接方输入即可，<b>全程不用复制长码</b>；服务器地址自动记忆；棋子数据仍走 WebRTC P2P 直连，服务器不接触棋局；保留「手动复制码」页签作为无服务器时保底</span></div>
-    <div class="log-item"><b>v4.3</b> <span class="fix">[修复·性能]</span> <span>卡顿根因：极光背景用 left/top 做动画每帧触发 layout 重排（改 transform，只走合成层）、blur 46px→28px、棋子每次重绘都 createRadialGradient+shadowBlur（改离屏 sprite 缓存）、文字重复绘制（烘焙进 sprite）</span> <span class="new">[新增]</span> <span>性能模式：低端设备自动开启（≤4核/≤3GB/DPR&gt;2.6），暂停菜单可手动切换，关闭极光·扫描线·尘埃·故障动画</span> <span class="fix">[修复]</span> <span>启动更新说明不弹：改为「版本号变化必弹」，并记录上次版本；同时修正标题版本号与 meta 不一致（残留 v2.5）</span></div>
-    <div class="log-item"><b>v4.2</b> <span class="new">[新增]</span> <span>橡皮筋回弹（Rubber-band）：滚动到顶/到底后继续拖动产生阻尼位移、松手弹性回弹；内容不足一屏时同样生效；5 个页面与 8 个弹窗全部绑定，且与页面切换动画互斥不冲突。附细滚动条样式与 overscroll-behavior 收敛</span></div>
-    <div class="log-item"><b>v4.1</b> <span class="new">[改版]</span> <span>翻棋改为<b>原位打乱</b>：标准 10×9 棋盘、棋子摆回原格但随机换位；将帅与士仕原位不动且明置；其余在各自半场原格位内重排（红黑对称）；走法完全沿用标准象棋；暗子是实体（挡马腿/当炮架/塞象眼）但不可吃不可动、不产生将军威胁；保留将军与将死判定</span> <span class="fix">[修复]</span> <span>玩法说明等长弹窗看不到下半部分且无法滑动（sheet 不再锁高+overflow:hidden，滚动交回 mask，关闭键吸底）</span> <span class="fix">[修复·关键]</span> <span>启动更新说明只弹一次：已读标记写死 upd_v30，改为按版本号生成；菜单与关于页新增「本版更新」入口</span></div>
-    <div class="log-item"><b>v4.0</b> <span class="new">[新增]</span> <span>翻棋 · 暗棋玩法：选模式后新增「玩法选择页」（经典对弈 / 翻棋暗棋）。4×8=32 格全暗置打乱；每回合翻开一子或移动己方明子一格；等级压制 帅7&gt;仕6&gt;相5&gt;车4&gt;马3&gt;炮2&gt;兵1；兵克帅、炮隔空直吃任意敌方明子；暗子不可吃不可动；吃光对方获胜。翻棋无卡牌，AI 支持三档难度</span></div>
-    <div class="log-item"><b>v3.2</b> <span class="fix">[修复]</span> <span>经典版模式封面仍用 EVO 霓虹（改为按版本重绘，经典版走木质水墨「對弈」）</span> <span class="fix">[修复]</span> <span>玩法说明等长弹窗溢出屏幕导致关闭按钮点不到（mask 改 fixed+可滚动、sheet 限高 86vh、内容区弹性滚动、关闭按钮不压缩）</span> <span class="new">[新增]</span> <span>难度选择移入「人机对战」：点封面后先弹难度窗（入门/普通/困难，带说明），选定才进入对局；双人/联机不受影响</span></div>
-    <div class="log-item"><b>v3.1.1</b> <span class="fix">[修复·关键]</span> <span>根因修复：加动态背景时误将 #app 的 position:fixed 覆盖为 relative，导致所有页面高度塌陷被顶出屏幕；同时把 CSS inset:0 简写全部改为四边写法（兼容老 WebView）</span></div>
-    <div class="log-item"><b>v3.1</b> <span class="fix">[修复]</span> <span>布局溢出：内容超高时 UI 被顶出屏幕顶部（居中改为可滚动 + auto 撑开）、新增刘海屏/手势条安全区、棋盘尺寸改为动态测量顶栏与手牌栏实际高度</span> <span class="fix">[调整]</span> <span>卡池再精简：移除「迷雾」，保留 疾步 / 炮援 / 铁壁 / 抽隙 四张纯策略卡；清理重复发牌的冗余逻辑</span></div>
-    <div class="log-item"><b>v3.0</b> <span class="new">[新增]</span> <span>大型升级：卡牌平衡重做（移除天雷与全部运气卡、疾步不能吃子、每回合限出 1 张、手牌上限 4）、AI 决策引擎重写（威胁感知/反制预判/位置价值/出牌策略）、动态极光背景、暂停菜单集成、全屏胜利蒙版、回合大字、启动更新说明、经典版水墨视觉修正</span></div>
-    <div class="log-item"><b>v2.5</b> <span class="fix">[修复]</span> <span>AI 卡牌系统重写：按难度出牌（入门30%/普通55%/困难85%）、会用铁壁·迷雾·疾步·炮援·抽隙·三张运气卡（天雷仍不给AI）、走子按吃子价值选优</span> <span class="fix">[修复]</span> <span>铁壁设完即失效（改为携带阵营、撑过对手整回合）、AI 找不到卡时白扔手牌（splice(-1)）、提示点不认铁壁</span></div>
-    <div class="log-item"><b>v2.4</b> <span class="new">[新增]</span> <span>首页面「当前设备信息」：11 项检测与最低配置对比，给出 完全可玩 / 部分受影响 / 不建议游玩 三档结论，含复制与重新检测</span></div>
-    <div class="log-item"><b>v2.3</b> <span class="new">[新增]</span> <span>首次操作引导弹窗（联机/卡牌/反馈三套，看过即记住，可「不再提示」）</span> <span class="new">[新增]</span> <span>问题反馈附带全量设备信息（33 项 + 棋局快照）</span></div>
-    <div class="log-item"><b>v2.2</b> <span class="new">[新增]</span> <span>联机改为主机 / 连接主机双页签模式，主机执红先手</span> <span class="new">[新增]</span> <span>问题反馈功能（发送至 xianggo-furry@foxmail.com）</span></div>
-    <div class="log-item"><b>v2.1</b> <span class="new">[新增]</span> <span>横向滑动页面切换（前进左滑 / 返回右滑）、各页返回按钮统一回版本选择页</span></div>
-    <div class="log-item"><b>v2.0</b> <span class="new">[新增]</span> <span>版本选择页（EVO 赛博版 / 经典版）</span> <span class="new">[新增]</span> <span>经典版木质古风皮肤：木纹棋盘、木质棋子、水墨文字、关闭 CRT 扫描线</span> <span class="fix">[修复]</span> <span>弹窗与页面关闭无动画</span></div>
-    <div class="log-item"><b>v1.9</b> <span class="new">[新增]</span> <span>危险格标记（走去会被将军的位置，橙色虚线圈 + 感叹号）、吃子/将军/天雷全屏赛博大字、局域网联机（WebRTC 房间码）</span></div>
-    <div class="log-item"><b>v1.8.1</b> <span class="fix">[修复]</span> <span>炮援卡只消耗不生效（隔两子吃仍未实现）</span></div>
-    <div class="log-item"><b>v1.8</b> <span class="new">[新增]</span> <span>全面赛博朋克视觉重构（深空底+霓虹网格+CRT扫描线）、Logo 故障(Glitch)特效、玻璃霓虹棋子、切角全息 UI</span></div>
-    <div class="log-item"><b>v1.7.1</b> <span class="fix">[修复]</span> <span>脚本语法崩溃导致按钮失效/封面丢失、按钮 this 丢失、黑方繁体「馬」被冻结无法移动、补上走法提示的送将拦截</span></div>
-    <div class="log-item"><b>v1.7</b> <span class="new">[新增]</span> <span>天雷瞄准 QTE（进度条+指针+完美命中）、3 张运气卡（命运骰/流星雨/幸运币）、关于页更新日志、开局随机发牌</span></div>
-    <div class="log-item"><b>v1.6</b> <span class="fix">[修复]</span> <span>疾步/抽隙走完就切回合（引入额外行动状态机）、天雷可直击将帅（禁止斩首）</span></div>
-    <div class="log-item"><b>v1.5</b> <span class="fix">[修复]</span> <span>将帅被吃不弹胜利结算、胜负方写反、可吃提示点遮挡敌方棋子（改半透明红环）</span></div>
-    <div class="log-item"><b>v1.4</b> <span class="new">[新增]</span> <span>红黑专属手牌槽（上黑下红）、卡牌只能对己方/敌方生效、非回合方灰显</span></div>
-    <div class="log-item"><b>v1.3</b> <span class="new">[新增]</span> <span>玩法说明页、卡牌两步生效、特效实装</span> <span class="fix">[修复]</span> <span>顶部按钮需先点棋子才响应</span></div>
-    <div class="log-item"><b>v1.2</b> <span class="new">[新增]</span> <span>「关于」页（版本/代码生成/玩法提示署名）</span></div>
-    <div class="log-item"><b>v1.1</b> <span class="new">[新增]</span> <span>模式选择页（人机/双人）、绿点红点走法提示、AI 三档难度</span></div>
-    <div class="log-item"><b>v1.0</b> <span class="new">[新增]</span> <span>基础对弈：完整象棋规则 + 卡牌系统</span></div>
-  </div>
-  </div>
-  <p style="text-align:center;opacity:.7;font-size:12px;margin:8px 0">单文件 · 零依赖 · 离线可玩 · 构建 2026-10-03</p>
-  <button class="ok" id="btnFb2" style="background:rgba(10,20,30,.8);border:1px solid #2a6a7a;color:#7ce8ff;box-shadow:none;letter-spacing:2px">✉ 问题反馈</button>
+  <div id="abPaneLog" style="display:none"></div>
+  <p style="text-align:center;opacity:.7;font-size:12px;margin:8px 0">单文件 · 零依赖 · 离线可玩</p>
+  <button class="ok" id="btnFb2" style="display:none">✉ 问题反馈</button>
   <button class="ok" id="aboutOk">知道了</button></div></div>
+
   <div class="dv" id="dv">
     <div class="dv-box">
       <h5>◇ CONSOLE</h5>
@@ -2551,146 +2484,6 @@ $('#covFlip').addEventListener('click', function () {
   }, 380);
 });
 /* ==================================================================
-   [v5.5.0] 检查更新
-   · 从仓库读取 version.json，与本地 build 版本号比对
-   · 依次尝试：同目录（Pages 部署后）→ raw.githubusercontent → Pages
-   · 纯前端只读，无需后端；失败时给仓库地址供手动查看
-   ================================================================== */
-var UPD_REPO = 'https://github.com/XIANGgo-furry/HtmlGamesUnite';
-/* 文件名带「象棋」前缀：同一仓库下可能有多个 HTML 各自的版本清单 */
-var UPD_URLS = [
-  './象棋version.json',
-  'https://raw.githubusercontent.com/XIANGgo-furry/HtmlGamesUnite/main/象棋version.json',
-  'https://XIANGgo-furry.github.io/HtmlGamesUnite/象棋version.json'
-];
-/* 本地当前版本号：从 meta build 解析，保证与版本字符串永远同步 */
-function localVer() {
-  try {
-    var m = document.querySelector('meta[name=build]');
-    var t = (m && m.getAttribute('content')) || '';
-    var v = t.match(/v(\d+)\.(\d+)\.(\d+)/);
-    if (v) return { s: 'v' + v[1] + '.' + v[2] + '.' + v[3], a: [+v[1], +v[2], +v[3]] };
-  } catch (e) {}
-  return { s: 'v0.0.0', a: [0, 0, 0] };
-}
-/* 比较：1=远程更新 0=相同 -1=本地更新 */
-function verCmp(a, b) {
-  for (var i = 0; i < 3; i++) {
-    if ((a[i] || 0) > (b[i] || 0)) return 1;
-    if ((a[i] || 0) < (b[i] || 0)) return -1;
-  }
-  return 0;
-}
-function numOf(v) {
-  var m = String(v || '').match(/(\d+)\.(\d+)\.(\d+)/);
-  return m ? [+m[1], +m[2], +m[3]] : [0, 0, 0];
-}
-var UPD_LAST = null;
-function checkUpdate(silent) {
-  var body = document.getElementById('updChkBody');
-  var go = document.getElementById('updChkGo');
-  var ok = document.getElementById('updChkOk');
-  if (go) go.style.display = 'none';
-  if (!silent) {
-    if (body) body.innerHTML = '<div style="text-align:center;opacity:.7;padding:14px 0">正在检查…</div>';
-    openMask('#updChkMask');
-  }
-  var idx = 0;
-  function next() {
-    if (idx >= UPD_URLS.length) {
-      if (!silent) {
-        if (body) body.innerHTML = '<div style="line-height:1.9">'
-          + '<b style="color:#c9a227">⚠ 无法连接到更新服务器</b><br>'
-          + '可能原因：当前处于离线状态，或本地 <code>file://</code> 打开时浏览器拦截了跨域请求。<br><br>'
-          + '· 若部署到 GitHub Pages 后使用，检查更新会正常工作<br>'
-          + '· 也可手动前往仓库查看最新版本</div>';
-        if (go) {
-          go.style.display = '';
-          go.textContent = '打开仓库';
-          go.onclick = function () { try { window.open(UPD_REPO, '_blank'); } catch (e) {} };
-        }
-      }
-      return;
-    }
-    var url = UPD_URLS[idx++];
-    var done = false;
-    var timer = setTimeout(function () { if (!done) { done = true; next(); } }, 6000);
-    try {
-      fetch(url, { cache: 'no-store' }).then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      }).then(function (j) {
-        if (done) return; done = true; clearTimeout(timer);
-        handleUpd(j, silent);
-      })['catch'](function () {
-        if (done) return; done = true; clearTimeout(timer); next();
-      });
-    } catch (e) {
-      if (done) return; done = true; clearTimeout(timer); next();
-    }
-  }
-  next();
-}
-function handleUpd(j, silent) {
-  var lv = localVer();
-  var rv = numOf(j && j.version);
-  var cmp = verCmp(rv, lv.a);
-  UPD_LAST = { j: j, cmp: cmp };
-  function esc(x) {
-    return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
-  var go = document.getElementById('updChkGo');
-  var ok = document.getElementById('updChkOk');
-  var link = (j && (j.download || j.page || UPD_REPO)) || UPD_REPO;
-  if (go) {
-    go.onclick = function () { try { window.open(link, '_blank'); } catch (e) {} };
-  }
-  if (cmp > 0) {
-    var notes = (j && j.notes) || [];
-    var h = '<div style="line-height:1.9"><b style="color:#c9a227">🎉 发现新版本</b><br>'
-      + '<span style="opacity:.75">当前：' + esc(lv.s) + '　最新：<b>' + esc(j.tag || j.version) + '</b></span>';
-    if (j && j.date) h += '<br><span style="opacity:.6;font-size:11.5px">发布于 ' + esc(j.date) + '</span>';
-    if (notes.length) {
-      h += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(128,128,128,.25)">';
-      notes.forEach(function (x) { h += '· ' + esc(x) + '<br>'; });
-      h += '</div>';
-    }
-    h += '</div>';
-    if (silent) {
-      if (document.getElementById('updChkBody')) document.getElementById('updChkBody').innerHTML = h;
-      if (go) { go.style.display = ''; go.textContent = '前往下载'; }
-      if (ok) ok.textContent = '稍后再说';
-      openMask('#updChkMask');
-    } else {
-      document.getElementById('updChkBody').innerHTML = h;
-      if (go) { go.style.display = ''; go.textContent = '前往下载'; }
-      if (ok) ok.textContent = '稍后再说';
-    }
-    return;
-  }
-  if (silent) return; /* 已是最新：静默检查不打扰 */
-  var h2 = '<div style="line-height:1.9"><b style="color:#4caf50">✓ 已是最新版本</b><br>'
-    + '<span style="opacity:.75">当前版本：' + esc(lv.s)
-    + (j && j.tag ? '（' + esc(j.tag) + '）' : '') + '</span><br>'
-    + '<span style="opacity:.6;font-size:11.5px">来源：' + esc(UPD_REPO) + '</span></div>';
-  document.getElementById('updChkBody').innerHTML = h2;
-  if (ok) ok.textContent = '知道了';
-}
-(function () {
-  var b = document.getElementById('btnChkUpd');
-  if (b) b.addEventListener('click', function (e) {
-    try { ripple(e, this); } catch (_e) {}
-    checkUpdate(false);
-  });
-  var o = document.getElementById('updChkOk');
-  if (o) o.addEventListener('click', function () { closeMask('#updChkMask'); });
-  var mm = document.getElementById('updChkMask');
-  if (mm) mm.addEventListener('click', function (e) { if (e.target === mm) closeMask('#updChkMask'); });
-})();
-
-/* ==================================================================
    [v5.4.1] 赛制选择：放在【第三层 - 玩法选择页】，进对局前决定
    （此前误放在暂停菜单，已按用户要求迁移）
    ================================================================== */
@@ -3229,7 +3022,7 @@ $('#devCopy').addEventListener('click', function () {
 
 /* ===== 首次操作引导弹窗 ===== */
 var TIPS = {
-  net: ['联机 · 6 位房间号配对', '<b>推荐：房间号配对</b>（需一台电脑运行信令服务器）<hr>' + '<b>【主机 / 老师机】</b><ul>' + '<li>电脑装好 Node.js 后，双击「<span class="k">启动联机服务器.bat</span>」</li>' + '<li>屏幕上会显示地址，如 <span class="k">http://192.168.1.5:8787</span></li>' + '<li>把这个地址告诉同学</li>' + '<li>游戏里：联机对战 →「<span class="k">房间号配对</span>」→「<span class="k">我是主机</span>」</li>' + '<li>填入服务器地址 → 点「<span class="k">创建房间</span>」</li>' + '<li>屏幕显示 <b>6 位房间号</b>，念给对方即可，<b>不用复制长码</b></li></ul>' + '<b>【连接方 / 同学】最省事：扫码</b><ul>' + '<li>主机屏幕上会显示一个<b>二维码</b></li>' + '<li>用手机相机 / 微信「扫一扫」扫它</li>' + '<li>自动打开页面，房间号<b>已经填好</b></li>' + '<li>只点一下「<span class="k">加入房间</span>」就完事</li></ul>' + '<b>手动输入也行：</b><ul>' + '<li>联机对战 →「<span class="k">房间号配对</span>」→「<span class="k">连接主机</span>」</li>' + '<li>填同样的服务器地址</li>' + '<li>输入那 6 位房间号 → 点「<span class="k">加入房间</span>」</li>' + '<li>显示「已连接 ✓」后双方点「<span class="k">开始对局</span>」</li></ul>' + '<b>没有服务器？</b>切到「<span class="k">手动复制码</span>」页签，互相复制地址码（较麻烦但可用）。<hr>' + '<b>连不上？</b>① 服务器窗口是否还开着 ② 地址别漏了 <span class="k">http://</span> 和端口号 ③ 双方在同一 WiFi ④ 电脑防火墙放行该端口'],
+  net: ['联机 · 6 位房间号配对', '<b>推荐：房间号配对</b>（需一台电脑运行信令服务器）<hr>' + '<b>【主机 / 老师机】</b><ul>' + '<li>电脑装好 Node.js 后，双击「<span class="k">启动联机服务器.bat</span>」</li>' + '<li>屏幕上会显示地址，如 <span class="k">192.168.1.5:8787</span></li>' + '<li>把这个地址告诉同学</li>' + '<li>游戏里：联机对战 →「<span class="k">房间号配对</span>」→「<span class="k">我是主机</span>」</li>' + '<li>填入服务器地址 → 点「<span class="k">创建房间</span>」</li>' + '<li>屏幕显示 <b>6 位房间号</b>，念给对方即可，<b>不用复制长码</b></li></ul>' + '<b>【连接方 / 同学】最省事：扫码</b><ul>' + '<li>主机屏幕上会显示一个<b>二维码</b></li>' + '<li>用手机相机 / 微信「扫一扫」扫它</li>' + '<li>自动打开页面，房间号<b>已经填好</b></li>' + '<li>只点一下「<span class="k">加入房间</span>」就完事</li></ul>' + '<b>手动输入也行：</b><ul>' + '<li>联机对战 →「<span class="k">房间号配对</span>」→「<span class="k">连接主机</span>」</li>' + '<li>填同样的服务器地址</li>' + '<li>输入那 6 位房间号 → 点「<span class="k">加入房间</span>」</li>' + '<li>显示「已连接 ✓」后双方点「<span class="k">开始对局</span>」</li></ul>' + '<b>没有服务器？</b>切到「<span class="k">手动复制码</span>」页签，互相复制地址码（较麻烦但可用）。<hr>' + '<b>连不上？</b>① 服务器窗口是否还开着 ② 地址别漏了端口号 ③ 双方在同一 WiFi ④ 电脑防火墙放行该端口'],
   flip: ['翻棋 · 暗棋（原位打乱）', '<b>核心思路</b>：标准 10×9 棋盘，棋子摆在<b>原来的格子</b>上，但<b>哪个格子放哪个子</b>被打乱。<hr>' + '<b>不参与打乱</b>：将 / 帅、士 / 仕 留在原位，且<b>一开始就是明牌</b>。<br>' + '<b>参与打乱</b>：车马炮相兵（車馬砲象卒）在<b>各自半场的原格位内</b>随机重排 —— 红黑各自打乱，<b>双方完全对称</b>。<br>' + '<b>除将帅士仕外，其余全部背面朝上</b>，翻开才知道是什么。<hr>' + '<b>每回合二选一</b><ul>' + '<li><b>翻开一个暗子</b> —— <b>消耗整个回合</b>，翻完就换对手</li>' + '<li><b>移动一枚己方明子</b> —— 走法就是标准象棋</li></ul>' + '<b>关键规则</b><ul>' + '<li>走法<b>完全沿用标准象棋</b>：马蹩腿、象塞眼、炮翻山、兵过河横走、九宫限制</li>' + '<li><b>暗子是实体</b>：能挡马腿、当炮架、塞象眼（这是最重要的策略点）</li>' + '<li><b>暗子不可被吃、也不可移动</b>，必须先翻开</li>' + '<li>暗子<b>不产生将军威胁</b> —— 没翻开就不知道它是什么</li>' + '<li>保留完整<b>将军 / 将死</b>判定</li></ul>' + '<b>怎么赢</b>：<b>将死</b>对方，或把对方棋子<b>全部吃光</b>。<hr>' + '<b>提示点</b>：🟢绿点=可走　🔴红环=可吃（红环是描边，不会挡住敌方棋子）'],
   evo: ['卡牌怎么用 · 两步生效', '<b>卡牌不是点一下就生效</b>，必须两步：<ul>' + '<li><span class="k">第一步</span> 点底部（红方）/顶部（黑方）<b>手牌槽</b>里的卡 → 卡片浮起发青光，顶栏出现提示</li>' + '<li><span class="k">第二步</span> 再点<b>棋盘上的棋子或格子</b>作为目标 → 卡牌生效</li></ul><hr>' + '<b>六张卡</b><ul>' + '<li>⚡ <b>疾步</b>：点己方棋子 → 该子<b>再走一次</b></li>' + '<li>🎯 <b>炮援</b>：己方炮本回合可<b>隔两子吃</b>（金色光环标记，用一次失效）</li>' + '<li>🛡️ <b>铁壁</b>：点己方棋子 → 本回合<b>不会被吃</b></li>' + '<li>🌀 <b>抽隙</b>：<b>吃子后</b>可再走一格（没吃到则作废）</li>' + '<li>🎯 <b>炮援</b>：无需目标，本回合你的炮可<b>隔两子吃</b>一次</li>' + '<li>🌀 <b>抽隙</b>：无需目标，本回合<b>吃子后</b>可再走一格</li></ul>' + '<b>手牌规则</b>：开局 3 张，每回合补 1 张，上限 4 张；<b>每回合只能出 1 张</b>（出过则本回合灰显）</li>' + '<b>提示点</b>：🟢绿点=可走　🔴红环=可吃'],
   fb: ['问题反馈 · 会发送什么', '点「发送反馈」会<b>唤起你设备上的邮件应用</b>，收件人已填好，正文自动附带诊断信息，你确认发送即可。<hr>' + '<b>建议这样描述</b>：<ul>' + '<li>做了什么操作（例：出了疾步卡，点了己方车）</li>' + '<li>期望发生什么 / 实际发生什么</li>' + '<li>是否每次都复现</li></ul>' + '<b>自动附带的设备信息</b>：版本号、模式、当前页面、浏览器与系统、屏幕与像素比、语言与时区、' + 'CPU 核心数、内存、触摸/网络状态、WebRTC 与 Canvas 支持情况、完整 UA，以及<b>当前棋局快照</b>。<hr>' + '如果设备上没有邮件应用，可点「<span class="k">复制内容</span>」手动粘贴发邮件。']
@@ -3274,7 +3067,7 @@ $('#tipMask').addEventListener('click', function (e) {
 });
 
 /* ===== 问题反馈 ===== */
-var FB_MAIL = 'xianggo-furry@foxmail.com';
+var FB_MAIL = '';
 function fbEnv() {
   var ua = navigator.userAgent || '';
   var br = '未知';
@@ -3394,19 +3187,15 @@ function fbSend() {
     return;
   }
   var sub = '[中国象棋] 问题反馈';
-  var url = 'mailto:' + FB_MAIL + '?subject=' + encodeURIComponent(sub) + '&body=' + encodeURIComponent(fbBody());
   try {
     localStorage.setItem('fbBackup', fbBody());
   } catch (e) {}
-  var a = document.createElement('a');
-  a.href = url;
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(function () {
-    return a.remove();
-  }, 200);
-  toast('已唤起邮件应用，确认发送即可 ✉');
+  var payload = sub + '\n\n' + fbBody();
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(payload);
+    else { var ta = document.createElement('textarea'); ta.value = payload; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  } catch (e) {}
+  toast('反馈内容已复制 ✉');
   setTimeout(function () {
     closeMask('#fbMask');
     $('#fbTxt').value = '';
@@ -4502,7 +4291,7 @@ function scanStop() {
   var v = $('#scanVid');
   if (v) { try { v.pause(); } catch (e) {} try { v.srcObject = null; } catch (e) {} }
 }
-/* 解析二维码内容：支持 http://host/?room=123456 或裸 6 位数字 */
+/* 解析二维码内容：支持 服务器地址/?room=123456 或裸 6 位数字 */
 function scanParse(txt) {
   try {
     var t = String(txt || '').trim();
@@ -4712,7 +4501,7 @@ if ($('#dlSrv')) $('#dlSrv').addEventListener('click', function () {
   if (dl('signal-server.js', SRV_SRC, 'text/javascript;charset=utf-8')) toast('已下载 signal-server.js');else netLog('下载失败，请换个浏览器', true);
 });
 if ($('#dlHelp')) $('#dlHelp').addEventListener('click', function () {
-  var h = ['中国象棋 · 联机服务器 使用说明', '', '【1】装 Node.js（只需一次）：https://nodejs.org 下载 LTS，一路下一步', '', '【2】启动服务器：双击 启动联机服务器.bat', '    （或命令行：node signal-server.js）', '    屏幕显示 http://192.168.x.x:8787 → 记下来', '', '【3】开始对战（二选一）', '  A 全班都访问 http://192.168.x.x:8787 → 地址已自动填好', '  B 各自打开 中国象棋EVO.html → 联机对战 → 填服务器地址', '     主机「创建房间」→ 得到 6 位房间号 → 念给对方', '     对方「连接主机」→ 输入房间号 → 加入 → 开始对局', '', '【常见问题】', '· 端口被占用：node signal-server.js 9000（游戏里地址同步改 :9000）', '· 连不上：① 服务器窗口还开着吗 ② 同一 WiFi 吗 ③ 防火墙放行了吗', '· 地址别漏 http:// 和端口号', '', '服务器只牵线，棋子走设备直连（P2P），看不到棋局内容。'].join('\n');
+  var h = ['中国象棋 · 联机服务器 使用说明', '', '【1】装 Node.js（只需一次）：下载 LTS 版，一路下一步', '', '【2】启动服务器：双击 启动联机服务器.bat', '    （或命令行：node signal-server.js）', '    屏幕显示 192.168.x.x:8787 → 记下来', '', '【3】开始对战（二选一）', '  A 全班都访问 192.168.x.x:8787 → 地址已自动填好', '  B 各自打开本游戏页面 → 联机对战 → 填服务器地址', '     主机「创建房间」→ 得到 6 位房间号 → 念给对方', '     对方「连接主机」→ 输入房间号 → 加入 → 开始对局', '', '【常见问题】', '· 端口被占用：node signal-server.js 9000（游戏里地址同步改 :9000）', '· 连不上：① 服务器窗口还开着吗 ② 同一 WiFi 吗 ③ 防火墙放行了吗', '· 地址别漏端口号', '', '服务器只牵线，棋子走设备直连（P2P），看不到棋局内容。'].join('\n');
   if (dl('使用说明.txt', h)) toast('已下载使用说明.txt');
 });
 if ($('#tabQuick')) $('#tabQuick').addEventListener('click', function () {
@@ -4860,7 +4649,7 @@ $('#netBack').addEventListener('click', function () {
    点「下载服务器程序」即可导出 signal-server.js（含使用说明）
    无需从别处拷贝，也不会因为丢文件而用不了
    ================================================================== */
-var SRV_SRC = "/* ============================================================================\n   中国象棋 EVO · 联机信令服务器（零依赖，只装 Node 就能跑）\n   ----------------------------------------------------------------------------\n   作用：让两台设备用【6 位房间号】配对，不用复制长码。\n        只负责牵线，棋子数据仍是设备间直连（P2P），服务器看不到棋局。\n\n   用法：\n       1. 装 Node.js（nodejs.org，一路下一步）\n       2. 双击 启动联机服务器.bat（或命令行 node signal-server.js）\n       3. 记下屏幕上打印的地址，例如 http://192.168.1.5:8787\n       4. 两台设备都打开浏览器访问这个地址（可直接使用内置页面）\n          或在游戏「联机对战」里把这个地址填进「服务器地址」\n\n   端口被占用？改 PORT 变量，或用命令行：node signal-server.js 9000\n   ============================================================================ */\n\nconst http = require('http');\nconst fs   = require('fs');\nconst path = require('path');\nconst os   = require('os');\n\n/* 端口：命令行可覆盖，如 node signal-server.js 9000 */\nconst PORT = parseInt(process.argv[2], 10) || 8787;\n\n/* 房间表： roomNo -> { host:{res}, guest:{res}, created } */\nconst ROOMS = new Map();\n/* 广播日志（每个房间一条 SSE 流，简化处理：给房间内两个角色各一条流） */\n\nconst MIME = {\n  '.html':'text/html; charset=utf-8',\n  '.js'  :'text/javascript; charset=utf-8',\n  '.css' :'text/css; charset=utf-8',\n  '.json':'application/json; charset=utf-8',\n  '.png' :'image/png', '.jpg':'image/jpeg', '.svg':'image/svg+xml',\n  '.ico' :'image/x-icon'\n};\n\n/* 生成 6 位数字房间号 */\nfunction newRoomNo(){\n  let n;\n  do {\n    n = String(Math.floor(100000 + Math.random() * 900000)); // 100000~999999\n  } while (ROOMS.has(n));\n  return n;\n}\n\n/* 清理超过 2 小时没动静的房间 */\nsetInterval(() => {\n  const now = Date.now();\n  for (const [no, r] of ROOMS) {\n    if (now - (r.touched || r.created) > 2 * 60 * 60 * 1000) {\n      try { r.host && r.host.res && r.host.res.end(); } catch (e) {}\n      try { r.guest && r.guest.res && r.guest.res.end(); } catch (e) {}\n      ROOMS.delete(no);\n      console.log('[清理] 房间 ' + no + ' 超时已移除');\n    }\n  }\n}, 10 * 60 * 1000);\n\nfunction sendJSON(res, obj, code) {\n  const body = JSON.stringify(obj);\n  res.writeHead(code || 200, {\n    'Content-Type': 'application/json; charset=utf-8',\n    'Access-Control-Allow-Origin': '*',\n    'Cache-Control': 'no-store'\n  });\n  res.end(body);\n}\n\n/* SSE 推送 */\nfunction sse(res, event, data) {\n  try {\n    res.write('event: ' + event + '\\n');\n    res.write('data: ' + JSON.stringify(data) + '\\n\\n');\n  } catch (e) {}\n}\n\nfunction getLocalIPs() {\n  const out = [];\n  const ifs = os.networkInterfaces();\n  for (const name of Object.keys(ifs)) {\n    for (const it of ifs[name]) {\n      if (it.family === 'IPv4' && !it.internal) out.push(it.address);\n    }\n  }\n  return out;\n}\n\nconst server = http.createServer((req, res) => {\n  const u = new URL(req.url, 'http://' + (req.headers.host || 'localhost'));\n  const p = u.pathname;\n\n  /* ---- CORS 预检 ---- */\n  if (req.method === 'OPTIONS') {\n    res.writeHead(204, {\n      'Access-Control-Allow-Origin': '*',\n      'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',\n      'Access-Control-Allow-Headers': 'Content-Type',\n      'Access-Control-Max-Age': '86400'\n    });\n    return res.end();\n  }\n\n  /* ---- 读取请求体 ---- */\n  const readBody = (cb) => {\n    let b = '';\n    req.on('data', c => { b += c; if (b.length > 2e6) req.destroy(); });\n    req.on('end', () => { try { cb(b ? JSON.parse(b) : {}); } catch (e) { cb({}); } });\n  };\n\n  /* ================= 接口 1：创建房间 ================= */\n  if (p === '/api/create' && req.method === 'POST') {\n    return readBody(() => {\n      const no = newRoomNo();\n      ROOMS.set(no, { created: Date.now(), touched: Date.now(), host: null, guest: null });\n      console.log('[创建] 房间 ' + no);\n      sendJSON(res, { ok: true, room: no });\n    });\n  }\n\n  /* ================= 接口 2：查询房间是否存在 ================= */\n  if (p === '/api/query') {\n    const no = (u.searchParams.get('room') || '').trim();\n    const r = ROOMS.get(no);\n    sendJSON(res, { ok: !!r, room: no, hasHost: !!(r && r.host), hasGuest: !!(r && r.guest) });\n    return;\n  }\n\n  /* ================= 接口 3：加入房间（建立 SSE 流） ================= */\n  if (p === '/api/join') {\n    const no  = (u.searchParams.get('room') || '').trim();\n    const role = (u.searchParams.get('role') || 'guest'); // host | guest\n    const r = ROOMS.get(no);\n    if (!r) { sendJSON(res, { ok: false, err: '房间不存在' }, 404); return; }\n    if (role !== 'host' && role !== 'guest') { sendJSON(res, { ok: false, err: '角色错误' }, 400); return; }\n    if (r[role]) { sendJSON(res, { ok: false, err: '该房间此角色已有人' }, 409); return; }\n\n    res.writeHead(200, {\n      'Content-Type': 'text/event-stream; charset=utf-8',\n      'Cache-Control': 'no-cache, no-transform',\n      'Connection': 'keep-alive',\n      'Access-Control-Allow-Origin': '*',\n      'X-Accel-Buffering': 'no'\n    });\n    res.write(': connected\\n\\n');\n\n    const slot = { res: res };\n    r[role] = slot;\n    r.touched = Date.now();\n    console.log('[加入] 房间 ' + no + ' · ' + role);\n\n    /* 通知双方当前的配对状态 */\n    sse(res, 'hello', { role: role, room: no });\n    if (r.host && r.guest) {\n      sse(r.host.res, 'peer', { peer: 'guest' });\n      sse(r.guest.res, 'peer', { peer: 'host' });\n      console.log('[配对] 房间 ' + no + ' 双方到齐');\n    }\n\n    req.on('close', () => {\n      if (r[role] === slot) { r[role] = null; console.log('[离开] 房间 ' + no + ' · ' + role); }\n      const other = role === 'host' ? r.guest : r.host;\n      if (other && other.res) sse(other.res, 'bye', { who: role });\n      if (!r.host && !r.guest) ROOMS.delete(no);\n    });\n    return;\n  }\n\n  /* ================= 接口 4：转发信令（offer/answer/ice/对局数据） ================= */\n  if (p === '/api/msg' && req.method === 'POST') {\n    return readBody((d) => {\n      const no = String(d.room || '').trim();\n      const from = d.from;                       // host | guest\n      const r = ROOMS.get(no);\n      if (!r) { sendJSON(res, { ok: false, err: '房间不存在' }, 404); return; }\n      r.touched = Date.now();\n      const target = from === 'host' ? r.guest : r.host;\n      if (target && target.res) sse(target.res, 'msg', { from: from, data: d.data });\n      sendJSON(res, { ok: true });\n    });\n  }\n\n  /* ================= 接口 5：房间列表（便于排错） ================= */\n  if (p === '/api/rooms') {\n    const list = [];\n    for (const [no, r] of ROOMS) list.push({ room: no, host: !!r.host, guest: !!r.guest });\n    sendJSON(res, { ok: true, rooms: list });\n    return;\n  }\n\n  /* ================= 静态文件：直接托管游戏页面 ================= */\n  let file = p === '/' ? '/index.html' : p;\n  file = file.replace(/\\?.*$/, '');\n  /* 防目录穿越 */\n  const safe = path.normalize(file).replace(/^(\\.\\.[\\/\\\\])+/, '');\n  const full = path.join(__dirname, safe);\n\n  fs.readFile(full, (err, buf) => {\n    if (err) {\n      /* 页面没找到 → 返回提示页 */\n      res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });\n      res.end('<meta charset=\"utf-8\"><body style=\"font-family:sans-serif;padding:24px;line-height:1.8\">' +\n        '<h2>未找到 index.html</h2>' +\n        '<p>请把游戏文件放在本服务器<strong>同一个文件夹</strong>里，并命名为 <code>index.html</code>。</p>' +\n        '<p>或者直接用浏览器打开本地的 中国象棋EVO.html，在「联机对战」里填写服务器地址。</p>' +\n        '<p><a href=\"/api/rooms\">查看当前房间列表</a></p></body>');\n      return;\n    }\n    const ext = path.extname(full).toLowerCase();\n    res.writeHead(200, {\n      'Content-Type': MIME[ext] || 'application/octet-stream',\n      'Cache-Control': 'no-store'\n    });\n    res.end(buf);\n  });\n});\n\nserver.on('error', (e) => {\n  if (e.code === 'EADDRINUSE') {\n    console.error('\\n端口 ' + PORT + ' 已被占用！');\n    console.error('换个端口试试：node signal-server.js 9000\\n');\n  } else {\n    console.error(e);\n  }\n  process.exit(1);\n});\n\nserver.listen(PORT, '0.0.0.0', () => {\n  const ips = getLocalIPs();\n  console.log('');\n  console.log('==============================================');\n  console.log('  中国象棋 EVO · 联机服务器已启动');\n  console.log('==============================================');\n  console.log('  本机打开：  http://localhost:' + PORT);\n  ips.forEach(ip => console.log('  局域网打开：http://' + ip + ':' + PORT));\n  console.log('');\n  console.log('  把上面的「局域网」地址告诉同学，或者：');\n  console.log('  在游戏里「联机对战」→ 填服务器地址 → 用 6 位房间号配对');\n  console.log('');\n  console.log('  关闭窗口即可停止服务器');\n  console.log('==============================================\\n');\n});\n";
+var SRV_SRC = "/* ============================================================================\n   中国象棋 · 联机信令服务器（零依赖，只装 Node 就能跑）\n   ----------------------------------------------------------------------------\n   作用：让两台设备用【6 位房间号】配对，不用复制长码。\n        只负责牵线，棋子数据仍是设备间直连（P2P），服务器看不到棋局。\n\n   用法：\n       1. 装 Node.js（nodejs.org，一路下一步）\n       2. 双击 启动联机服务器.bat（或命令行 node signal-server.js）\n       3. 记下屏幕上打印的地址，例如 192.168.1.5:8787\n       4. 两台设备都打开浏览器访问这个地址（可直接使用内置页面）\n          或在游戏「联机对战」里把这个地址填进「服务器地址」\n\n   端口被占用？改 PORT 变量，或用命令行：node signal-server.js 9000\n   ============================================================================ */\n\nconst http = require('http');\nconst fs   = require('fs');\nconst path = require('path');\nconst os   = require('os');\n\n/* 端口：命令行可覆盖，如 node signal-server.js 9000 */\nconst PORT = parseInt(process.argv[2], 10) || 8787;\n\n/* 房间表： roomNo -> { host:{res}, guest:{res}, created } */\nconst ROOMS = new Map();\n/* 广播日志（每个房间一条 SSE 流，简化处理：给房间内两个角色各一条流） */\n\nconst MIME = {\n  '.html':'text/html; charset=utf-8',\n  '.js'  :'text/javascript; charset=utf-8',\n  '.css' :'text/css; charset=utf-8',\n  '.json':'application/json; charset=utf-8',\n  '.png' :'image/png', '.jpg':'image/jpeg', '.svg':'image/svg+xml',\n  '.ico' :'image/x-icon'\n};\n\n/* 生成 6 位数字房间号 */\nfunction newRoomNo(){\n  let n;\n  do {\n    n = String(Math.floor(100000 + Math.random() * 900000)); // 100000~999999\n  } while (ROOMS.has(n));\n  return n;\n}\n\n/* 清理超过 2 小时没动静的房间 */\nsetInterval(() => {\n  const now = Date.now();\n  for (const [no, r] of ROOMS) {\n    if (now - (r.touched || r.created) > 2 * 60 * 60 * 1000) {\n      try { r.host && r.host.res && r.host.res.end(); } catch (e) {}\n      try { r.guest && r.guest.res && r.guest.res.end(); } catch (e) {}\n      ROOMS.delete(no);\n      console.log('[清理] 房间 ' + no + ' 超时已移除');\n    }\n  }\n}, 10 * 60 * 1000);\n\nfunction sendJSON(res, obj, code) {\n  const body = JSON.stringify(obj);\n  res.writeHead(code || 200, {\n    'Content-Type': 'application/json; charset=utf-8',\n    'Access-Control-Allow-Origin': '*',\n    'Cache-Control': 'no-store'\n  });\n  res.end(body);\n}\n\n/* SSE 推送 */\nfunction sse(res, event, data) {\n  try {\n    res.write('event: ' + event + '\\n');\n    res.write('data: ' + JSON.stringify(data) + '\\n\\n');\n  } catch (e) {}\n}\n\nfunction getLocalIPs() {\n  const out = [];\n  const ifs = os.networkInterfaces();\n  for (const name of Object.keys(ifs)) {\n    for (const it of ifs[name]) {\n      if (it.family === 'IPv4' && !it.internal) out.push(it.address);\n    }\n  }\n  return out;\n}\n\nconst server = http.createServer((req, res) => {\n  const u = new URL(req.url, 'http:' + '//' + (req.headers.host || 'localhost'));\n  const p = u.pathname;\n\n  /* ---- CORS 预检 ---- */\n  if (req.method === 'OPTIONS') {\n    res.writeHead(204, {\n      'Access-Control-Allow-Origin': '*',\n      'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',\n      'Access-Control-Allow-Headers': 'Content-Type',\n      'Access-Control-Max-Age': '86400'\n    });\n    return res.end();\n  }\n\n  /* ---- 读取请求体 ---- */\n  const readBody = (cb) => {\n    let b = '';\n    req.on('data', c => { b += c; if (b.length > 2e6) req.destroy(); });\n    req.on('end', () => { try { cb(b ? JSON.parse(b) : {}); } catch (e) { cb({}); } });\n  };\n\n  /* ================= 接口 1：创建房间 ================= */\n  if (p === '/api/create' && req.method === 'POST') {\n    return readBody(() => {\n      const no = newRoomNo();\n      ROOMS.set(no, { created: Date.now(), touched: Date.now(), host: null, guest: null });\n      console.log('[创建] 房间 ' + no);\n      sendJSON(res, { ok: true, room: no });\n    });\n  }\n\n  /* ================= 接口 2：查询房间是否存在 ================= */\n  if (p === '/api/query') {\n    const no = (u.searchParams.get('room') || '').trim();\n    const r = ROOMS.get(no);\n    sendJSON(res, { ok: !!r, room: no, hasHost: !!(r && r.host), hasGuest: !!(r && r.guest) });\n    return;\n  }\n\n  /* ================= 接口 3：加入房间（建立 SSE 流） ================= */\n  if (p === '/api/join') {\n    const no  = (u.searchParams.get('room') || '').trim();\n    const role = (u.searchParams.get('role') || 'guest'); // host | guest\n    const r = ROOMS.get(no);\n    if (!r) { sendJSON(res, { ok: false, err: '房间不存在' }, 404); return; }\n    if (role !== 'host' && role !== 'guest') { sendJSON(res, { ok: false, err: '角色错误' }, 400); return; }\n    if (r[role]) { sendJSON(res, { ok: false, err: '该房间此角色已有人' }, 409); return; }\n\n    res.writeHead(200, {\n      'Content-Type': 'text/event-stream; charset=utf-8',\n      'Cache-Control': 'no-cache, no-transform',\n      'Connection': 'keep-alive',\n      'Access-Control-Allow-Origin': '*',\n      'X-Accel-Buffering': 'no'\n    });\n    res.write(': connected\\n\\n');\n\n    const slot = { res: res };\n    r[role] = slot;\n    r.touched = Date.now();\n    console.log('[加入] 房间 ' + no + ' · ' + role);\n\n    /* 通知双方当前的配对状态 */\n    sse(res, 'hello', { role: role, room: no });\n    if (r.host && r.guest) {\n      sse(r.host.res, 'peer', { peer: 'guest' });\n      sse(r.guest.res, 'peer', { peer: 'host' });\n      console.log('[配对] 房间 ' + no + ' 双方到齐');\n    }\n\n    req.on('close', () => {\n      if (r[role] === slot) { r[role] = null; console.log('[离开] 房间 ' + no + ' · ' + role); }\n      const other = role === 'host' ? r.guest : r.host;\n      if (other && other.res) sse(other.res, 'bye', { who: role });\n      if (!r.host && !r.guest) ROOMS.delete(no);\n    });\n    return;\n  }\n\n  /* ================= 接口 4：转发信令（offer/answer/ice/对局数据） ================= */\n  if (p === '/api/msg' && req.method === 'POST') {\n    return readBody((d) => {\n      const no = String(d.room || '').trim();\n      const from = d.from;                       // host | guest\n      const r = ROOMS.get(no);\n      if (!r) { sendJSON(res, { ok: false, err: '房间不存在' }, 404); return; }\n      r.touched = Date.now();\n      const target = from === 'host' ? r.guest : r.host;\n      if (target && target.res) sse(target.res, 'msg', { from: from, data: d.data });\n      sendJSON(res, { ok: true });\n    });\n  }\n\n  /* ================= 接口 5：房间列表（便于排错） ================= */\n  if (p === '/api/rooms') {\n    const list = [];\n    for (const [no, r] of ROOMS) list.push({ room: no, host: !!r.host, guest: !!r.guest });\n    sendJSON(res, { ok: true, rooms: list });\n    return;\n  }\n\n  /* ================= 静态文件：直接托管游戏页面 ================= */\n  let file = p === '/' ? '/index.html' : p;\n  file = file.replace(/\\?.*$/, '');\n  /* 防目录穿越 */\n  const safe = path.normalize(file).replace(/^(\\.\\.[\\/\\\\])+/, '');\n  const full = path.join(__dirname, safe);\n\n  fs.readFile(full, (err, buf) => {\n    if (err) {\n      /* 页面没找到 → 返回提示页 */\n      res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });\n      res.end('<meta charset=\"utf-8\"><body style=\"font-family:sans-serif;padding:24px;line-height:1.8\">' +\n        '<h2>未找到 index.html</h2>' +\n        '<p>请把游戏文件放在本服务器<strong>同一个文件夹</strong>里，并命名为 <code>index.html</code>。</p>' +\n        '<p>或者直接用浏览器打开本地的 本游戏页面，在「联机对战」里填写服务器地址。</p>' +\n        '<p><a href=\"/api/rooms\">查看当前房间列表</a></p></body>');\n      return;\n    }\n    const ext = path.extname(full).toLowerCase();\n    res.writeHead(200, {\n      'Content-Type': MIME[ext] || 'application/octet-stream',\n      'Cache-Control': 'no-store'\n    });\n    res.end(buf);\n  });\n});\n\nserver.on('error', (e) => {\n  if (e.code === 'EADDRINUSE') {\n    console.error('\\n端口 ' + PORT + ' 已被占用！');\n    console.error('换个端口试试：node signal-server.js 9000\\n');\n  } else {\n    console.error(e);\n  }\n  process.exit(1);\n});\n\nserver.listen(PORT, '0.0.0.0', () => {\n  const ips = getLocalIPs();\n  console.log('');\n  console.log('==============================================');\n  console.log('  中国象棋 EVO · 联机服务器已启动');\n  console.log('==============================================');\n  console.log('  本机打开：  localhost:' + PORT);\n  ips.forEach(ip => console.log('  局域网打开：' + ip + ':' + PORT));\n  console.log('');\n  console.log('  把上面的「局域网」地址告诉同学，或者：');\n  console.log('  在游戏里「联机对战」→ 填服务器地址 → 用 6 位房间号配对');\n  console.log('');\n  console.log('  关闭窗口即可停止服务器');\n  console.log('==============================================\\n');\n});\n";
 function dl(name, text, mime) {
   try {
     var b = new Blob([text], {
@@ -4987,57 +4776,6 @@ $('#pauseMask').addEventListener('click', function (e) {
   if (e.target === $('#pauseMask')) closeMask('#pauseMask');
 });
 
-/* ===== [13] 启动更新说明 ===== */
-/* [v5.0 修复] 「本版更新」应按字面意思只显示【当前版本】的更新内容。
-   此前 UPD_HTML 是 v3.0 时代写死的常量，与版本演进完全脱钩 ——
-   导致升了十几个版本，弹窗里仍显示 v3.0 的卡牌说明。 */
-var UPD_BY_VER = {
-  'v5.6.0': "<div style=\"line-height:1.9\">◆ 变更：已移除调试防护，F12 / 右键 / 查看源码均正常可用</div>"
-};
-var UPD_HTML = '<div style="line-height:1.9">' + '<b style="color:#39ffea">◆ 卡牌平衡重做</b><br>' + '· 移除「天雷」与全部运气卡（命运骰 / 流星雨 / 幸运币），回归纯策略对抗<br>' + '· 疾步平衡：额外那一步<b>不能吃子</b>，只作机动<br>' + '· 开局 3 张、手牌上限 4、<b>每回合只能出 1 张</b><br><br>' + '<b style="color:#39ffea">◆ AI 更像真人</b><br>' + '· 新增威胁感知：不再白送子，会躲开被攻击的格子<br>' + '· 反制预判：困难档会算你下一步能吃掉什么<br>' + '· 位置价值：出子、占中心、兵过河、车压河界<br>' + '· 出牌讲策略：只在被威胁时才铁壁，能连吃才抽隙<br><br>' + '<b style="color:#39ffea">◆ 翻棋 · 暗棋（原位打乱）</b><br>' + '· 选模式后先选玩法：经典对弈 / 翻棋暗棋<br>' + '· 标准 10×9 棋盘，棋子摆在【原来的格子】但【随机换位】<br>' + '· 将帅与士仕原位不动且明置，其余全部背面朝上<br>' + '· 每回合：翻开一个暗子（消耗整回合）或移动己方明子<br>' + '· 走法沿用标准象棋；暗子是实体，能挡马腿/当炮架/塞象眼<br>' + '· 暗子不可吃不可动；暗子不产生将军威胁<br><br>' + '<b style="color:#ffb347">◆ 性能（卡顿修复）</b><br>' + '· 极光背景改用 transform 动画，不再每帧重排<br>' + '· 棋子系统改为离屏缓存，不再每次重绘渐变与辉光<br>' + '· 新增性能模式：低配自动开启，暂停菜单可切换<br><br>' + '<b style="color:#ffb347">◆ 修复</b><br>' + '· 玩法说明等长弹窗看不到下半部分且无法滑动<br>' + '· 启动更新说明只弹一次（已读标记未带版本号）<br><br>' + '<b style="color:#ffb347">◆ 动态背景重做（更省电）</b><br>' + '· 改用低分辨率 Canvas，去掉 filter:blur 模糊开销<br>' + '· 限帧 30fps，切后台自动暂停<br>' + '· 修复：尘埃粒子此前<b>从未显示过</b><br>' + '· 修复：经典版（木质水墨）背景被整个关掉<br>' + '· 修复：性能模式阈值过激，不再误伤中高端机<br><br>' + '<b style="color:#ffb347">◆ 修复：横屏弹窗显示不全</b><br>' + '· 横屏(矮屏)自动切换紧凑模式<br>' + '· <b>关闭按钮吸底</b>，永远点得到<br><br>' + '<b style="color:#39ffea">◆ JS 自检提示</b><br>' + '· 禁用 JS / 用错方式打开时会明确提示<br><br>' + '<b style="color:#ff5c8a">◆ 联机更稳：局域网免 STUN</b><br>' + '· 新增「局域网直连 / 跨网模式」切换<br>' + '· 同一 WiFi 用局域网档，<b>秒连不靠外网</b><br>' + '· 失败会告诉你具体原因（含 AP 隔离提示）<br><br>' + '<b style="color:#39ffea">◆ 横屏引导页</b><br>' + '· 启动先检测方向，竖屏给出引导<br>' + '· <b>转横屏自动进入</b>，不用点按钮<br>' + '· 也可「仍要竖屏游玩」直接进<br><br>' + '<b style="color:#39ffea">◆ 侧栏信息 + 倒计时进度条</b><br>' + '· 左右两侧显示<b>各自吃子数</b><br>' + '· 倒计时（带进度条）显示在<b>当前回合方</b>那一侧<br>' + '· 倒计时<b>强制开启</b>：30/60/90 秒，默认 60<br><br>' + '<b style="color:#ffb347">◆ 启动加载动画 + 横竖屏检测</b><br>' + '· 开局显示渐变旋转环，加载完自动淡出<br>' + '· 宽&lt;长=竖屏，反之横屏，竖屏侧栏收窄<br><br>' + '<b style="color:#ff8ab0">◆ 背景真的动起来了</b><br>' + '· 漂移速度 ×5（原来慢到看不出在动）<br><br>' + '<b style="color:#39ffea">◆ 回合倒计时</b><br>' + '· 时间到 → 自动换对方走，不用干等<br>' + '· 档位：关 / 30秒 / 60秒 / 90秒，点顶栏 ⏱ 切换<br>' + '· 看说明时自动冻结，联机模式不计时<br><br>' + '<b style="color:#ffb347">◆ 手牌改到棋盘左右两侧</b><br>' + '· 不再上下堆叠，棋盘更大<br>' + '· <b>建议横屏游玩</b>（竖屏棋盘会偏小）<br><br>' + '<b style="color:#ff5c8a">◆ 修复：翻棋翻子后不显示</b><br>' + '· 根因：残留旧变量导致每回合抛错<br>' + '· 连带修复：<b>回合不切换</b>、<b>AI 不启动</b>、顶栏计数不更新<br><br>' + '<b style="color:#39ffea">◆ 联机：扫码即连</b><br>' + '· 主机生成<b>二维码</b>，对方扫一下自动填好房间号<br>' + '· 也可以手动输 6 位房间号<br>' + '· 服务器程序已内置，联机页一键下载<br>' + '· 棋子走 P2P 直连，服务器看不到棋局<br><br>' + '· 不再复制长码，念一串数字即可配对<br>' + '· <b>服务器程序已内置</b>，联机页一键下载，只用这一个文件<br>' + '· 联机页全面适配手机（大按钮、防缩放输入框）<br>' + '· 棋子仍走 P2P 直连，服务器看不到棋局<br>' + '· 保留「手动复制码」作为无服务器时的保底<br><br>' + '· 不再复制长码，念一串数字即可配对<br>' + '· 需一台电脑跑信令服务器（零依赖，双击启动）<br>' + '· 棋子仍走 P2P 直连，服务器看不到棋局<br>' + '· 保留「手动复制码」作为无服务器时的保底<br><br>' + '<b style="color:#39ffea">◆ 界面与体验</b><br>' + '· 动态极光背景、回合大字提示<br>' + '· 棋盘按钮收进右上角 ⏸ 暂停菜单<br>' + '· 胜负改为全屏蒙版，按钮水平排列<br>' + '· 关于页拆分为「开发人员 / 更新日志」<br>' + '· 修复：经典版仍显示 EVO 视觉、重开后残留旧手牌</div>';
-/* [v5.1.0] 版本标签需带 Beta / Official 后缀：
-   buildVer() 只取数字部分，此处补读 meta 里的后缀标识 */
-function buildVerFull() {
-  try {
-    var m = document.querySelector('meta[name=build]');
-    var c = (m && m.content) || '';
-    var mm = c.match(/v(\d+(?:\.\d+)*)/);
-    var v = mm ? mm[1] : '0';
-    var sfx = /Official/.test(c) ? ' Official' : (/Beta/.test(c) ? ' Beta' : '');
-    return 'v' + v + sfx;
-  } catch (e) { return 'v0'; }
-}
-function showUpdate() {
-  var vt = $('#updVerTag');
-  if (vt) vt.textContent = buildVerFull();
-  $('#updBody').innerHTML = (typeof UPD_BY_VER !== 'undefined' && UPD_BY_VER['v5.6.0']) ? UPD_BY_VER['v5.6.0'] : UPD_HTML;
-  openMask('#updMask');
-}
-$('#updOk').addEventListener('click', function () {
-  return closeMask('#updMask');
-});
-if ($('#btnUpd')) $('#btnUpd').addEventListener('click', function (e) {
-  e.stopPropagation();
-  showUpdate();
-});
-if ($('#btnUpd2')) $('#btnUpd2').addEventListener('click', function (e) {
-  e.stopPropagation();
-  closeMask('#aboutMask');
-  setTimeout(showUpdate, 240);
-});
-$('#updMask').addEventListener('click', function (e) {
-  if (e.target === $('#updMask')) closeMask('#updMask');
-});
-/* [修复·关键] 已读标记必须带版本号：之前写死 upd_v30，v3.0 弹过一次后所有版本都不再弹 */
-function buildVer() {
-  try {
-    var m = document.querySelector('meta[name=build]');
-    var mm = (m && m.content || '').match(/v(\d+(?:\.\d+)*)/);
-    return mm ? mm[1] : '0';
-  } catch (e) {
-    return '0';
-  }
-}
 /* 绑定橡皮筋：所有页面与弹窗 */
 [verSel, menu, game, $('#netPage'), $('#varSel')].forEach(function (el) {
   if (el) attachRubber(el);
@@ -5046,32 +4784,6 @@ function buildVer() {
   var el = $(id);
   if (el) attachRubber(el);
 });
-function showUpdateOnLaunch() {
-  var cur = buildVer();
-  var last = null,
-    shown = false;
-  try {
-    last = localStorage.getItem('upd_last');
-    /* [修复] 只在「版本号变化」时弹：记录上次弹过的版本，跨版本必弹 */
-    if (last !== cur) {
-      setTimeout(showUpdate, 500);
-      shown = true;
-      localStorage.setItem('upd_last', cur);
-      localStorage.setItem('upd_v' + cur, '1');
-    } else if (localStorage.getItem('upd_v' + cur) !== '1') {
-      setTimeout(showUpdate, 500);
-      shown = true;
-      localStorage.setItem('upd_v' + cur, '1');
-    }
-  } catch (e) {
-    /* localStorage 不可用（file:// 或隐私模式）→ 每次都弹，保证看得到 */
-    setTimeout(showUpdate, 500);
-    shown = true;
-  }
-  return shown;
-}
-showUpdateOnLaunch();
-
 /* ===== [4] 关于页分栏切换 ===== */
 $('#abTabDev').addEventListener('click', function () {
   $('#abTabDev').classList.add('on');
@@ -7663,7 +7375,7 @@ var __XQ_AI__ = {
     return true;
   },
   unregister: function () { this.pick = null; this.label = ''; this.on = false; },
-  /* 内部：尝试用外部引擎选点，失败自动回退内置 AI */
+  /* 优先用扩展引擎选点，失败自动回退内建 AI */
   tryPick: function (b, side, depth) {
     if (!this.on || !this.pick) return null;
     try {
@@ -8471,7 +8183,7 @@ function getDarkSprite(wood) {
 
 /* ==================================================================
    [v4.7] 动态背景引擎（Canvas 低分辨率 · 限帧 · 页面隐藏暂停）
-   · 内部画布 = 屏幕 ×0.3，CSS 拉伸 → 天然柔化，无需 filter:blur
+   · 内建画布 = 屏幕 ×0.3，CSS 拉伸 → 天然柔化，无需 filter:blur
    · 光球预渲染成 64px 小图，绘制时放大 → 零模糊开销
    · 限帧：正常 30fps / 性能模式 20fps
    · 经典版自动切换水墨风格（淡墨山影 + 飘絮）
@@ -8484,7 +8196,7 @@ var BgFx = function () {
     raf = 0,
     lastT = 0,
     running = false;
-  var SC = 0.3; /* 内部分辨率倍率 */
+  var SC = 0.3; /* 内建分辨率倍率 */
   var sprites = {},
     orbs = [],
     dusts = [],
@@ -8695,10 +8407,6 @@ window.addEventListener('resize', function () {
   _rzT = setTimeout(resize, 120);
 });
 perfAutoDetect();
-
-/* [v5.5.0] 启动后静默检查一次更新（仅在确实有新版本时才弹窗） */
-setTimeout(function () { try { checkUpdate(true); } catch (e) {} }, 4200);
-
 /* [v5.4.1] 恢复高级赛制设置（开关在玩法选择页） */
 try {
   var _pm = localStorage.getItem('pro_mode');
@@ -8924,7 +8632,7 @@ function bootDone() {
   }
 }
 /* [v5.3.2] 保存【原始 bootDone】引用 —— 此刻尚未被预加载包装覆盖。
-   原 bootDone 内部要自我延期重试，必须走这个引用，不能走全局 bootDone。 */
+   原 bootDone 需要自我延期重试，必须走这个引用，不能走全局 bootDone。 */
 var BOOT_DONE_CORE = bootDone;
 /* ==================================================================
    [v5.2.0] 启动资源预加载：真正把资源准备好再进游戏，避免进页面后卡顿
@@ -9898,7 +9606,7 @@ window.addEventListener('orientationchange', function () {
 });
 /* ==================================================================
    [v4.6] 扫码进入：识别 ?room=XXXXXX 参数
-   二维码内容是 http://服务器/?room=房间号
+   二维码内容是 服务器地址 + ?room=房间号
    对方扫码打开后：自动填服务器地址 + 房间号 + 切到连接方 → 只差点「加入房间」
    ================================================================== */
 (function () {

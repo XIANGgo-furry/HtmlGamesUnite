@@ -3,12 +3,35 @@
 <title>测试中</title>
 <style>
 *{box-sizing:border-box}
-body{font-family:system-ui,-apple-system,sans-serif;max-width:680px;margin:0 auto;padding:24px 16px 60px;line-height:1.6;color:#222;background:#f6f7f9}
+body{font-family:system-ui,-apple-system,"PingFang SC",sans-serif;max-width:680px;margin:0 auto;padding:24px 16px 60px;line-height:1.6;color:#222;background:#f6f7f9}
 input,button{font-size:16px;width:100%;padding:11px;margin:8px 0;border:1px solid #dcdfe4;border-radius:10px;font-family:inherit}
 button{cursor:pointer;background:#222;color:#fff;border:0;font-weight:600}
+button.sec{background:#fff;color:#333;border:1px solid #dcdfe4;font-weight:500}
+button:disabled{opacity:.55}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
 h1{font-size:22px;margin:4px 0 6px}
 .about{color:#666;font-size:14px;margin:0 0 18px}
 .tag{display:inline-block;font-size:12px;color:#8a5b00;background:#fff2d6;border:1px solid #ffd98a;padding:2px 9px;border-radius:99px;margin-bottom:10px}
+.panel{background:#fff;border:1px solid #e3e6ec;border-radius:16px;padding:16px;margin:0 0 20px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.panel h2{font-size:17px;margin:0 0 4px}
+.note{color:#777;font-size:13px;margin:0 0 12px}
+.status{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:9px 12px;border-radius:10px;background:#f1f2f5;margin:10px 0;word-break:break-all}
+.dot{flex:0 0 10px;width:10px;height:10px;border-radius:50%;background:#bbb}
+.s-wait .dot{background:#e0a020;animation:bl 1s infinite}.s-ok .dot{background:#22a06b}.s-bad .dot{background:#d64545}
+@keyframes bl{50%{opacity:.3}}
+.s-ok{background:#e8f6ef;color:#186b48}.s-bad{background:#fdecec;color:#a33030}.s-wait{background:#fff5e2;color:#8a5b00}
+.room{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:22px;letter-spacing:5px;text-align:center;font-weight:700}
+#log{background:#f7f8fa;border:1px solid #e6e8ec;border-radius:10px;padding:10px;min-height:46px;max-height:130px;overflow-y:auto;font-size:13px;color:#555;margin:10px 0}
+#log div{padding:2px 0;word-break:break-word}
+#log .ok{color:#186b48;font-weight:600}#log .me{color:#3b5bdb}
+.onl{display:flex;align-items:center;gap:10px;background:#fafbfc;border:1px solid #e8eaef;border-radius:11px;padding:10px;margin:8px 0;text-decoration:none;color:inherit}
+.onl .ic{font-size:22px;flex:0 0 30px;text-align:center}
+.onl .tx{flex:1;min-width:0}.onl b{font-size:14px}.onl small{display:block;color:#888;font-size:12px;line-height:1.45;margin-top:2px}
+.onl .go{flex:0 0 auto;font-size:12px;color:#3b5bdb;font-weight:600}
+details{margin-top:12px;border-top:1px solid #eceef2;padding-top:10px}
+summary{cursor:pointer;font-size:14px;font-weight:600;color:#3b5bdb}
+details ol{font-size:13px;color:#666;padding-left:20px;margin:10px 0 0}
+details li{margin:5px 0}
 #bar{position:sticky;top:0;z-index:2;background:#f6f7f9;padding:6px 0 2px}
 #q{margin:0;background:#fff}
 #chips{display:flex;gap:8px;overflow-x:auto;padding:12px 0 4px;scrollbar-width:none}
@@ -23,16 +46,54 @@ h1{font-size:22px;margin:4px 0 6px}
 .info{min-width:0;flex:1}
 .nm{font-weight:600;font-size:16px;word-break:break-word}
 .cat{display:inline-block;margin-top:3px;font-size:12px;color:#666;background:#f0f1f4;padding:2px 8px;border-radius:6px}
+.badge{display:inline-block;margin-top:3px;margin-left:6px;font-size:11px;color:#8a5b00;background:#fff2d6;border:1px solid #ffd98a;padding:2px 7px;border-radius:6px}
 .arrow{color:#bbb;font-size:18px;flex:0 0 auto}
 .empty{text-align:center;color:#999;padding:36px 0}
 </style>
 <div id="app">
   <span class="tag">🧪 测试中 · 可能有 bug</span>
   <h1>测试页面</h1>
-  <p class="about">正在调试的 HTML 都放这儿，点开直接玩。新增页面：编辑本文件顶部 <b>RAW</b> 里加一行即可。</p>
+  <p class="about">正在调试的 HTML 都放这儿，点开直接玩。带 <b>🧪 测试中</b> 角标的是还在调的版本，遇到 bug 属正常。新增页面：编辑本文件顶部 RAW 里加一行即可。</p>
+
+  <!-- ============ 联机大厅 ============ -->
+  <div class="panel">
+    <h2>🔌 联机大厅</h2>
+    <p class="note">本站是纯静态页，<b>不会自己启动服务</b>。这里连的是免费公共中继（它一直在线），你只是加入房间。</p>
+
+    <div id="st" class="status"><span class="dot"></span><span id="stTxt">未连接 · 点下面按钮测一下</span></div>
+    <button id="btnConn" onclick="Lobby.start()">① 连接中继</button>
+
+    <p class="note" style="margin:14px 0 2px">房间号（两人填一样的）</p>
+    <input id="room" class="room" inputmode="numeric" maxlength="6" value="------" autocomplete="off">
+    <div class="row">
+      <button class="sec" onclick="Lobby.newRoom()">换一个</button>
+      <button class="sec" onclick="Lobby.copyRoom()">复制房间号</button>
+    </div>
+    <button class="sec" onclick="Lobby.copyInvite()">复制邀请链接（对方打开自动填好）</button>
+
+    <div id="log"></div>
+    <div class="row">
+      <input id="say" placeholder="给对方发句话，试试通不通" maxlength="60" style="margin:0">
+      <button style="flex:0 0 78px" onclick="Lobby.say()">发送</button>
+    </div>
+
+    <p class="note" style="margin:16px 0 2px">支持联机的游戏</p>
+    <div id="onl"></div>
+
+    <details>
+      <summary>怎么联机？（点开看 4 步）</summary>
+      <ol>
+        <li>两人都打开这个主页，或把「邀请链接」发给对方。</li>
+        <li>两边都点「连接中继」，等状态变<b>绿</b>；日志出现「对方已进房间 ✓」就说明链路通了。</li>
+        <li>点上面游戏进去了，在<b>游戏里输同一个 6 位房间号</b>。</li>
+        <li>⚠️ 中国象棋还额外需要<b>一台电脑跑它自带的信令服务器</b>；围棋走公共中继，不用电脑。另外本站是 HTTPS 页面，游戏里不能填 <code>http://</code> 开头的地址，会被浏览器拦。</li>
+      </ol>
+    </details>
+  </div>
+
   <div id="bar"><input id="q" placeholder="搜索名称 / 分类" autocomplete="off"></div>
   <div id="chips"></div>
-  <div class="meta"><span id="count"></span><button id="sort" onclick="toggleSort()">A → Z</button></div>
+  <div class="meta"><span id="count"></span><button id="sort" onclick="toggleSort()">按名称</button></div>
   <div id="list"></div>
 </div>
 <script>
@@ -43,21 +104,219 @@ const RAW = `
 中国围棋PLUS | 棋类 | ⚫ | 中国围棋PLUS.html
 中国象棋 | 棋类 | ♟️ | 中国象棋.html
 反应挑战 | 反应 | ⚡ | 反应力.html
+决心弹幕 | 反应 | 💗 | 决心弹幕.html | 测试中
 `;
-/* ↑↑↑ 加完保存并提交，GitHub Pages 会自动更新，别的都不用动 ↑↑↑ */
+/* ↑↑↑ 加完保存并提交，GitHub Pages 会自动更新，别的都不用动 ↑↑↑
+   第 5 列可选：填上就显示「🧪 xxx」角标；留空就跟旧行一样，不加角标 */
+
+/* 支持联机的游戏（单独列，不动 RAW 格式） */
+const ONLINE = [
+  {f:'中国围棋PLUS.html', n:'中国围棋PLUS', e:'⚫', tip:'自带公共中继，零服务器；房间号要在游戏里手输'},
+  {f:'中国象棋.html',    n:'中国象棋',    e:'♟️', tip:'房间号自动填，但服务器地址要另填，需一台电脑跑中继'}
+];
 
 const $=id=>document.getElementById(id);
 const clr=el=>{while(el.firstChild)el.removeChild(el.firstChild)};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let items=[],curCat='',sortMode='name';
 
+/* ================= 极简 MQTT 3.1.1 协议层（零依赖，不引 CDN） ================= */
+const MQ=(function(){
+  'use strict';
+  function utf8(s){
+    if(typeof TextEncoder!=='undefined') return Array.from(new TextEncoder().encode(s));
+    const b=unescape(encodeURIComponent(s)),o=[];
+    for(let i=0;i<b.length;i++)o.push(b.charCodeAt(i));
+    return o;
+  }
+  function dec(u){
+    if(typeof TextDecoder!=='undefined') return new TextDecoder().decode(u);
+    let b='';for(let i=0;i<u.length;i++)b+=String.fromCharCode(u[i]);
+    return decodeURIComponent(escape(b));
+  }
+  function encLen(n){const o=[];do{let d=n%128;n=Math.floor(n/128);if(n>0)d|=0x80;o.push(d);}while(n>0);return o;}
+  function str(s){const u=utf8(s);return [u.length>>8,u.length&255].concat(u);}
+  function pack(head,body){return new Uint8Array([head].concat(encLen(body.length),body));}
+  /* CONNECT：clean session + 60s keepalive */
+  function connect(cid){return pack(0x10,[0,4,77,81,84,84,4,2,0,60].concat(str(cid)));}
+  /* SUBSCRIBE：QoS 0 */
+  function subscribe(topic,id){return pack(0x82,[id>>8,id&255].concat(str(topic),[0]));}
+  /* PUBLISH：QoS 0 */
+  function publish(topic,data){return pack(0x30,str(topic).concat(utf8(data)));}
+  const ping=()=>new Uint8Array([0xC0,0x00]);
+  function readLen(u,at){let mul=1,val=0,i=at,d;do{d=u[i++];val+=(d&127)*mul;mul*=128;}while((d&128)&&i<at+4);return [val,i];}
+  function parse(buf){
+    const u=new Uint8Array(buf),out=[];let i=0;
+    while(i+1<u.length){
+      const type=u[i]>>4,[len,at]=readLen(u,i+1),end=at+len;
+      if(end>u.length)break;
+      const b=u.slice(at,end);
+      if(type===2)out.push({type:'connack',code:b[1]});
+      else if(type===9)out.push({type:'suback'});
+      else if(type===13)out.push({type:'pingresp'});
+      else if(type===3&&b.length>=2){
+        const tl=(b[0]<<8)|b[1];
+        out.push({type:'publish',topic:dec(b.slice(2,2+tl)),data:dec(b.slice(2+tl))});
+      }
+      i=end;
+    }
+    return out;
+  }
+  return {connect,subscribe,publish,ping,parse};
+})();
+
+/* ================= 联机大厅状态机 ================= */
+const Lobby=(function(){
+  'use strict';
+  /* 国内节点优先；一个不通自动换下一个。全部是免费公共测试中继 */
+  const RELAYS=[
+    'wss://broker-cn.emqx.io:8084/mqtt',
+    'wss://broker.emqx.io:8084/mqtt',
+    'wss://broker.hivemq.com:8884/mqtt',
+    'wss://test.mosquitto.org:8081/mqtt',
+    'wss://mqtt.eclipseprojects.io:443/mqtt'
+  ];
+  let ws=null,state='idle',idx=0,cid='',topic='',pingT=null;
+
+  function host(u){try{return new URL(u).host;}catch(e){return u;}}
+  function cidNew(){
+    try{const a=new Uint32Array(1);crypto.getRandomValues(a);return 'yb'+a[0].toString(36);}
+    catch(e){return 'yb'+Math.random().toString(36).slice(2,10);}
+  }
+  function set(txt,cls){$('st').className='status '+(cls||'');$('stTxt').textContent=txt;}
+  function log(txt,cls){
+    const d=document.createElement('div');if(cls)d.className=cls;
+    d.textContent=txt;$('log').appendChild(d);$('log').scrollTop=$('log').scrollHeight;
+  }
+  function room(){return ($('room').value||'').replace(/\D/g,'').slice(0,6);}
+  function topicOf(r){return 'htmlgamesunite/room/'+r;}
+  function stopPing(){if(pingT){clearInterval(pingT);pingT=null;}}
+  function startPing(){stopPing();pingT=setInterval(()=>{try{ws.send(MQ.ping());}catch(e){}},30000);}
+
+  function handle(raw){
+    let m;try{m=JSON.parse(raw);}catch(e){return;}
+    if(!m||m.id===cid)return;
+    if(m.k==='hello')log('对方已进房间 ✓','ok');
+    else if(m.k==='say')log('对方：'+String(m.t||'').slice(0,60));
+  }
+  function failAll(){
+    state='idle';stopPing();
+    set('中继暂时连不上 · 单机游戏照常能玩','s-bad');
+    log('5 个公共中继都没连上。可能是网络限制，稍后再试；游戏列表不受影响。');
+  }
+  function tryNext(){
+    if(idx>=RELAYS.length){failAll();return;}
+    const url=RELAYS[idx++];
+    let sock,settled=false,t=null;
+    const giveUp=()=>{
+      if(settled)return;settled=true;clearTimeout(t);
+      try{sock.close();}catch(e){}
+      tryNext();
+    };
+    try{sock=new WebSocket(url,'mqtt');}catch(e){tryNext();return;}
+    sock.binaryType='arraybuffer';
+    t=setTimeout(giveUp,6000);
+    sock.onopen=()=>{
+      set('正在握手 · '+host(url),'s-wait');
+      try{sock.send(MQ.connect(cid));}catch(e){giveUp();}
+    };
+    sock.onmessage=ev=>{
+      let pkts;try{pkts=MQ.parse(ev.data);}catch(e){return;}
+      for(const p of pkts){
+        if(p.type==='connack'){
+          if(p.code!==0){giveUp();return;}
+          settled=true;clearTimeout(t);ws=sock;state='online';
+          set('已连接 · '+host(url),'s-ok');
+          try{
+            sock.send(MQ.subscribe(topic,1));
+            sock.send(MQ.publish(topic,JSON.stringify({id:cid,k:'hello'})));
+          }catch(e){}
+          startPing();
+          log('连上了 '+host(url)+'，房间 '+room()+' 已就绪','ok');
+          return;
+        }
+        if(p.type==='publish')handle(p.data);
+      }
+    };
+    sock.onerror=giveUp;
+    sock.onclose=()=>{
+      if(!settled){giveUp();return;}
+      if(state==='online'){state='idle';stopPing();set('连接已断开 · 点「连接中继」重连','s-bad');}
+    };
+  }
+  function start(){
+    const r=room();
+    if(r.length!==6){log('先弄一个 6 位房间号（点「换一个」就行）');return;}
+    if(state==='connecting')return;
+    if(ws){try{ws.close();}catch(e){}ws=null;}
+    stopPing();
+    cid=cidNew();topic=topicOf(r);idx=0;state='connecting';
+    clr($('log'));set('连接中…逐个试公共中继','s-wait');
+    tryNext();
+  }
+  function newRoom(){
+    let n;
+    try{const a=new Uint32Array(1);crypto.getRandomValues(a);n=a[0]%1000000;}
+    catch(e){n=Math.floor(Math.random()*1000000);}
+    $('room').value=String(n).padStart(6,'0');
+    if(state==='online')start();
+    else log('新房间 '+$('room').value+'，两边都填这个号');
+  }
+  async function copy(txt,okMsg){
+    try{await navigator.clipboard.writeText(txt);}
+    catch(e){
+      const t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);
+      t.select();try{document.execCommand('copy');}catch(_){}t.remove();
+    }
+    log(okMsg,'ok');
+  }
+  function invite(){
+    return location.origin+location.pathname+'?room='+room();
+  }
+  function drawOnline(){
+    const box=$('onl');clr(box);
+    ONLINE.forEach(g=>{
+      const a=document.createElement('a');a.className='onl';
+      a.href=g.f+'?room='+room();a.rel='noopener';
+      const ic=document.createElement('div');ic.className='ic';ic.textContent=g.e;
+      const tx=document.createElement('div');tx.className='tx';
+      const b=document.createElement('b');b.textContent=g.n;
+      const s=document.createElement('small');s.textContent=g.tip;
+      tx.append(b,s);
+      const go=document.createElement('div');go.className='go';go.textContent='进入 ›';
+      a.append(ic,tx,go);box.appendChild(a);
+    });
+  }
+  function say(){
+    const v=$('say').value.trim();if(!v)return;
+    if(state!=='online'){log('还没连上中继，先点「连接中继」');return;}
+    try{ws.send(MQ.publish(topic,JSON.stringify({id:cid,k:'say',t:v})));log('我：'+v,'me');$('say').value='';}
+    catch(e){log('发送失败，重连一下');}
+  }
+  function init(){
+    const sp=new URLSearchParams(location.search),r=(sp.get('room')||'').replace(/\D/g,'').slice(0,6);
+    $('room').value=r.length===6?r:String(Math.floor(Math.random()*1000000)).padStart(6,'0');
+    $('room').addEventListener('input',()=>{
+      const v=$('room').value.replace(/\D/g,'').slice(0,6);$('room').value=v;drawOnline();
+    });
+    $('say').addEventListener('keydown',e=>{if(e.key==='Enter')say();});
+    drawOnline();
+    log('房间号已就绪。点「连接中继」开始，或先看下面「怎么联机」。');
+    if(r.length===6){log('已从邀请链接填好房间号 '+r+'，正在连接…');setTimeout(()=>{try{start();}catch(e){}},300);}
+  }
+  return {start,newRoom,copyRoom:()=>copy(room(),'房间号已复制：'+room()),
+          copyInvite:()=>copy(invite(),'邀请链接已复制，发给对方即可'),say,init};
+})();
+
+/* ================= 游戏库（保持原样） ================= */
 function parse(t){
   const out=[];
   t.split('\n').forEach(line=>{
     let s=line.trim();if(!s)return;s=s.replace(/｜/g,'|');
     if(s.includes('|')){
       const p=s.split('|').map(v=>v.trim());
-      out.push({name:p[0]||'未命名',cat:p[1]||'未分类',emoji:p[2]||'',url:p[3]||''});
-    }else out.push({name:s,cat:'未分类',emoji:'',url:''});
+      out.push({name:p[0]||'未命名',cat:p[1]||'未分类',emoji:p[2]||'',url:p[3]||'',tag:p[4]||''});
+    }else out.push({name:s,cat:'未分类',emoji:'',url:'',tag:''});
   });
   return out;
 }
@@ -70,12 +329,12 @@ function coverOf(g){
 function draw(){
   const kw=($('q').value||'').trim().toLowerCase();
   let arr=items.filter(g=>(!curCat||g.cat===curCat)&&
-    (g.name+' '+g.cat).toLowerCase().includes(kw));
+    (g.name+' '+g.cat+' '+g.tag).toLowerCase().includes(kw));
   arr=arr.slice().sort((a,b)=>sortMode==='cat'
     ? a.cat.localeCompare(b.cat,'zh')||a.name.localeCompare(b.name,'en',{sensitivity:'base',numeric:true})
     : a.name.localeCompare(b.name,'en',{sensitivity:'base',numeric:true}));
   $('count').textContent=`共 ${arr.length} 个`;
-  $('sort').textContent=sortMode==='name'?'A → Z':'按分类';
+  $('sort').textContent=sortMode==='name'?'按名称':'按分类';
   const list=$('list');clr(list);
   if(!arr.length){const e=document.createElement('div');e.className='empty';e.textContent='没找到匹配的页面';list.appendChild(e);return}
   arr.forEach(g=>{
@@ -85,7 +344,9 @@ function draw(){
     const info=document.createElement('div');info.className='info';
     const nm=document.createElement('div');nm.className='nm';nm.textContent=g.name;
     const cat=document.createElement('span');cat.className='cat';cat.textContent=g.cat;
-    info.append(nm,cat);card.appendChild(info);
+    info.append(nm,cat);
+    if(g.tag){const bd=document.createElement('span');bd.className='badge';bd.textContent='🧪 '+g.tag;info.appendChild(bd)}
+    card.appendChild(info);
     if(g.url){const ar=document.createElement('span');ar.className='arrow';ar.textContent='›';card.appendChild(ar)}
     list.appendChild(card);
   });
@@ -100,6 +361,6 @@ const chips=$('chips');clr(chips);
     [...chips.children].forEach(x=>x.classList.toggle('on',x===b));draw()};
   chips.appendChild(b);
 });
-$('q').oninput=draw;
-draw();
+$('q').oninput=draw;draw();
+try{Lobby.init();}catch(e){}
 </script>

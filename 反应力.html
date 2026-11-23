@@ -2,24 +2,24 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>反应挑战 · 双版本</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>反应力</title>
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%}
+  html,body{margin:0;height:100%;overflow:hidden;touch-action:manipulation}
   body{
     background:radial-gradient(120% 80% at 50% 0%,#16203a 0%,#0b1020 60%,#070a14 100%);
     color:#e5e7eb;
     font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
     display:flex;align-items:center;justify-content:center;
-    user-select:none;-webkit-user-select:none;overflow:hidden;
+    overflow:hidden;
   }
   #app{width:100%;max-width:430px;max-height:100%;padding:12px 16px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;overflow-y:auto}
   .page{width:100%;display:none;flex-direction:column;align-items:center;gap:12px}
   .page.show{display:flex}
-  .top{width:100%;display:flex;align-items:center;justify-content:space-between;min-height:30px}
-  .back{padding:6px 10px;font-size:13px;color:#8b98b3;background:none;border:0;cursor:pointer;margin-left:-10px}
-  .mute{padding:6px 10px;font-size:15px;background:none;border:0;cursor:pointer;opacity:.75}
+  .top{width:100%;display:flex;align-items:center;justify-content:space-between;min-height:44px;padding-left:100px}
+  .back{min-width:44px;min-height:44px;padding:10px 12px;font-size:13px;color:#8b98b3;background:none;border:0;cursor:pointer}
+  .mute{min-width:44px;min-height:44px;padding:10px 12px;font-size:15px;background:none;border:0;cursor:pointer;opacity:.75}
   header{width:100%}
   .row{display:flex;align-items:center;gap:10px}
   .bar{flex:1;height:18px;border-radius:99px;background:#1b2337;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
@@ -50,7 +50,7 @@
   /* ---------- 模式切换 ---------- */
   .modes{display:flex;gap:7px;width:100%}
   .mode{
-    flex:1;padding:9px 2px 8px;border-radius:13px;text-align:center;cursor:pointer;
+    flex:1;min-height:44px;padding:9px 2px 8px;border-radius:13px;text-align:center;cursor:pointer;
     background:#131a2c;border:1px solid rgba(255,255,255,.07);transition:.12s;
   }
   .mode b{display:block;font-size:13px;color:#cbd5e1}
@@ -101,36 +101,25 @@
   .overlay.hide{display:none}
   .overlay h1{margin:0;font-size:20px}
   .overlay p{margin:0;font-size:13px;color:#9aa7bd;line-height:1.7}
-  .pill{margin-top:4px;padding:10px 24px;border-radius:99px;font-size:15px;font-weight:700;color:#04120a;
+  .pill{margin-top:4px;min-height:44px;padding:10px 24px;display:flex;align-items:center;justify-content:center;border-radius:99px;font-size:15px;font-weight:700;color:#04120a;
     background:linear-gradient(180deg,#4ade80,#22c55e);box-shadow:0 6px 18px rgba(34,197,94,.35)}
   .pill.grey{background:#1f2942;color:#cbd5e1;box-shadow:none}
 
-  /* ---------- 更新按钮 / 提示条 ---------- */
   .ver{font-size:11px;color:#5b6880;font-variant-numeric:tabular-nums;letter-spacing:.3px}
-  .upd{
-    position:relative;display:flex;align-items:center;gap:6px;
-    padding:6px 12px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;
-    background:rgba(74,222,128,.10);border:1px solid rgba(74,222,128,.32);color:#4ade80;
+  #back{
+    position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:8px;z-index:300000;
+    min-width:44px;min-height:44px;padding:10px 14px;border:0;border-radius:10px;
+    background:rgba(0,0,0,.55);color:#fff;font-size:15px;text-decoration:none;
+    display:flex;align-items:center;justify-content:center;touch-action:manipulation;
   }
-  .upd:active{transform:translateY(1px)}
-  .upd.newer{background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.45);color:#fbbf24}
-  .upd .dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:0;transition:opacity .2s}
-  .upd.newer .dot{opacity:1;animation:blink 1.1s ease-in-out infinite}
-  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-  #toast{
-    position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);
-    max-width:86vw;padding:10px 16px;border-radius:12px;font-size:13px;line-height:1.5;text-align:center;
-    background:rgba(20,26,42,.96);border:1px solid rgba(255,255,255,.12);color:#e5e7eb;
-    box-shadow:0 8px 26px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.22s;z-index:99;
-  }
-  #toast.show{opacity:1;transform:translate(-50%,0)}
+  #back:active{background:rgba(0,0,0,.75)}
 
   /* ---------- 版本三：靶场速射 ---------- */
   #range{
     position:relative;width:100%;border-radius:18px;overflow:hidden;
     background:radial-gradient(circle at 50% 40%,#141c30 0%,#0b1020 70%,#070a14 100%);
     border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 2px 24px rgba(0,0,0,.6);
-    touch-action:none;   /* 移动端禁滚动/双击缩放，保证点靶精准 */
+    touch-action:none;   /* 画布区域接管手势，避免滚动干扰 */
   }
   #rangeCanvas{display:block;width:100%;height:100%}
   #range.grabbable{cursor:grab}
@@ -158,16 +147,16 @@
   .badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;
     background:rgba(74,222,128,.14);color:#4ade80;margin-bottom:2px}
 
-  /* 开始前必读弹窗（双端适配说明） */
+  /* 开始前说明卡（双端适配） */
   #deviceModal{
     position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;
-    background:rgba(4,6,12,.78);backdrop-filter:blur(4px);padding:20px;
+    padding:20px;pointer-events:none;
   }
   #deviceModal.show{display:flex}
   .dmBox{
     width:100%;max-width:360px;max-height:86vh;overflow-y:auto;border-radius:20px;padding:22px 20px 18px;
     background:linear-gradient(160deg,#182138,#0e1424);border:1px solid rgba(255,255,255,.12);
-    box-shadow:0 18px 50px rgba(0,0,0,.6);
+    box-shadow:0 18px 50px rgba(0,0,0,.6);pointer-events:auto;
   }
   .dmBox h2{margin:0 0 6px;font-size:19px}
   .dmBox .dmDev{
@@ -187,7 +176,7 @@
   .dmDrag > span{display:block;font-size:11px;color:#8b98b3;margin-bottom:8px}
   .dmOpts{display:flex;gap:6px}
   .dmOpt{
-    flex:1;padding:8px 4px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;
+    flex:1;min-height:44px;padding:8px 4px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;
     background:#131a2c;border:1px solid rgba(255,255,255,.08);color:#94a3b8;
     transition:.12s;text-align:center;
   }
@@ -207,7 +196,7 @@
   .dmRow .dmOpt{flex:none;width:52px;padding:6px 0;font-size:11px}
   .dmTune .dmNote{margin:8px 0 0;font-size:10.5px;color:#7c8aa5;line-height:1.6}
   .dmBox .pill{width:100%;margin-top:16px;text-align:center;cursor:pointer}
-  .dmBox .pill.ghost{margin-top:8px;padding:9px;font-size:13px}
+  .dmBox .pill.ghost{margin-top:8px;padding:9px;font-size:13px;min-height:44px}
 
   /* ---------- 常驻视角轮盘 ---------- */
   #joy{
@@ -243,11 +232,11 @@
   /* ---------- 启动加载屏 ---------- */
   #boot{
     position:fixed;inset:0;z-index:200000;display:flex;align-items:center;justify-content:center;
-    background:radial-gradient(120% 90% at 50% 35%,#16203a 0%,#0b1020 58%,#05070e 100%);
-    transition:opacity .38s ease;
+    padding:20px;pointer-events:none;transition:opacity .38s ease;
   }
   #boot.out{opacity:0;pointer-events:none}
-  .bootBox{width:100%;max-width:330px;padding:0 26px;text-align:center}
+  .bootBox{width:100%;max-width:330px;padding:24px 26px;text-align:center;border-radius:20px;
+    background:#0e1424;border:1px solid rgba(255,255,255,.12);box-shadow:0 18px 50px rgba(0,0,0,.6)}
   .bootRing{
     width:86px;height:86px;margin:0 auto 20px;border-radius:50%;position:relative;
     background:conic-gradient(from 0deg,#22c55e,#60a5fa,#22c55e);
@@ -275,15 +264,16 @@
 </style>
 </head>
 <body>
+<a id="back" href="index.html">← 返回</a>
+<noscript>请用浏览器打开，并启用 JavaScript。</noscript>
 <div id="app">
 
   <!-- ============ 版本选择 ============ -->
   <div class="page show" id="home">
-    <div class="top">
-      <span class="ver" id="verTag">v1.0.0</span>
-      <button class="upd" id="updBtn">离线版<span class="dot" id="updDot"></span></button>
+    <div class="top" style="justify-content:flex-end">
+      <span class="ver" id="verTag">v1.6.2</span>
     </div>
-    <h1 style="margin-top:2px">反应挑战</h1>
+    <h1 style="margin-top:2px">反应力</h1>
     <p class="sub">选择一个版本开始</p>
 
     <div class="card" id="pickRing">
@@ -316,7 +306,7 @@
   <!-- ============ 版本一：圆环指针 ============ -->
   <div class="page" id="game1">
     <div class="top">
-      <button class="back" id="back1">‹ 返回</button>
+      <button class="back" id="back1">‹ 首页</button>
       <button class="mute" id="mute1">🔊</button>
     </div>
 
@@ -358,7 +348,7 @@
   <!-- ============ 版本二：五盏红灯 ============ -->
   <div class="page" id="game2">
     <div class="top">
-      <button class="back" id="back2">‹ 返回</button>
+      <button class="back" id="back2">‹ 首页</button>
       <button class="mute" id="mute2">🔊</button>
     </div>
 
@@ -400,7 +390,7 @@
   <!-- ============ 版本三：靶场速射（移动端 + 桌面端） ============ -->
   <div class="page" id="game3">
     <div class="top">
-      <button class="back" id="back3">‹ 返回</button>
+      <button class="back" id="back3">‹ 首页</button>
       <button class="mute" id="mute3">🔊</button>
     </div>
 
@@ -446,8 +436,6 @@
 
 </div>
 
-<div id="toast"></div>
-
 <!-- 启动 / 进场加载屏 -->
 <div id="boot">
   <div class="bootBox">
@@ -460,7 +448,7 @@
   </div>
 </div>
 
-<!-- 开始前必读：双端适配说明弹窗 -->
+<!-- 开始前必读：双端适配说明卡 -->
 <div id="deviceModal">
   <div class="dmBox">
     <h2>开打前先看一眼 👀</h2>
@@ -543,129 +531,11 @@
     bad(){ this.beep(150, 0.22, 'sawtooth', 0.07); }
   };
 
-  /* ================= 版本信息 & 更新 ================= */
-
-  /* ★★★ 发新版（站点集成版，不再需要任何 json 清单）★★★
-   *
-   * 所有游戏都集成在 https://xianggo-furry.github.io/HtmlGamesUnite/
-   * 网页打开永远是最新的，所以版本比对 / 更新清单已移除。
-   *
-   * 【发新版只做两件事】
-   *   1. 把改好的 反应力.html 覆盖上传到仓库 HtmlGamesUnite
-   *      （顺手更新 index.html 导航 / README.md / games.json 里的说明文字）
-   *   2. 改下面 BUILD 的 v 和 date —— 只用于首页显示版本号，不必跟谁同步
-   *
-   * 【加载】页面启动、进入靶场各有一段 runBoot 加载动画，期间后台已完成
-   *      设备判定 / 画布尺寸 / 穹顶点位预计算，不是纯假进度条。
-   *
-   * 【靶场】伪3D 超广角穹顶投影：sin 有界，所有靶永远在屏幕内；
-   *      顶部雷达条再兜一层提示，快消失的靶变红。拖动改 cam.yaw / cam.pitch。
-   *      拖动方向可在开始前弹窗切换，默认「靶跟手」（往右拖靶往右走），
-   *      另一档是「视角跟手转」（FPS 景物反向），偏好存 localStorage。
-   *      左下常驻轮盘：按住推向某方向即持续转视角，不必反复拖；
-   *      灵敏度 0.4~2.5× 同时作用于拖动与轮盘，轮盘开关和方向键/WASD 都存本地。
-   *
-   * 【离线包】右上按钮仅作为蓝奏云离线版入口，点击会复制密码并打开下载页。
-   *      蓝奏云：https://xianggo.lanzout.com/b01d7c15fg     密码：3x
-   * ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★ */
-
-  const BUILD = { v:'1.6.0', date:'2026-11-22', code:2026112205 };
-
-  // 离线包地址与提取密码
-  const UPDATE_URL = 'https://xianggo.lanzout.com/b01d7c15fg';
-  const UPDATE_PWD = '3x';
-
-  // 站点版不再做自动版本检测：留空即走「手动打开离线包」路径。
-  // 若哪天又需要离线自动检测，填一个带 CORS 的清单地址即可，下面逻辑仍保留。
-  const MANIFEST_URL = '';
-  const MANIFEST_BACKUP = [];
-
-  const toastEl = $('toast');
-  let toastTimer = 0;
-  function toast(msg, ms){
-    toastEl.textContent = msg;
-    toastEl.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms || 2600);
-  }
-
-  function copyText(t){
-    try{
-      if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
-    }catch(e){}
-    try{
-      const ta = document.createElement('textarea');
-      ta.value = t;
-      ta.style.cssText = 'position:fixed;opacity:0;left:-9999px';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-    }catch(e){}
-  }
-
-  function cmpVer(a, b){
-    const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
-    for (let i = 0; i < 3; i++){
-      const x = pa[i] || 0, y = pb[i] || 0;
-      if (x !== y) return x > y ? 1 : -1;
-    }
-    return 0;
-  }
-
-  function markNewer(info){
-    const b = $('updBtn');
-    b.classList.add('newer');
-    if (info && info.v) b.firstChild.nodeValue = '有新版本 ' + info.v;
-    else b.firstChild.nodeValue = '有新版本';
-  }
-
-  async function checkUpdate(silent){
-    const b = $('updBtn');
-    if (!MANIFEST_URL){
-      if (!silent) openUpdate();
-      return;
-    }
-    const urls = [MANIFEST_URL].concat(MANIFEST_BACKUP || []);
-    let info = null, lastErr = null;
-    for (const u of urls){
-      if (!u) continue;
-      try{
-        const r = await fetch(u + (u.indexOf('?') < 0 ? '?t=' : '&t=') + Date.now(), { cache:'no-store' });
-        if (!r.ok) throw new Error('http ' + r.status);
-        info = await r.json();
-        if (info && (info.v || info.code)) break;   // 拿到有效清单就停
-        info = null;
-      }catch(e){ lastErr = e; }
-    }
-    try{
-      if (!info) throw lastErr || new Error('网络受限');
-      const newer = (info.code && info.code > BUILD.code) ||
-                    (!info.code && info.v && cmpVer(info.v, BUILD.v) > 0);
-      if (newer){
-        remoteInfo = info;
-        markNewer(info);
-        toast(info.note ? '发现新版本 ' + info.v + '：' + info.note : '发现新版本 ' + info.v + '，点击按钮更新', 4200);
-      } else if (!silent){
-        toast('已是最新版本 ' + BUILD.v);
-      }
-    }catch(e){
-      if (!silent){
-        toast('无法自动检测（' + (e.message || '网络受限') + '），已打开下载页');
-        openUpdate();
-      }
-    }
-  }
-
-  let remoteInfo = null;
-  function openUpdate(){
-    const url = (remoteInfo && remoteInfo.url) || UPDATE_URL;
-    const pwd = (remoteInfo && remoteInfo.pwd) || UPDATE_PWD;
-    copyText(pwd);
-    toast('提取密码已复制：' + pwd + ' · 正在打开下载页…', 3600);
-    try { window.open(url, '_blank', 'noopener'); }
-    catch(e){ location.href = url; }
-  }
+  /* ================= 版本信息 ================= */
+  /* 裸 HTML 约定：本文件只负责游戏本体，不含站点导航、版本检测或外链。
+   * 版本号只用于首页显示；列表与说明统一由 index.html / games.json 维护。
+   * 发新版：覆盖本文件，顺手改下面 BUILD 的 v 和 date。 */
+  const BUILD = { v:'1.6.2', date:'2026-11-23' };
 
   /* ================= 启动加载屏 ================= */
   let booting = false;
@@ -727,13 +597,7 @@
   $('back2').onclick = () => show('home');
   $('back3').onclick = () => show('home');
 
-  // 更新按钮
   $('verTag').textContent = 'v' + BUILD.v + ' · ' + BUILD.date;
-  $('updBtn').onclick = () => {
-    if (remoteInfo) openUpdate();
-    else checkUpdate(false);
-  };
-  if (MANIFEST_URL) setTimeout(() => checkUpdate(true), 600);
   function bindMute(id){
     const el = $(id);
     el.onclick = () => { SFX.on = !SFX.on; el.textContent = SFX.on ? '🔊' : '🔇'; };
@@ -1294,7 +1158,7 @@
   const CAM_YAW = 0.80, CAM_PITCH = 0.42;     // 视角转动上限（保证所有靶仍在画面内）
   const JOY_SPEED = 0.55;                     // 轮盘满推时的角速度（rad/秒，再乘灵敏度）
 
-  // 灵敏度 / 轮盘开关：存本地，开始前弹窗可调
+  // 灵敏度 / 轮盘开关：存本地，开始前说明卡可调
   let sens = 1.0, joyOn = true;
   try {
     const s = parseFloat(localStorage.getItem('range_sens'));
@@ -1787,7 +1651,7 @@
   joyEl.addEventListener('pointerup', joyEnd);
   joyEl.addEventListener('pointercancel', joyEnd);
 
-  // ---- 开始前必读弹窗 ----
+  // ---- 开始前说明卡 ----
   function openDeviceModal(){
     const mobile = detectDevice() === 'mobile';
     $('dmIco').textContent  = mobile ? '📱' : '🖱️';
@@ -1797,7 +1661,7 @@
       ? '靶子已按屏幕<b>放大</b>；准星固定在正中央，不跟手指跑'
       : '准星固定在正中央；<b>拖动</b>移靶，轻点 / 空格开火';
     $('dmExtra').textContent = mobile
-      ? '已禁用页面滚动与双击缩放；横竖屏切换会自动重排。'
+      ? '已针对触屏优化；横竖屏切换会自动重排。'
       : '窗口缩放自动重排；按 Esc 返回。';
     applyDragMode();
     applySens();
@@ -1888,7 +1752,7 @@
     if (booting) return;              // 加载期间忽略按键
     SFX.init();
     const isConfirm = (e.code === 'Space' || e.key === ' ' || e.key === 'Enter');
-    // 弹窗优先：空格/回车确认，Esc 关闭
+    // 说明卡优先：空格/回车确认，Esc 关闭
     if (deviceModal.classList.contains('show')){
       if (e.key === 'Escape'){ e.preventDefault(); deviceModal.classList.remove('show'); return; }
       if (isConfirm){ e.preventDefault(); confirmDevice(); }
@@ -1907,7 +1771,7 @@
       else { ov2.classList.add('hide'); M2.reset(); M2.run(); }
     } else if (pages.g3.classList.contains('show')){
       if (M3.running) M3.fire();          // 空格 = 开枪
-      else openDeviceModal();             // 未开始 / 结束后 = 弹说明再重开
+      else openDeviceModal();             // 未开始 / 结束后 = 显示说明卡再重开
     }
   });
   window.addEventListener('keyup', e => {

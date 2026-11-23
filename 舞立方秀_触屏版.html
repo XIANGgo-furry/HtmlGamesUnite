@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#05060c">
-<title>舞立方：秀 · 触屏版</title>
+<title>XYX · 舞立方：秀</title>
 <style>
 /* ===== Material Design 3 · 设计令牌（深色配色角色）=====
    加载页按这套令牌实现：surface / on-surface / primary 等角色名与 M3 一致，
@@ -98,6 +98,12 @@ button.main{background:linear-gradient(135deg,#2b6cff,#7a3bff);border-color:tran
 .warn{color:#ffb26a}
 
 /* ---------- 谱面库（启动首页） ---------- */
+/* 全站统一返回条：每个游戏 HTML 顶部一行，游戏内的子面板不用重复加 */
+#libBack{display:inline-flex;align-items:center;align-self:flex-start;gap:4px;
+  min-height:34px;padding:5px 10px 5px 6px;margin:0 0 0 -6px;
+  color:#7fe9ff;font-size:13px;font-weight:800;text-decoration:none;
+  border-radius:9px;flex:none;touch-action:manipulation}
+#libBack:active,#libBack:hover{background:#16233a}
 #lib{position:fixed;inset:0;z-index:55;background:#070a14;display:flex;flex-direction:column;
   align-items:center;padding:calc(10px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));
   overflow:auto;-webkit-overflow-scrolling:touch}
@@ -410,11 +416,13 @@ audio{display:none}
 </style>
 </head>
 <body>
+<noscript style="position:fixed;inset:0;z-index:9999;background:#05060c;color:#e9f1ff;display:flex;align-items:center;justify-content:center;font:16px system-ui,sans-serif">请用浏览器打开，并启用 JavaScript。</noscript>
 
 
 <!-- ============ 谱面库（启动首页） ============ -->
 <div id="lib">
   <div id="libWrap">
+    <a id="libBack" href="index.html">← 返回</a>
 
     <div id="libScanCard">
       <div class="libCap">本地存档</div>
@@ -1100,10 +1108,9 @@ audio{display:none}
     <h4>谱面去哪下载</h4>
     <p>导入页有「<b>谱面下载</b>」卡片，点「打开网盘」跳转到蓝奏云，密码用旁边的「复制密码」按钮复制后粘贴即可。</p>
 
-     <h4>关于查看源码与调试</h4>
-     <p>本作没有防调试限制，按 F12、右键菜单、查看源码都正常可用，方便自己排查问题。</p>
-     <p>游戏是纯静态 HTML，源码本来就是公开的；想改逻辑直接下载文件编辑即可。</p>
-     <p>平板上要是误触卡住了，刷新页面重新进就行。</p>
+    <h4>想看源码 / 想改这个游戏</h4>
+    <p>本作是<b>纯静态单文件 HTML</b>，不联网、不加载外部依赖。开发者工具随便开，代码随便看，下载下来就能改。</p>
+    <p>整站是公开的，仓库是唯一副本。想备份的话，在仓库页面点 <b>Code → Download ZIP</b> 存一份就行。</p>
 
     <h4>Phigros 社区谱面能导入吗</h4>
     <p>能。支持 <b>Phira 谱面包</b>（一个 zip 里含 <code>info.yml</code> + 谱面 + 音乐 + 曲绘）、<b>Re:PhiEdit 的 RPE JSON</b>、<b>Phigros 官谱 JSON</b>、<b>PEC 文本</b>。直接拖进导入页，自动识别格式，音乐和曲绘也会一起挂上。</p>
@@ -1535,7 +1542,7 @@ function beatToMs(tl,beat){
      · RPE JSON   ：Re:PhiEdit 生成，BPMList / META / judgeLineList
      · PGR JSON   ：Phigros 官谱，formatVersion 1/3，notesAbove/Below
      · PEC 文本   ：PhiEditor Classic，n1/n2/n3/n4 + bp 命令
-   统一转成内部的 {meta,time,note} 结构，走原有 buildChart，
+   统一转成通用 {meta,time,note} 结构，走原有 buildChart，
    这样存档 / 难度切换 / 时间轴校准 / 结算全都自动兼容。
 
    【重要】Phigros 是「无轨」音游：音符只有 positionX，判定线会
@@ -1712,7 +1719,7 @@ function phiraAssignLanes(notes,bpm0){
   }
 }
 
-/* ---- 组装成内部 data ---- */
+/* ---- 组装成谱面数据 ---- */
 function phiraMakeData(raw,info,fallback){
   const segs=(raw.bpm&&raw.bpm.length?raw.bpm.slice():[{beat:0,bpm:120}])
     .map(s=>({beat:+s.beat||0,bpm:+(s.bpm)>0?+(s.bpm):120}))
