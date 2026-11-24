@@ -1,5 +1,9 @@
 <!doctype html><html lang="zh-CN"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- 让浏览器别再缓存这份首页：以后每次进来都取最新一份 -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>测试中</title>
 <style>
 *{box-sizing:border-box}
@@ -49,6 +53,14 @@ details li{margin:5px 0}
 .badge{display:inline-block;margin-top:3px;margin-left:6px;font-size:11px;color:#8a5b00;background:#fff2d6;border:1px solid #ffd98a;padding:2px 7px;border-radius:6px}
 .arrow{color:#bbb;font-size:18px;flex:0 0 auto}
 .empty{text-align:center;color:#999;padding:36px 0}
+/* 制作中预告：纯文字、不产生链接，避免指向还没上传的文件 */
+.soon{margin-top:22px;background:#fbfbfd;border:1px dashed #cfd4de;border-radius:14px;padding:14px 16px}
+.soon h2{font-size:15px;margin:0 0 4px;color:#555}
+.soon .hint{font-size:12px;color:#999;margin:0 0 10px;line-height:1.6}
+.soon-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #eceef2;font-size:14px;color:#555}
+.soon-item .ic{flex:0 0 26px;text-align:center;font-size:19px}
+.soon-item .nm{flex:1;min-width:0;font-weight:500}
+.soon-item .st{flex:0 0 auto;font-size:11px;color:#8a5b00;background:#fff2d6;border:1px solid #ffd98a;padding:2px 8px;border-radius:99px}
 </style>
 <div id="app">
   <span class="tag">🧪 测试中 · 可能有 bug</span>
@@ -95,10 +107,30 @@ details li{margin:5px 0}
   <div id="chips"></div>
   <div class="meta"><span id="count"></span><button id="sort" onclick="toggleSort()">按名称</button></div>
   <div id="list"></div>
+
+  <!-- ============ 制作中预告（纯文字，不是链接） ============
+       项目做好后：把下面那几行删掉，改成 RAW 里加一行即可 -->
+  <div class="soon">
+    <h2>🛠 制作中 · 还没上传</h2>
+    <p class="hint">这几个还在坑里，下面的名字点不动是正常的（故意不放链接，免得点了 404）。</p>
+    <div class="soon-item"><span class="ic">🍉</span><span class="nm">水果忍者</span><span class="st">制作中</span></div>
+    <div class="soon-item"><span class="ic">🤖</span><span class="nm">RoboMaster</span><span class="st">制作中</span></div>
+    <div class="soon-item"><span class="ic">🎯</span><span class="nm">俯视角 CQB · 小队指挥</span><span class="st">制作中</span></div>
+    <div class="soon-item"><span class="ic">🕳️</span><span class="nm">找洞</span><span class="st">即将上线</span></div>
+  </div>
 </div>
 <!-- 联机能力统一由 relay.js 提供；首页与所有游戏共用同一份实现 -->
-<script src="relay.js"></script>
+<script src="relay.js?v=6"></script>
 <script>
+/* 进页时静默清掉「首页自己」旧版遗留的本地键（早期访问码版留下的）。
+   只按精确键名删，绝不做「整个本地存储一起清空」那种操作：
+   同源下各游戏的最佳成绩/设置都存在这儿，整体清掉就把玩家存档一起清没了。 */
+(function(){
+  try{
+    ['hgu_key','hgu_salt','hgu_room','hgu_remember','hgu_unlock','hgu_code','hgu_session']
+      .forEach(function(k){ localStorage.removeItem(k); });
+  }catch(e){/* 隐私模式等拿不到 localStorage 时直接跳过 */}
+})();
 /* ↓↓↓ 加测试页面就在这里加一行：名称 | 分类 | 图标 | 文件名（后三项可留空）↓↓↓ */
 const RAW = `
 午夜保安室 | 恐怖 | 🌙 | 午夜保安室.html
