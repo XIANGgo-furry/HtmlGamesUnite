@@ -1,0 +1,638 @@
+<!doctype html><html lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>节奏与弹幕</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;touch-action:manipulation}
+body{font-family:system-ui,-apple-system,"PingFang SC",sans-serif}
+#back{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:8px;z-index:99;
+min-width:44px;min-height:44px;padding:10px 14px;border:0;border-radius:10px;
+background:rgba(0,0,0,.55);color:#fff;font-size:15px;text-decoration:none}
+</style></head><body>
+<a id="back" href="index.html">← 返回</a>
+<noscript>请用浏览器打开，并启用 JavaScript。</noscript>
+<style>
+#hub,#a,#b{position:fixed;inset:0;overflow-y:auto;background:#08080b;color:#fff;
+padding:calc(62px + env(safe-area-inset-top,0px)) 12px calc(16px + env(safe-area-inset-bottom,0px))}
+#a,#b{display:none;overflow:hidden;flex-direction:column;gap:6px;padding-left:8px;padding-right:8px}
+#hub h1{font-size:20px;text-align:center;margin:0 0 4px;letter-spacing:2px}
+#hub>p{text-align:center;color:#8b90a0;font:12px/1.6 ui-monospace,monospace;margin:0 0 16px}
+.hcard{display:block;width:100%;max-width:440px;margin:0 auto 12px;min-height:104px;text-align:left;
+border:2px solid #fff;border-radius:14px;background:#12141b;color:#fff;padding:12px 14px}
+.hcard:active{background:#fff;color:#000}
+.hcard .n{font-size:18px;font-weight:700;display:block;margin-bottom:4px}
+.hcard .d{font:12px/1.6 ui-monospace,monospace;color:#9ba1ad;display:block;white-space:normal}
+.hcard:active .d{color:#333}
+.hcard.one{border-color:#ff5b9e;background:#1b1020}
+.hcard.two{border-color:#7cc4ff;background:#101a2a}
+.tag{display:inline-block;font:11px ui-monospace,monospace;color:#08080b;background:#ffd54a;
+border-radius:4px;padding:1px 6px;margin-bottom:6px}
+.bar{flex:0 0 auto;display:flex;align-items:center;gap:8px;font:13px ui-monospace,monospace;color:#c9c9d2}
+.bar .t{font-size:15px;font-weight:700;color:#fff}
+.bar .sp{flex:1}
+.bar button,.sbtn{min-width:44px;min-height:44px;border:2px solid #fff;border-radius:9px;
+background:#12141b;color:#fff;font-size:13px;font-weight:600;padding:5px 9px}
+.bar button:active,.sbtn:active{background:#fff;color:#000}
+#aStageWrap,#bStageWrap{position:relative;flex:1 1 auto;min-height:0;touch-action:none}
+#aCv{position:absolute;left:50%;top:50%;transform-origin:center center;display:block;background:#0a0713;
+border:3px solid #fff;border-radius:4px}
+#aMsg,#bAtk{position:absolute;left:10px;top:9px;z-index:4;font:11px/1.4 ui-monospace,monospace;
+color:#ffd54a;pointer-events:none;max-width:70%;white-space:pre-wrap}
+#aMsg.hot,#bAtk.hot{color:#ff6b6b;text-shadow:0 0 8px #ff6b6b}
+#aFoot,#bFoot{flex:0 0 auto;display:flex;align-items:center;gap:8px;
+font:11px/1.4 ui-monospace,monospace;color:#8b90a0}
+#aFoot span,#bFoot span{flex:1;min-width:0}
+#aFoot button,#bFoot button{min-width:64px;min-height:44px;border:2px solid #fff;border-radius:8px;
+background:#12141b;color:#fff;font:600 13px ui-monospace,monospace;padding:4px 8px}
+#aFoot button:active,#bFoot button:active{background:#fff;color:#000}
+/* 固定逻辑战斗框：两端同一套坐标，只整体等比缩放 */
+#bBoard{position:absolute;left:50%;top:50%;width:320px;height:180px;
+transform-origin:center center;border:3px solid #fff;border-radius:4px;background:#050507;overflow:hidden}
+#bLayer{position:absolute;inset:0;pointer-events:none}
+#bSoul{position:absolute;font-size:22px;line-height:1;transform:translate(-50%,-50%);
+color:#ff2f4f;text-shadow:0 0 9px #ff2f4f;pointer-events:none;z-index:3}
+#bSoul.blue{color:#4aa8ff;text-shadow:0 0 9px #4aa8ff}
+#bSoul.orange{color:#ffb03a;text-shadow:0 0 9px #ffb03a}
+#bSoul.hit{opacity:.25}
+.hz{position:absolute;background:#f2f2f6;border:2px solid #fff;border-radius:4px;pointer-events:none;z-index:2}
+.hz.bone{background:linear-gradient(180deg,#fff,#c9c9d6)}
+.hz.star{background:none;border:0;font:16px/1 ui-monospace,monospace;color:#fff;border-radius:0;
+width:auto!important;height:auto!important}
+.hz.star.b{color:#4aa8ff}.hz.star.g{color:#8fd06a}.hz.star.o{color:#ff9a3c}
+.hz.bluebone{background:linear-gradient(180deg,#7cc4ff,#2b6fb8);border-color:#9fd4ff}
+.hz.warn{background:rgba(255,60,60,.16);border:2px dashed #ff5b5b}
+.hz.warn:after{content:"!";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+font:700 15px ui-monospace,monospace;color:#ff8a8a}
+.hz.fire{background:linear-gradient(90deg,rgba(255,255,255,.25),#fff,rgba(255,255,255,.25));
+border:0;box-shadow:0 0 18px #fff,0 0 34px #9fd4ff}
+.hz.lava{background:linear-gradient(180deg,rgba(255,120,30,.15),#ff6a1e);border:2px solid #ffb03a;box-shadow:0 0 20px #ff6a1e}
+#bFlash{position:absolute;inset:0;background:#f33;opacity:0;pointer-events:none;z-index:4;transition:opacity .12s}
+#bGrav{position:absolute;right:5px;bottom:5px;z-index:5;min-width:44px;min-height:44px;border:2px solid #4aa8ff;
+border-radius:9px;background:rgba(20,40,70,.85);color:#cfe8ff;font:700 11px ui-monospace,monospace;padding:3px}
+#bGrav:active{background:#4aa8ff;color:#000}
+#bGrav[hidden]{display:none}
+.float{position:absolute;transform:translate(-50%,-50%);font:700 18px ui-monospace,monospace;color:#ffd54a;
+text-shadow:0 0 6px #000;pointer-events:none;z-index:6;animation:fl .78s ease-out forwards}
+.float.heal{color:#7dff8a}.float.hurt{color:#ff5b6e}.float.kr{color:#ff9c4a;font-size:14px}
+@keyframes fl{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}20%{opacity:1;transform:translate(-50%,-90%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-170%) scale(1)}}
+#bTop{flex:0 0 auto;text-align:center;height:80px}
+#bFoe{width:52px;height:44px;margin:0 auto;border:2px solid #fff;border-radius:12px;background:#e8e8ee;
+display:flex;align-items:center;justify-content:center;font-size:26px;line-height:1}
+#bFoe.skull{background:#d9dde6;border-radius:50% 50% 12px 12px;box-shadow:inset 0 -6px 0 #aeb5c2}
+#bFoe.flower{background:#1b2a16;border-color:#8fd06a;border-radius:50%}
+#bFoe.hit{animation:shk .3s}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px) rotate(-5deg);filter:brightness(2)}75%{transform:translateX(7px) rotate(5deg);filter:brightness(2)}}
+#bLine{font:12px/1.4 ui-monospace,monospace;display:flex;justify-content:center;gap:12px;align-items:center}
+#bName.ok{color:#ffd54a}
+#bTrack{width:70px;height:8px;border:1px solid #fff;background:#222;display:inline-block}
+#bFoeBar{display:block;height:100%;background:#7dff8a;width:100%;transition:width .2s}
+/* 文字框固定高度，打字不再撑动战斗框 */
+#bTalk{flex:0 0 auto;height:64px;overflow:hidden;border:2px solid #fff;border-radius:6px;
+background:#000;padding:7px 10px;font:13px/1.5 ui-monospace,monospace;white-space:pre-wrap}
+#bHud{flex:0 0 auto;font:12px/1.4 ui-monospace,monospace;color:#aeb4bd;display:flex;align-items:center;gap:8px}
+#bHudTxt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bHpWrap{flex:0 0 70px;height:9px;border:1px solid #fff;background:#222}
+#bHpBar{display:block;height:100%;background:#ff2f4f;width:100%;transition:width .2s}
+#bMenu{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;flex:0 0 auto}
+#bSub{display:flex;flex-wrap:wrap;gap:6px;flex:0 0 auto;min-height:0}
+#bSub:empty{display:none}
+#bMenu button,#bSub button{min-width:44px;min-height:48px;border:2px solid #fff;border-radius:8px;
+background:#12141b;color:#fff;font-size:15px;font-weight:600;padding:6px 4px}
+#bMenu button:active,#bSub button:active{background:#fff;color:#000}
+#bTiming{flex:1 1 100%;height:44px;position:relative;border:2px solid #fff;background:#12141b;overflow:hidden;border-radius:6px}
+#bTarget{position:absolute;top:0;bottom:0;left:46%;width:8%;background:rgba(255,255,255,.18);border-left:2px solid #fff;border-right:2px solid #fff}
+#bTBar{position:absolute;top:0;bottom:0;left:0;width:4px;background:#ffd54a}
+#bTLabel{position:absolute;left:0;right:0;bottom:3px;text-align:center;font:11px ui-monospace,monospace;color:#aeb4bd;pointer-events:none}
+#bPick{position:absolute;inset:0;z-index:20;background:#08080b;overflow-y:auto;padding:18px}
+#bPick h2{font-size:17px;text-align:center;margin:0 0 4px}
+#bPick p{text-align:center;color:#8b90a0;font:12px ui-monospace,monospace;margin:0 0 12px}
+.pcard{display:block;width:100%;max-width:400px;margin:0 auto 9px;min-height:76px;text-align:left;
+border:2px solid #fff;border-radius:12px;background:#12141b;color:#fff;padding:9px 12px}
+.pcard:active{background:#fff;color:#000}
+.pcard .n{font-size:16px;font-weight:700;display:block}
+.pcard .d{font:11px/1.5 ui-monospace,monospace;color:#9ba1ad;display:block;white-space:normal}
+.pcard.hot{border-color:#7cc4ff;background:#101a2a}
+.over{position:absolute;inset:0;z-index:21;display:flex;flex-direction:column;align-items:center;
+justify-content:center;gap:10px;background:rgba(5,5,9,.93);text-align:center;padding:12px}
+.over[hidden]{display:none}
+.over h2{margin:0;font-size:22px;letter-spacing:2px}
+.over p{margin:0;font:13px/1.7 ui-monospace,monospace;color:#c9c9d2;white-space:pre-wrap}
+.over .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+</style>
+
+<section id="hub">
+<h1>节奏与弹幕</h1>
+<p>一个文件，两个互不相干的小游戏。随时切。</p>
+<button class="hcard one" data-go="a"><span class="tag">玩法 ①</span>
+<span class="n">🎵 几何节拍</span><span class="d">红块躲 · 蓝块吃 · 几何随拍脉冲<br>四段：推条 → 夹击 → 旋转臂 → Boss 激光<br>纯身法躲避，无冲刺 · 方向键 / 拖动都能操心</span></button>
+<button class="hcard two" data-go="b"><span class="tag">玩法 ②</span>
+<span class="n">❤️ 决心弹幕</span><span class="d">固定战斗框 · 四键回合战斗 · 时机条停手<br>蓝魂重力恒定 / 橙魂必须一直动 / 业报<br>方向键 / WASD / 按住画面拖动</span></button>
+</section>
+
+<section id="a">
+<div class="bar"><span class="t">几何节拍</span><span id="aScore">0</span><span id="aHearts">♥♥♥</span>
+<span class="sp"></span><button id="aMute">🔊</button><button id="aHub">换玩法</button></div>
+<div id="aStageWrap"><canvas id="aCv"></canvas><div id="aMsg"></div></div>
+<div id="aFoot"><span>方向键 / WASD 持续移动 · 或按住画面拖动 · 红躲蓝吃</span></div>
+<div class="over" id="aOver" hidden><h2 id="aOverT"></h2><p id="aOverP"></p>
+<div class="row"><button class="sbtn" id="aAgain">再来一次</button><button class="sbtn" id="aToHub">换玩法</button></div></div>
+</section>
+
+<section id="b">
+<div id="bTop"><div id="bFoe"><span id="bEmoji">🪆</span></div>
+<div id="bLine"><span id="bName">灰烬木偶</span><span>HP <span id="bTrack"><i id="bFoeBar"></i></span></span></div></div>
+<div id="bTalk"></div>
+<div id="bStageWrap"><div id="bBoard"><div id="bLayer"></div><div id="bAtk"></div>
+<button id="bGrav" hidden>重力<br>↓</button><div id="bSoul">♥</div><div id="bFlash"></div></div></div>
+<div id="bHud"><span id="bHudTxt"></span><span id="bHpWrap"><i id="bHpBar"></i></span></div>
+<div id="bMenu"><button data-m="fight">战斗</button><button data-m="act">行动</button>
+<button data-m="item">物品</button><button data-m="mercy">仁慈</button></div>
+<div id="bSub"></div>
+<div id="bFoot"><span>方向键 / WASD / 按住画面拖动 · 蓝魂重力持续生效</span>
+<button id="bHub2">换玩法</button></div>
+<div id="bPick"><h2>选择对手</h2><p>挑一只，进去挨打。</p><div id="bCards"></div></div>
+<div class="over" id="bOver" hidden><h2 id="bOverT">结束</h2><p id="bOverP"></p>
+<div class="row"><button class="sbtn" id="bAgain">再来一次</button><button class="sbtn" id="bPickBtn">换对手</button>
+<button class="sbtn" id="bToHub">换玩法</button></div></div>
+</section>
+
+<script>
+/* 游戏逻辑写这里；纯前端，无网络请求 */
+var hub=document.querySelector('#hub'),rootA=document.querySelector('#a'),rootB=document.querySelector('#b');
+var keys={};
+window.addEventListener('keydown',function(e){
+ var k=e.key.toLowerCase();
+ if(['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d',' ','spacebar'].indexOf(k)>=0)e.preventDefault();
+ keys[k]=true;
+});
+window.addEventListener('keyup',function(e){keys[e.key.toLowerCase()]=false});
+window.addEventListener('blur',function(){keys={}});
+function axis(){return{
+ x:((keys.arrowright||keys.d)?1:0)-((keys.arrowleft||keys.a)?1:0),
+ y:((keys.arrowdown||keys.s)?1:0)-((keys.arrowup||keys.w)?1:0)};
+}
+function go(where){
+ A.stop();B.stop();keys={};
+ hub.style.display=where==='hub'?'block':'none';
+ rootA.style.display=where==='a'?'flex':'none';
+ rootB.style.display=where==='b'?'flex':'none';
+ window.scrollTo(0,0);
+ if(where==='a')A.start();
+ if(where==='b')B.start();
+}
+hub.addEventListener('click',function(e){var c=e.target.closest('[data-go]');if(c)go(c.dataset.go)});
+
+/* 相对拖动：触屏/鼠标都只取位移增量，除以舞台缩放系数 */
+function bindDrag(el,active,onMove){
+ var drag=false,pid=null,lx=0,ly=0;
+ el.addEventListener('pointerdown',function(e){
+  if(!active()||e.target.closest('button')||e.target.closest('.over'))return;
+  drag=true;pid=e.pointerId;lx=e.clientX;ly=e.clientY;
+  try{el.setPointerCapture(e.pointerId)}catch(err){}
+ });
+ el.addEventListener('pointermove',function(e){
+  if(!drag||e.pointerId!==pid||!active())return;
+  e.preventDefault();onMove(e.clientX-lx,e.clientY-ly);lx=e.clientX;ly=e.clientY;
+ });
+ function end(e){if(e.pointerId===pid){drag=false;pid=null}}
+ el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+ return function(){drag=false;pid=null};
+}
+
+/* ================= 玩法 ①：几何节拍 ================= */
+var A=(function(){
+var AW=320,AH=380;
+var wrap=document.querySelector('#aStageWrap'),cv=document.querySelector('#aCv'),ctx=cv.getContext('2d'),
+    msg=document.querySelector('#aMsg'),scoreEl=document.querySelector('#aScore'),
+    heartsEl=document.querySelector('#aHearts'),muteBtn=document.querySelector('#aMute'),
+    over=document.querySelector('#aOver'),overT=document.querySelector('#aOverT'),overP=document.querySelector('#aOverP');
+var k=1,px=0,py=0,running=false,raf=0,t0=0,lastBeat=-1,score=0,hp=3,
+    invul=0,objs=[],rings=[],actx=null,muted=false;
+var BPM=108,BEAT=60000/BPM,TOTAL=48;
+var SEG=['① 推条 · 上下留缝','② 夹击 · 左右交替','③ 旋转臂 · 追踪块','④ Boss · 全屏预警'];
+function fit(){
+ var aw=wrap.clientWidth,ah=wrap.clientHeight;
+ if(aw<10||ah<10)return;
+ k=Math.min(1,aw/AW,ah/AH);
+ var d=Math.min(2,window.devicePixelRatio||1);
+ cv.width=Math.round(AW*d);cv.height=Math.round(AH*d);
+ cv.style.width=AW+'px';cv.style.height=AH+'px';
+ cv.style.transform='translate(-50%,-50%) scale('+k+')';
+ ctx.setTransform(d,0,0,d,0,0);
+ if(!px){px=AW/2;py=AH/2}
+}
+function tone(f,dur,type,vol){if(!actx||muted)return;try{
+ var o=actx.createOscillator(),g=actx.createGain(),n=actx.currentTime;
+ o.type=type||'sine';o.frequency.setValueAtTime(f,n);
+ g.gain.setValueAtTime(vol||.07,n);g.gain.exponentialRampToValueAtTime(.001,n+dur);
+ o.connect(g);g.connect(actx.destination);o.start(n);o.stop(n+dur);
+}catch(err){}}
+function audio(){if(actx)return;try{
+ var C=window.AudioContext||window.webkitAudioContext;if(C){actx=new C();if(actx.state==='suspended')actx.resume()}
+}catch(err){actx=null}}
+function clamp(x,y){px=Math.max(10,Math.min(AW-10,x));py=Math.max(10,Math.min(AH-10,y))}
+function nudge(dx,dy){clamp(px+dx/k,py+dy/k)}
+var stopDrag=bindDrag(wrap,function(){return running},nudge);
+muteBtn.addEventListener('click',function(){muted=!muted;muteBtn.textContent=muted?'🔇':'🔊';if(!muted)audio()});
+document.querySelector('#aHub').addEventListener('click',function(){go('hub')});
+document.querySelector('#aToHub').addEventListener('click',function(){go('hub')});
+document.querySelector('#aAgain').addEventListener('click',function(){start()});
+function bar(x,y,w,h,warn,life,dir){objs.push({t:'bar',x:x,y:y,w:w,h:h,dir:dir||'top',
+ born:performance.now(),warn:warn||0,life:life||560})}
+function collect(x,y){objs.push({t:'blue',x:x,y:y,born:performance.now(),life:5200})}
+function chaser(){objs.push({t:'chase',x:Math.random()*AW,y:-16,vx:0,vy:0,
+ born:performance.now(),life:4200})}
+function laser(horiz,pos){objs.push({t:'laser',horiz:horiz,pos:pos,born:performance.now(),warn:640,life:420})}
+function onBeat(b){
+ tone(b%4===0?110:82,.14,'sine',.09);tone(b%2===0?880:660,.05,'square',.022);
+ rings.push({born:performance.now()});score+=1;
+ var seg=Math.floor(b/12),warn=BEAT*1.15,TH=Math.max(46,AH*.24),TW=Math.max(38,AW*.17);
+ if(seg===0){
+  var g=Math.random()*(AW*.45)+AW*.12;
+  if(b%2===0){bar(0,-2,g,TH,warn,540,'top');bar(g+70,-2,AW-g-70,TH,warn,540,'top')}
+  else{bar(0,AH-TH+2,g,TH,warn,540,'bottom');bar(g+70,AH-TH+2,AW-g-70,TH,warn,540,'bottom')}
+ }else if(seg===1){
+  var y=AH*(.18+Math.random()*.64);
+  bar(-2,y-22,TW,44,warn,520,'left');bar(AW-TW+2,y-66,TW,44,warn,520,'right');
+  if(b%4===0)collect(AW*(.2+Math.random()*.6),AH*(.2+Math.random()*.6));
+ }else if(seg===2){
+  if(b%6===0)chaser();
+  if(b%4===0)collect(AW*(.15+Math.random()*.7),AH*(.15+Math.random()*.7));
+  if(b%3===0)bar(-2,Math.random()*(AH-30),AW+4,14,warn,460,'left');
+ }else{
+  if(b%3===0)laser(b%2===0,Math.random()*(b%2===0?AH:AW));
+  if(b%4===1)collect(AW*(.2+Math.random()*.6),AH*(.2+Math.random()*.6));
+  if(b%6===0)chaser();
+ }
+ msg.textContent=SEG[seg];msg.className=(seg===3?'hot':'');
+}
+function rectOf(o,f){
+ if(o.dir==='top')return[o.x,o.y,o.w,o.h*f];
+ if(o.dir==='bottom')return[o.x,o.y+o.h*(1-f),o.w,o.h*f];
+ if(o.dir==='left')return[o.x,o.y,o.w*f,o.h];
+ return[o.x+o.w*(1-f),o.y,o.w*f,o.h];
+}
+function distSeg(px0,py0,x1,y1,x2,y2){var dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy;
+ var t=l2?Math.max(0,Math.min(1,((px0-x1)*dx+(py0-y1)*dy)/l2)):0;
+ var qx=x1+t*dx,qy=y1+t*dy;return Math.sqrt((px0-qx)*(px0-qx)+(py0-qy)*(py0-qy))}
+function hit(t){if(t<invul)return;invul=t+1300;hp--;
+ heartsEl.textContent='♥'.repeat(Math.max(0,hp))+'·'.repeat(3-Math.max(0,hp));
+ tone(150,.25,'sawtooth',.06);if(hp<=0)end(false)}
+function end(win){running=false;if(raf){cancelAnimationFrame(raf);raf=0}
+ var grade=score>=560?'S':score>=460?'A':score>=340?'B':'C';
+ overT.textContent=win?'通关！':'决心碎了';
+ overP.textContent=(win?'48 拍全数走完':'三颗心用完了')+'\n得分 '+score+'　评级 '+grade;
+ over.hidden=false}
+function draw(t){
+ var beatF=(t-t0)/BEAT,pulse=1-(beatF-Math.floor(beatF));
+ ctx.clearRect(0,0,AW,AH);ctx.fillStyle='#0a0713';ctx.fillRect(0,0,AW,AH);
+ ctx.strokeStyle='rgba(255,91,158,'+(.05+pulse*.09)+')';ctx.lineWidth=1;
+ for(var gx=0;gx<AW;gx+=32){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,AH);ctx.stroke()}
+ for(var gy=0;gy<AH;gy+=32){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(AW,gy);ctx.stroke()}
+ ctx.strokeStyle='rgba(255,91,158,'+(.35+pulse*.5)+')';ctx.lineWidth=2+pulse*3;
+ ctx.strokeRect(4,4,AW-8,AH-8);
+ for(var i=rings.length-1;i>=0;i--){var r=rings[i],rage=(t-r.born)/BEAT;
+  if(rage>1.4){rings.splice(i,1);continue}if(rage<0)continue;
+  ctx.strokeStyle='rgba(120,210,255,'+(.32*(1-rage/1.4))+')';ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(AW/2,AH/2,1+rage*Math.max(AW,AH)*.75,0,6.2832);ctx.stroke()}
+ var seg=Math.floor(Math.max(0,lastBeat)/12);
+ if(seg===2||seg===3){
+  var ang=t/760*(seg===3?1.35:1),cx=AW/2,cy=AH/2,len=Math.min(AW,AH)*.48;
+  ctx.strokeStyle=seg===3?'#ff5b9e':'#ff9a3c';ctx.lineWidth=12;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(ang)*len,cy+Math.sin(ang)*len);ctx.stroke();
+  if(seg===3){ctx.strokeStyle='#ffd54a';ctx.beginPath();ctx.moveTo(cx,cy);
+   ctx.lineTo(cx-Math.cos(ang*.8)*len,cy-Math.sin(ang*.8)*len);ctx.stroke()}
+  ctx.lineCap='butt';
+  if(distSeg(px,py,cx,cy,cx+Math.cos(ang)*len,cy+Math.sin(ang)*len)<16)hit(t);
+  if(seg===3&&distSeg(px,py,cx,cy,cx-Math.cos(ang*.8)*len,cy-Math.sin(ang*.8)*len)<16)hit(t);
+ }
+ for(var j=objs.length-1;j>=0;j--){var o=objs[j];if(!running)break;
+  var age=t-o.born;
+  if(o.t==='bar'){
+   if(age<o.warn){ctx.fillStyle='rgba(255,70,110,.14)';ctx.strokeStyle='#ff5b6e';ctx.setLineDash([7,6]);ctx.lineWidth=2;
+    ctx.fillRect(o.x,o.y,o.w,o.h);ctx.strokeRect(o.x,o.y,o.w,o.h);ctx.setLineDash([]);continue}
+   if(age>o.warn+o.life){objs.splice(j,1);continue}
+   var f=Math.min(1,Math.max(0,(age-o.warn)/100)),r=rectOf(o,f);
+   ctx.fillStyle='#ff4d78';ctx.fillRect(r[0],r[1],r[2],r[3]);
+   ctx.fillStyle='rgba(255,255,255,.55)';
+   if(o.dir==='top')ctx.fillRect(r[0],r[1]+r[3]-3,r[2],3);
+   else if(o.dir==='bottom')ctx.fillRect(r[0],r[1],r[2],3);
+   else ctx.fillRect(r[0],r[1],3,r[3]);
+   if(px>r[0]-6&&px<r[0]+r[2]+6&&py>r[1]-6&&py<r[1]+r[3]+6)hit(t);
+  }else if(o.t==='laser'){
+   if(age<o.warn){ctx.fillStyle='rgba(255,70,110,.13)';ctx.setLineDash([7,6]);ctx.strokeStyle='#ff5b6e';ctx.lineWidth=2;
+    var a=o.horiz?[0,o.pos-13,AW,26]:[o.pos-13,0,26,AH];
+    ctx.fillRect(a[0],a[1],a[2],a[3]);ctx.strokeRect(a[0],a[1],a[2],a[3]);ctx.setLineDash([]);continue}
+   if(age>o.warn+o.life){objs.splice(j,1);continue}
+   ctx.fillStyle='#fff';ctx.shadowBlur=22;ctx.shadowColor='#9fd4ff';
+   if(o.horiz)ctx.fillRect(0,o.pos-9,AW,18);else ctx.fillRect(o.pos-9,0,18,AH);
+   ctx.shadowBlur=0;
+   if(o.horiz?(Math.abs(py-o.pos)<17):(Math.abs(px-o.pos)<17))hit(t);
+  }else if(o.t==='blue'){
+   if(age>o.life){objs.splice(j,1);continue}
+   ctx.save();ctx.translate(o.x,o.y);ctx.rotate(t/700);
+   ctx.fillStyle='#4aa8ff';ctx.fillRect(-9,-9,18,18);
+   ctx.fillStyle='rgba(255,255,255,.7)';ctx.fillRect(-4,-4,8,8);ctx.restore();
+   if(Math.abs(px-o.x)<18&&Math.abs(py-o.y)<18){objs.splice(j,1);score+=50;tone(1040,.09,'square',.05)}
+  }else if(o.t==='chase'){
+   if(age>o.life){objs.splice(j,1);continue}
+   var dx=px-o.x,dy=py-o.y,L=Math.sqrt(dx*dx+dy*dy)||1;
+   o.vx+=dx/L*.035;o.vy+=dy/L*.035;
+   var sp=Math.sqrt(o.vx*o.vx+o.vy*o.vy)||1;if(sp>1.9){o.vx*=1.9/sp;o.vy*=1.9/sp}
+   o.x+=o.vx;o.y+=o.vy;
+   ctx.fillStyle='#b06bff';ctx.fillRect(o.x-9,o.y-9,18,18);
+   if(L<17)hit(t);
+  }
+ }
+ scoreEl.textContent=score;
+ var blink=t<invul&&Math.floor(t/90)%2===0;
+ ctx.save();ctx.translate(px,py);
+ ctx.fillStyle=blink?'#fff':'#4affd0';ctx.shadowBlur=12;ctx.shadowColor='#4affd0';
+ ctx.fillRect(-8,-8,16,16);ctx.shadowBlur=0;
+ ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(-8,-8,16,16);ctx.restore();
+}
+function loop(t){raf=0;if(!running)return;
+ var a=axis();if(a.x||a.y)nudge(a.x*4.6,a.y*4.6);
+ var b=Math.floor((t-t0)/BEAT);
+ while(lastBeat<b){lastBeat++;onBeat(lastBeat)}
+ if(lastBeat>=TOTAL){end(true);return}
+ draw(t);raf=requestAnimationFrame(loop)}
+function start(){
+ stop();fit();audio();
+ score=0;hp=3;invul=0;objs=[];rings=[];lastBeat=-1;
+ px=AW/2;py=AH/2;t0=performance.now();
+ heartsEl.textContent='♥♥♥';scoreEl.textContent='0';msg.textContent='踩着拍子走';
+ msg.className='';over.hidden=true;muteBtn.textContent=muted?'🔇':'🔊';
+ running=true;raf=requestAnimationFrame(loop)}
+function stop(){running=false;if(raf){cancelAnimationFrame(raf);raf=0}
+ stopDrag();over.hidden=true;objs=[];rings=[]}
+window.addEventListener('resize',function(){if(rootA.style.display!=='none')fit()});
+return{start:start,stop:stop};
+})();
+
+/* ================= 玩法 ②：决心弹幕 ================= */
+var B=(function(){
+var $=function(s){return document.querySelector(s)};
+var VW=320,VH=180; /* 固定逻辑框：PC 与移动端同一套坐标 */
+var wrap=$('#bStageWrap'),board=$('#bBoard'),layer=$('#bLayer'),soul=$('#bSoul'),talk=$('#bTalk'),
+    sub=$('#bSub'),menu=$('#bMenu'),flash=$('#bFlash'),foe=$('#bFoe'),pick=$('#bPick'),
+    gravBtn=$('#bGrav'),atkEl=$('#bAtk'),over=$('#bOver'),overP=$('#bOverP'),overT=$('#bOverT');
+var k=1,sx=0,sy=0;
+function fit(){
+ var aw=wrap.clientWidth,ah=wrap.clientHeight;if(aw<10||ah<10)return;
+ k=Math.min(1,aw/VW,ah/VH);
+ board.style.transform='translate(-50%,-50%) scale('+k+')';
+ if(!sx){sx=VW/2;sy=VH/2}place();
+}
+function place(){soul.style.left=sx+'px';soul.style.top=sy+'px'}
+function moveTo(x,y){sx=Math.max(11,Math.min(VW-11,x));sy=Math.max(11,Math.min(VH-11,y));place()}
+function nudge(dx,dy){moveTo(sx+dx/k,sy+dy/k)}
+var stopDrag=bindDrag(wrap,function(){return S.phase==='dodge'},nudge);
+
+var FOES=[
+ {key:'puppet',name:'灰烬木偶',emoji:'🪆',cls:'',hp:70,mercy:true,
+  intro:'* 灰烬木偶 挡住了去路。* 你心里充满了决心。',
+  desc:'碎骨六连 · 上下夹击 · 横向骨刺 · 四角合围',
+  waves:['boneTop','boneBottom','boneSide','boneCorner']},
+ {key:'flower',name:'回响花',emoji:'🌻',cls:'flower',hp:60,mercy:true,
+  intro:'* 回响花 轻轻晃了晃。* 它把花瓣撒成了弹幕。',
+  desc:'花瓣环爆 · 藤蔓收拢 · 音波扩散 · 节拍音符',
+  waves:['petalRing','vineClose','soundRing','beatNote']},
+ {key:'captain',name:'铁卫队长',emoji:'🛡️',cls:'',hp:84,mercy:true,orange:true,
+  intro:'* 铁卫队长 把长矛往地上一顿。* 「别站着不动。」',
+  desc:'长矛突刺 · 盾墙夹缝 · 橙魂必须一直动',
+  waves:['spearThrust','shieldWall','heartbeat','spearThrust']},
+ {key:'judge',name:'懒骨审判官',emoji:'💀',cls:'skull',hp:96,mercy:false,kr:true,blue:true,
+  intro:'* 懒骨审判官 靠在门框上，没抬眼。* 「哟。你今天挺有精神。」* 战斗框里，骨头已经排好了。',
+  desc:'蓝魂重力 · 巨炮预警 · 菜单横骨 · 地板骨柱 · 四向齐射 · 业报',
+  waves:['blueWall','gbLaser','menuBone','floorPillar','volley'],hot:true}
+];
+var FM={};FOES.forEach(function(f){FM[f.key]=f});
+var S={key:'puppet',hp:20,max:20,foehp:70,foemax:70,turn:1,items:3,buff:0,spare:0,
+ phase:'select',best:{},grav:1,krUntil:0,krTick:0,orange:false,lastMove:0};
+try{var raw=localStorage.getItem('hgu_db_best');if(raw)S.best=JSON.parse(raw)||{}}catch(err){}
+function save(){try{localStorage.setItem('hgu_db_best',JSON.stringify(S.best))}catch(err){}}
+function F(){return FM[S.key]}
+function spareable(){return F().mercy&&(S.spare>=2||S.foehp<=F().hp*.2)}
+function update(){
+var f=F(),b=S.best[S.key];
+$('#bFoeBar').style.width=(S.foehp/S.foemax*100)+'%';
+$('#bHpBar').style.width=(Math.max(0,S.hp)/S.max*100)+'%';
+$('#bName').textContent=f.name;$('#bName').className=spareable()?'ok':'';
+$('#bEmoji').textContent=f.emoji;foe.className=f.cls;
+$('#bHudTxt').textContent='LV 1 · HP '+Math.max(0,S.hp)+'/'+S.max+' · 回合 '+S.turn+' · 道具 '+S.items+
+ (S.buff?' ⚡':'')+(S.krUntil?' · 业报':'')+(S.orange?' · 橙魂':'')+(F().blue?' · 蓝魂':'')+
+ ' · '+(b?('最佳 '+b+' 回合'):'最佳 —');
+}
+function pop(x,y,t,c){var d=document.createElement('div');d.className='float'+(c?' '+c:'');d.textContent=t;
+ d.style.left=x+'px';d.style.top=y+'px';board.appendChild(d);setTimeout(function(){d.remove()},800)}
+var ttext='',ti=0,timer=null,tdone=null;
+function finish(){clearInterval(timer);if(tdone){var f=tdone;tdone=null;f()}}
+function say(t,cb){clearInterval(timer);ttext=t;ti=0;tdone=cb||null;talk.textContent='';
+ timer=setInterval(function(){ti++;talk.textContent=ttext.slice(0,ti);if(ti>=ttext.length)finish()},16)}
+talk.addEventListener('click',function(){if(ti<ttext.length){ti=ttext.length;talk.textContent=ttext}finish()});
+function setMenu(on){S.phase=on?'menu':'busy';menu.querySelectorAll('button').forEach(function(x){x.disabled=!on;x.style.opacity=on?1:.42})}
+function lock(){S.phase='sub';menu.querySelectorAll('button').forEach(function(x){x.disabled=true;x.style.opacity=.42})}
+var tpos=0,tiv=null;
+function stopT(){clearInterval(tiv);tiv=null}
+function open(m){
+ lock();
+ if(m==='fight'){
+  sub.innerHTML='<div id="bTiming"><div id="bTarget"></div><div id="bTBar"></div><div id="bTLabel">点「出手」停条 · 越靠中间越疼</div></div><button data-a="hit">出手</button><button data-a="back">返回</button>';
+  clearInterval(tiv);tpos=0;tiv=setInterval(function(){tpos=(tpos+2.6)%100;var el=$('#bTBar');if(el)el.style.left=tpos+'%'},16);
+ }else if(m==='act'){
+  sub.innerHTML='<button data-a="check">查看</button><button data-a="cheer">鼓励</button><button data-a="taunt">挑衅</button><button data-a="back">返回</button>';
+ }else if(m==='item'){
+  sub.innerHTML='<button data-a="candy">回魂糖</button><button data-a="star">星尘</button><button data-a="back">返回</button>';
+ }else{
+  sub.innerHTML='<button data-a="spare">饶恕</button><button data-a="flee">逃跑</button><button data-a="back">返回</button>';
+ }
+}
+menu.addEventListener('click',function(e){var b=e.target.closest('button');if(!b||S.phase!=='menu')return;open(b.dataset.m)});
+sub.addEventListener('click',function(e){
+ var b=e.target.closest('button');if(!b)return;var a=b.dataset.a;
+ if(a==='back'){stopT();sub.innerHTML='';setMenu(true);return}
+ if(a==='hit'){
+  stopT();var d=Math.max(3,Math.round(12-Math.abs(tpos-50)/3.2)),perfect=d>=11;
+  var boost=S.buff>0;if(boost){d*=2;S.buff=0}
+  S.foehp=Math.max(0,S.foehp-d);update();
+  foe.classList.remove('hit');void foe.offsetWidth;foe.classList.add('hit');
+  pop(VW/2,24,'-'+d,'');
+  if(S.foehp<=0){win(false);return}
+  say('* '+(perfect?'完美时机！':'命中！')+(boost?'星尘迸发！':'')+F().name+' 受到 '+d+' 点伤害。');
+  after();return}
+ if(a==='check'){var f=F();say('* '+f.name+'　HP '+f.hp+'　招式 '+f.waves.length+' 套* '+f.desc+'* '+(f.mercy?'名字变黄后可饶恕。':'它不接受饶恕。'));after();return}
+ if(a==='cheer'){S.spare++;update();say(spareable()?'* 你冲它笑了笑。* 它的名字变黄了，现在可以饶恕。':'* 你冲它笑了笑。* 它看起来没那么紧张了。');after();return}
+ if(a==='taunt'){say('* 你说了句狠话。* 弹幕又密了一格。');after();return}
+ if(a==='candy'){
+  if(S.items>0&&S.hp<S.max){S.items--;S.hp=Math.min(S.max,S.hp+8);update();pop(sx,sy,'+8','heal');say('* 你吃下回魂糖，恢复 8 点 HP。')}
+  else say('* 现在用不上，或者已经没有了。');
+  after();return}
+ if(a==='star'){
+  if(S.items>0&&!S.buff){S.items--;S.buff=1;update();pop(sx,sy,'⚡','');say('* 星尘贴在手心。* 下一次出手伤害翻倍。')}
+  else say('* 已经握着一颗了，或者道具用完了。');
+  after();return}
+ if(a==='spare'){
+  if(spareable()){win(true);return}
+  if(!F().mercy){say('* 你伸出了手。* 它打了个哈欠，把你的手轻轻拨开。* 「省省吧。」');}
+  else say('* 你伸出了手。* 但它还没准备好接受。');
+  after();return}
+ if(a==='flee'){S.phase='over';stopT();clearH();showOver('跑掉了','* 你转身跑开……* 决心却把你留在了原地。');return}
+});
+function after(){setMenu(false);sub.innerHTML='';setTimeout(dodge,650)}
+
+/* 危险物：飞出边界才移除，ttl 给足，不会半途凭空消失 */
+var hz=[],raf=0,last=0,dodgeEnd=0,nextWave=0,waveN=0,invulUntil=0;
+function haz(x,y,w,h,vx,vy,o){o=o||{};var d=document.createElement('div');
+ d.className='hz '+(o.cls||'bone')+(o.warn?' warn':'');d.style.left=x+'px';d.style.top=y+'px';
+ d.style.width=w+'px';d.style.height=h+'px';if(o.text)d.textContent=o.text;
+ layer.appendChild(d);hz.push({x:x,y:y,w:w,h:h,vx:vx||0,vy:vy||0,el:d,born:performance.now(),
+  warn:o.warn||0,ttl:o.ttl||8000,fired:false,dmg:o.dmg||4,txt:!!o.text})}
+function star(x,y,vx,vy,c){haz(x,y,0,0,vx,vy,{cls:'star'+(c?' '+c:''),text:'✦',ttl:8000})}
+function atk(t,hot){atkEl.textContent=t;atkEl.className=hot?'hot':''}
+function clearH(){hz.forEach(function(o){o.el.remove()});hz=[];stopT();stopDrag();
+ if(raf){cancelAnimationFrame(raf);raf=0}last=0}
+function setGrav(g){S.grav=g;gravBtn.innerHTML='重力<br>'+(g>0?'↓':'↑');soul.classList.add('blue')}
+var V=function(){return 2.6+S.turn*.08};
+var WAVES={
+ boneTop:function(){var g=Math.floor(Math.random()*5),i,v=V();for(i=0;i<6;i++)if(i!==g)star(VW*(i+.5)/6,-14,0,v)},
+ boneBottom:function(){var g=Math.floor(Math.random()*5),i,v=V();for(i=0;i<6;i++)if(i!==g)star(VW*(i+.5)/6,VH+14,0,-v,'b')},
+ boneSide:function(){var i,v=V();for(i=0;i<4;i++)star(-14,VH*(i+.5)/4,v,0)},
+ boneCorner:function(){star(-14,-14,1.8,1.8);star(VW+14,-14,-1.8,1.8);
+  star(-14,VH+14,1.8,-1.8,'b');star(VW+14,VH+14,-1.8,-1.8,'b')},
+ petalRing:function(){var i;for(i=0;i<10;i++){var a=i*.628;star(VW/2,VH/2,Math.cos(a)*2,Math.sin(a)*1.7,i%2?'g':'')}},
+ vineClose:function(){haz(-20,0,26,VH,1.5,0,{cls:'lava',ttl:8000,dmg:3});
+  haz(VW-6,0,26,VH,-1.5,0,{cls:'lava',ttl:8000,dmg:3});
+  for(var i=0;i<5;i++)star(VW/2,-14,Math.sin(i)*1.1,2.4,'g')},
+ soundRing:function(){var i;for(i=0;i<14;i++){var a=i*.449;
+  star(VW/2+Math.cos(a)*18,VH/2+Math.sin(a)*18,Math.cos(a)*3,Math.sin(a)*2.6,'')}},
+ beatNote:function(){var i;for(i=0;i<5;i++)haz(-20,VH*(i+.5)/5-8,0,0,3.4,0,{cls:'star',text:'♪',ttl:8000,dmg:3});
+  for(i=0;i<3;i++)star(VW*(i+.5)/3,-14,0,2.5,'')},
+ spearThrust:function(){var g=Math.floor(Math.random()*4),i;
+  for(i=0;i<4;i++)if(i!==g)haz(-20,VH*(i+.5)/4-4,VW+40,9,6,0,{ttl:8000,dmg:5})},
+ shieldWall:function(){haz(0,VH*.18,VW*.4,VH*.18,0,0,{cls:'shield',ttl:1800,dmg:4});
+  haz(VW*.6,VH*.58,VW*.4,VH*.18,0,0,{cls:'shield',ttl:1800,dmg:4});
+  for(var i=0;i<4;i++)star(VW*(i+.5)/4,-14,0,2.8,'b')},
+ heartbeat:function(){var i;for(i=0;i<3;i++){
+  star(VW/2,-14,(i-1)*2.1,2.7,'');star(VW/2,VH+14,(1-i)*2.1,-2.7,'b')}
+  haz(0,-8,VW,12,0,0,{cls:'gb',warn:1000,ttl:220,dmg:4})},
+ blueWall:function(){var g,i,v=V();setGrav(waveN%10===1?1:-1);
+  g=Math.floor(Math.random()*5);for(i=0;i<6;i++)if(i!==g)haz(VW*i/6,-14,VW/6+2,16,0,v,{cls:'bluebone',ttl:8000});
+  g=Math.floor(Math.random()*5);for(i=0;i<6;i++)if(i!==g)haz(VW*i/6,VH-2,VW/6+2,16,0,-v,{cls:'bluebone',ttl:8000})},
+ gbLaser:function(){var i,yy;for(i=0;i<2;i++){yy=VH*(i+.6)/2.6-12;
+  haz(-8,yy,VW+16,24,0,0,{cls:'gb',warn:420+i*260,ttl:300,dmg:5})}
+  if(waveN%2===0)haz(VW*.62,-8,26,VH+16,0,0,{cls:'gb',warn:760,ttl:300,dmg:5})},
+ menuBone:function(){var g=Math.random()*(VW-70),v=V();
+  haz(0,-16,g,16,0,v+1,{ttl:8000});haz(g+70,-16,VW-g-70,16,0,v+1,{ttl:8000});
+  haz(0,VH,VH*.36,14,v+1,0,{ttl:8000})},
+ floorPillar:function(){var g=Math.floor(Math.random()*5),i,v=V();
+  for(i=0;i<5;i++)if(i!==g)haz(VW*(i+.5)/5-8,VH,16,70,0,-2.8,{ttl:8000});
+  for(i=0;i<4;i++)star(-14,VH*(i+.5)/4,v,0,'b')},
+ volley:function(){haz(0,-8,VW,14,0,0,{cls:'gb',warn:900,ttl:260,dmg:5});
+  haz(0,VH-6,VW,14,0,0,{cls:'gb',warn:1300,ttl:260,dmg:5});
+  haz(-8,0,14,VH,0,0,{cls:'gb',warn:1700,ttl:260,dmg:5});
+  haz(VW-6,0,14,VH,0,0,{cls:'gb',warn:1700,ttl:260,dmg:5})}
+};
+var NAMES={boneTop:'碎骨六连 · 留一个缺口',boneBottom:'下方向上夹击',boneSide:'横向骨刺四连',boneCorner:'四角合围',
+ petalRing:'花瓣环爆',vineClose:'藤蔓向中收拢',soundRing:'音波扩散环',beatNote:'节拍音符横排',
+ spearThrust:'长矛突刺 · 整排扫过',shieldWall:'盾墙夹缝',heartbeat:'心跳双发 · 别停',
+ blueWall:'① 蓝魂重力 · 上下骨墙',gbLaser:'② 巨炮激光 · 先亮预警',menuBone:'③ 菜单横骨 · 整排压落',
+ floorPillar:'④ 地板骨柱 · 依次顶起',volley:'⑤ 四向齐射'};
+function hurt(dmg){
+ if(F().kr){S.krUntil=performance.now()+2100;S.krTick=0;pop(sx,sy,'业报','kr');
+  S.hp-=1;flash.style.opacity=.35;setTimeout(function(){flash.style.opacity=0},110)}
+ else{S.hp-=dmg;pop(sx,sy,'-'+dmg,'hurt');flash.style.opacity=.45;setTimeout(function(){flash.style.opacity=0},130)}
+ update();soul.classList.add('hit');setTimeout(function(){soul.classList.remove('hit')},600);
+ if(S.hp<=0)lose()}
+function dodge(){if(S.phase==='over')return;sub.innerHTML='';setMenu(false);S.phase='dodge';
+ stopDrag();var f=F();gravBtn.hidden=!f.blue;
+ if(f.blue)setGrav(1);else soul.classList.remove('blue');
+ S.orange=!!f.orange;S.lastMove=performance.now();
+ if(S.orange)soul.classList.add('orange');else soul.classList.remove('orange');
+ var gap=Math.max(1050,1320-S.turn*20);
+ dodgeEnd=performance.now()+260+(f.waves.length-1)*gap+2700;
+ nextWave=performance.now()+260;waveN=0;last=0;
+ if(!raf)raf=requestAnimationFrame(tick)}
+function tick(ts){
+ raf=0;if(S.phase!=='dodge')return;
+ if(!last)last=ts;var dt=Math.min(2.5,(ts-last)/16.7)||1;last=ts;
+ var ox=sx,oy=sy;
+ /* 键盘方向键：持续按住持续移动 */
+ var a=axis();if(a.x||a.y)moveTo(sx+a.x*3.6*dt,sy+a.y*3.6*dt);
+ /* 蓝魂重力恒定生效：按住拖动/按键照样把你往下拽 */
+ if(F().blue)moveTo(sx,sy+S.grav*1.5*dt);
+ /* 橙魂：必须一直动，静止就掉血（不看输入方式） */
+ if(S.orange){
+  if(Math.abs(sx-ox)>0.1||Math.abs(sy-oy)>0.1)S.lastMove=ts;
+  else if(ts-S.lastMove>900){S.lastMove=ts;S.hp-=1;update();pop(sx,sy,'-1','kr');
+   if(S.hp<=0){lose();return}}
+ }
+ if(S.krUntil&&ts<S.krUntil&&ts>S.krTick){S.krTick=ts+560;S.hp-=1;update();pop(sx,sy-16,'-1','kr');
+  if(S.hp<=0){lose();return}}
+ if(S.krUntil&&ts>=S.krUntil)S.krUntil=0;
+ if(ts>nextWave&&waveN<F().waves.length){waveN++;var key=F().waves[waveN-1];
+  atk(NAMES[key]||key,key==='volley');WAVES[key]();
+  nextWave=ts+Math.max(1050,1320-S.turn*20)}
+ for(var i=hz.length-1;i>=0;i--){var o=hz[i];if(!o||S.phase!=='dodge')break;
+  var age=ts-o.born;
+  if(o.warn&&age<o.warn){o.el.style.left=o.x+'px';o.el.style.top=o.y+'px';continue}
+  if(o.warn&&!o.fired){o.fired=true;o.el.classList.remove('warn');o.el.classList.add('fire')}
+  o.x+=o.vx*dt;o.y+=o.vy*dt;
+  /* 只有飞出边界或定时类到点才移除，不再半途删 */
+  var out=o.x<-VW-50||o.x>VW+50||o.y<-VH-50||o.y>VH+50;
+  if(age>o.warn+o.ttl||out){o.el.remove();hz.splice(i,1);continue}
+  o.el.style.left=o.x+'px';o.el.style.top=o.y+'px';
+  var pad=o.txt?13:8;
+  if(ts>invulUntil&&sx>o.x-pad&&sx<o.x+o.w+pad&&sy>o.y-pad&&sy<o.y+o.h+pad){
+   invulUntil=ts+800;hurt(o.dmg);if(S.phase!=='dodge')return}
+ }
+ if(S.phase==='dodge'){
+  if(ts>=dodgeEnd)endDodge();else raf=requestAnimationFrame(tick)
+ }
+}
+function endDodge(){clearH();gravBtn.hidden=true;soul.classList.remove('blue');soul.classList.remove('orange');
+ S.orange=false;atk('');S.turn++;update();setMenu(true);say('* 轮到你了。* '+F().name+' 静静等着。')}
+function showOver(t,p){clearH();gravBtn.hidden=true;soul.classList.remove('blue','orange');S.orange=false;atk('');
+ pick.style.display='none';sub.innerHTML='';setMenu(false);S.phase='over';
+ overT.textContent=t;overP.textContent=p;over.hidden=false}
+function win(kind){showOver(kind?'和平结局':'战斗结束',kind?'* 你选择了仁慈。* 名字变黄的那位，散成了暖光。':'* '+F().name+' 碎成了灰。* 路通了。');
+ var b=S.best[S.key];if(!b||S.turn<b){S.best[S.key]=S.turn;save();update()}}
+function lose(){showOver('决心碎了','* 你的决心碎了。* ……再试一次吧。')}
+function reset(){var f=F();
+ S.hp=20;S.foehp=f.hp;S.foemax=f.hp;S.turn=1;S.items=3;S.buff=0;S.spare=0;
+ S.grav=1;S.krUntil=0;S.orange=!!f.orange;S.lastMove=performance.now();S.phase='intro';
+ clearH();sub.innerHTML='';flash.style.opacity=0;atk('');soul.classList.remove('hit','blue');foe.className=f.cls;
+ gravBtn.hidden=true;pick.style.display='none';over.hidden=true;
+ fit();moveTo(VW/2,VH/2);update();
+ say('* '+f.name+' 又站了起来。* 你依然充满决心。',function(){setMenu(true)})}
+function startFoe(key){S.key=key;reset();say(F().intro,function(){setMenu(true)})}
+function showPick(){clearH();sub.innerHTML='';talk.textContent='';atk('');
+ gravBtn.hidden=true;soul.classList.remove('blue','orange');S.orange=false;over.hidden=true;
+ setMenu(false);S.phase='select';pick.style.display='block';renderCards()}
+function renderCards(){var html='';
+ FOES.forEach(function(f){html+='<button class="pcard'+(f.hot?' hot':'')+'" data-foe="'+f.key+'">'+
+  '<span class="n">'+f.emoji+' '+f.name+'</span><span class="d"><b>'+f.waves.length+' 套招</b> · '+f.desc+
+  (f.kr?' · 业报持续掉血':'')+(f.blue?' · 蓝魂重力恒定':'')+(f.orange?' · 必须一直动':'')+
+  (S.best[f.key]?'<br>最佳 '+S.best[f.key]+' 回合':'')+'</span></button>'});
+ $('#bCards').innerHTML=html}
+pick.addEventListener('click',function(e){var b=e.target.closest('button[data-foe]');if(b)startFoe(b.dataset.foe)});
+gravBtn.addEventListener('click',function(e){e.stopPropagation();setGrav(-S.grav)});
+gravBtn.addEventListener('pointerdown',function(e){e.stopPropagation()});
+$('#bAgain').addEventListener('click',function(){reset()});
+$('#bPickBtn').addEventListener('click',function(){showPick()});
+$('#bToHub').addEventListener('click',function(){go('hub')});
+$('#bHub2').addEventListener('click',function(){go('hub')});
+window.addEventListener('resize',function(){if(rootB.style.display!=='none')fit()});
+function start(){fit();showPick();renderCards()}
+function stop(){clearH();clearInterval(timer);timer=null;stopT();
+ gravBtn.hidden=true;over.hidden=true;pick.style.display='block';
+ soul.classList.remove('blue','orange','hit');flash.style.opacity=0;talk.textContent='';sub.innerHTML='';
+ board.querySelectorAll('.float').forEach(function(d){d.remove()});
+ atk('');S.phase='select'}
+return{start:start,stop:stop};
+})();
+
+go('hub');
+</script>
+</body></html>

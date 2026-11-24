@@ -248,8 +248,11 @@ border-radius:2px;padding:7px 10px;
 }
 .rp-info b{color:var(--seal);font-size:13px;}
 .rp-bar{display:flex;gap:6px;}
-.rp-bar .btn{flex:1;font-size:12px;padding:8px 2px;letter-spacing:0;}
-.rp-bar .btn.play{background:linear-gradient(180deg,rgba(168,50,45,.14),rgba(168,50,45,.06));}
+.rp-bar .btn{flex:1;min-width:0;font-size:12.5px;padding:8px 2px;letter-spacing:0;white-space:nowrap;}
+.rp-bar .btn.play{
+background:linear-gradient(180deg,rgba(168,50,45,.96),rgba(140,38,34,.9));
+color:#fff;border-color:rgba(120,30,26,.9);font-weight:600;
+}
 .rp-scrub{
 width:100%;margin:2px 0;accent-color:#a8322d;height:22px;
 }
@@ -331,14 +334,17 @@ background:linear-gradient(180deg,rgba(255,255,255,.6),rgba(232,220,196,.4));
 .panel-x{
 position:sticky; top:0; z-index:6; float:right;
 margin:-6px -6px 0 0;
-width:34px; height:34px; flex:0 0 auto;
-border:none; border-radius:50%; cursor:pointer;
-background:rgba(26,23,18,.08); color:var(--ink);
+width:36px; height:36px; flex:0 0 auto;
+border:1px solid rgba(26,23,18,.22); border-radius:50%; cursor:pointer;
+background:rgba(255,255,255,.85); color:var(--ink);
 font-size:19px; line-height:1; display:flex; align-items:center; justify-content:center;
+box-shadow:0 1px 3px rgba(60,45,25,.12);
 -webkit-tap-highlight-color:transparent;
 }
-.panel-x:hover{background:rgba(26,23,18,.16);}
-.panel-x:active{background:rgba(26,23,18,.26);}
+/* 视觉 36px，点击热区扩到 44px */
+.panel-x::after{content:"";position:absolute;inset:-4px;border-radius:50%;}
+.panel-x:hover{background:#fff;border-color:rgba(26,23,18,.4);}
+.panel-x:active{background:rgba(232,220,196,.9);}
 .panel > h3{clear:none;}
 
 #loader{
@@ -537,7 +543,7 @@ text-shadow:0 1px 2px rgba(0,0,0,.25);
 .cmp-row span{flex:0 0 60px;color:var(--ink-soft);letter-spacing:1px;}
 .cmp-row b{color:var(--seal);}
 .ev-tip-mini{font-size:10.5px;color:var(--ink-soft);line-height:1.7;margin:2px 0 6px;}
-.ev-item.locked{opacity:.5;filter:grayscale(.7);cursor:not-allowed;}
+.ev-item.locked{opacity:.72;filter:grayscale(.35);cursor:not-allowed;}
 .ev-item.locked:hover{border-color:rgba(26,23,18,.35);box-shadow:none;}
 .ev-state{
 flex:0 0 auto;font-size:10px;padding:3px 6px;border-radius:2px;letter-spacing:1px;
@@ -773,17 +779,36 @@ padding:5px 8px;background:rgba(168,133,63,.09);border-radius:2px;
 #pauseVeil .opts.mini .opt{padding:5px 1px;font-size:11px;}
 }
 
-#menu .start-btn{
+/* 底部操作区整块 sticky：两个按钮依次排列，不再各自粘底重叠 */
+#menu .start-stack{
 position:sticky; bottom:-1px; z-index:5;
-background:linear-gradient(180deg, rgba(255,255,255,.75), rgba(232,220,196,.94));
-box-shadow:0 -3px 8px rgba(60,45,25,.14);
+display:flex;flex-direction:column;align-items:center;gap:7px;
+width:100%;margin-top:14px;padding:10px 0 2px;
+background:linear-gradient(180deg,rgba(247,240,224,0),rgba(247,240,224,.96) 38%);
 }
-#btnEvent.event-btn{ bottom:-1px; }
+#menu .start-stack .start-btn{margin-top:0;}
+/* 扁平化：浅底深字，字不再隐形 */
+#menu .start-btn{
+color:var(--ink);font-weight:600;
+border:1px solid rgba(26,23,18,.55);
+background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(232,220,196,.96));
+box-shadow:0 1px 2px rgba(60,45,25,.14);
+}
+/* Material 主色实心：红底白字，不被浅底规则吃掉 */
+#menu #btnEvent.event-btn{
+color:#fff;
+background:linear-gradient(180deg,rgba(168,50,45,.97),rgba(140,38,34,.93));
+border-color:rgba(120,30,26,.9);
+text-shadow:0 1px 2px rgba(0,0,0,.25);
+box-shadow:0 2px 6px rgba(120,30,26,.24);
+}
 
+/* 不再 sticky 钉底：原先会盖住同区域的「玩法说明 / 棋谱回放 / 青瓷」，
+   看起来像按钮没字。改为正常排队，面板本身可滚动到底。 */
 #pmMenu{
-position:sticky; bottom:-1px; z-index:5; grid-column:1 / -1;
+grid-column:1 / -1;
 background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(232,220,196,.92));
-box-shadow:0 -3px 8px rgba(60,45,25,.14);
+box-shadow:0 1px 3px rgba(60,45,25,.14);
 }
 
 @media (min-width:900px) and (max-height:880px){
@@ -877,7 +902,7 @@ text-shadow:0 1px 2px rgba(0,0,0,.25);
 .cmp-row span{flex:0 0 60px;color:var(--ink-soft);letter-spacing:1px;}
 .cmp-row b{color:var(--seal);}
 .ev-tip-mini{font-size:10.5px;color:var(--ink-soft);line-height:1.7;margin:2px 0 6px;}
-.ev-item.locked{opacity:.5;filter:grayscale(.7);cursor:not-allowed;}
+.ev-item.locked{opacity:.72;filter:grayscale(.35);cursor:not-allowed;}
 .ev-item.locked:hover{border-color:rgba(26,23,18,.35);box-shadow:none;}
 .ev-state{
 flex:0 0 auto;font-size:10px;padding:3px 6px;border-radius:2px;letter-spacing:1px;
@@ -933,7 +958,7 @@ text-shadow:0 1px 2px rgba(0,0,0,.25);
 .cmp-row span{flex:0 0 60px;color:var(--ink-soft);letter-spacing:1px;}
 .cmp-row b{color:var(--seal);}
 .ev-tip-mini{font-size:10.5px;color:var(--ink-soft);line-height:1.7;margin:2px 0 6px;}
-.ev-item.locked{opacity:.5;filter:grayscale(.7);cursor:not-allowed;}
+.ev-item.locked{opacity:.72;filter:grayscale(.35);cursor:not-allowed;}
 .ev-item.locked:hover{border-color:rgba(26,23,18,.35);box-shadow:none;}
 .ev-state{
 flex:0 0 auto;font-size:10px;padding:3px 6px;border-radius:2px;letter-spacing:1px;
@@ -1072,8 +1097,10 @@ font-size:15px;box-shadow:0 1px 3px rgba(120,30,26,.35);
 </div>
 </div>
 
+<div class="start-stack">
 <button class="start-btn" id="btnStart">对 弈 开 始</button>
 <button class="start-btn event-btn" id="btnEvent">限 时 赛 事</button>
+</div>
 <div class="menu-links">
 <span id="linkRule">玩法</span>
 <span id="linkStat">战绩</span>
@@ -1093,7 +1120,7 @@ font-size:15px;box-shadow:0 1px 3px rgba(120,30,26,.35);
 <canvas id="board"></canvas>
 <div class="net-badge" id="netBadge"><span class="dot"></span><span id="netBadgeTxt">联机</span></div>
 <div class="net-badge" id="evBadge"><span class="dot ok"></span><span id="evBadgeTxt">赛事</span></div>
-<button class="pause-fab" id="btnPause" aria-label="暂停菜单">
+<button class="pause-fab" id="btnPause" aria-label="暂停菜单" title="暂停菜单">
 <svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
 </button>
 </div>
@@ -1194,34 +1221,14 @@ font-size:15px;box-shadow:0 1px 3px rgba(120,30,26,.35);
 <div id="netVeil" class="veil hidden">
 <div class="panel">
 <h3>联 机 对 弈</h3>
-
-<h4>连 接 方 式</h4>
-<div class="pm-opts" id="optNetMode">
-<div class="opt on" data-v="local">同机双窗<small>零服务器</small></div>
-</div>
-
-<h4>创 建 房 间</h4>
-<div class="net-row">
-<button class="btn" id="netCreate">开 房 间</button>
-<button class="btn hidden" id="netCancel">取 消 等 待</button>
-</div>
-<div id="netCodeWrap" class="hidden">
-<div class="code-big" id="netCode"><b>-</b><b>-</b><b>-</b><b>-</b></div>
-<div class="net-tip">把这 <b>4 位房间码</b> 告诉对方即可，无需复制长串</div>
-</div>
-
-<h4>加 入 房 间</h4>
-<div class="code-in" id="netJoin">
-<input maxlength="1" inputmode="numeric" pattern="[0-9]" id="ji0" aria-label="第1位">
-<input maxlength="1" inputmode="numeric" pattern="[0-9]" id="ji1" aria-label="第2位">
-<input maxlength="1" inputmode="numeric" pattern="[0-9]" id="ji2" aria-label="第3位">
-<input maxlength="1" inputmode="numeric" pattern="[0-9]" id="ji3" aria-label="第4位">
-</div>
-<div class="net-row">
-<button class="btn" id="netJoinBtn">加 入 对 局</button>
-</div>
-
 <div class="net-state"><span class="dot" id="netDot"></span><span id="netStateTxt">未连接</span></div>
+
+<h4>本 局 房 间</h4>
+<div class="code-big" id="netCode"><b>-</b><b>-</b><b>-</b><b>-</b><b>-</b><b>-</b></div>
+<div class="net-tip">房间号由首页「联机大厅」统一生成，本页只读邀请链接里的号，不自己造号。</div>
+<div class="net-row" style="margin-top:9px;">
+<a class="btn" href="index.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">回 首 页 拿 号</a>
+</div>
 
 <h4>联 机 诊 断</h4>
 <div class="term" id="netTerm"></div>
@@ -1229,9 +1236,11 @@ font-size:15px;box-shadow:0 1px 3px rgba(120,30,26,.35);
 <button class="btn" id="netRetry">重 试 连 接</button>
 <button class="btn" id="netClear">清 屏</button>
 </div>
-<div class="net-tip" id="netHint">同机双窗：本机再开一个游戏窗口，输入同一房间码即连，全程不经过任何服务器</div>
+<div class="net-tip" id="netHint">没有 ?room= 时就是纯单机，断网 / 直接双击打开都照常能玩。</div>
 
 <button class="btn panel-close" id="netClose">收 起 卷 轴</button>
+</div>
+</div>
 </div>
 </div>
 
@@ -1289,11 +1298,11 @@ font-size:15px;box-shadow:0 1px 3px rgba(120,30,26,.35);
 </div>
 <input type="range" class="rp-scrub" id="rpScrub" min="0" max="0" value="0">
 <div class="rp-bar">
-<button class="btn" id="rpFirst">⏮</button>
+<button class="btn" id="rpFirst" aria-label="第一手" title="第一手">⏮</button>
 <button class="btn" id="rpPrev">◀ 上一手</button>
 <button class="btn play" id="rpPlay">▶ 播放</button>
 <button class="btn" id="rpNext">下一手 ▶</button>
-<button class="btn" id="rpLast">⏭</button>
+<button class="btn" id="rpLast" aria-label="最后一手" title="最后一手">⏭</button>
 </div>
 <div class="rp-bar">
 <button class="btn" id="rpSgf">导 出 棋 谱</button>
@@ -1382,7 +1391,6 @@ font-size:15px;box-shadow:0 1px 3px rgba(120,30,26,.35);
 <div class="result-sub" id="endSub"></div>
 <div class="menu-list">
 <button class="btn" id="endAgain">再 来 一 局</button>
-<button class="btn" id="endLog">更 新 日 志</button>
 <button class="btn" id="endReview">棋 谱 回 放</button>
 <button class="btn" id="endStat">战 绩 · 段 位</button>
 <button class="btn" id="endMenu">返 回 主 菜 单</button>
@@ -1399,283 +1407,18 @@ font-size:15px;box-shadow:0 1px 3px rgba(120,30,26,.35);
 </div>
 </div>
 
+<script src="relay.js"></script>
 <script>
 
 const CHANGELOG = [];
 
 const DEVELOPERS = [];
 
-const QR={pc:null, dc:null, role:"", myType:"", remoteType:"", payload:null};
-
+/* 旧「扫码直连 / 相机 / 本机中继」已整体移除，只留空实现保证遗留绑定不抛错。
+   跨设备联机改走公共接口 relay.js（见 NET 对象）。 */
 function loadQRLibs(cb){ cb&&cb(false); }
-
-function sdpInfo(sdp){
-const cands=[]; let fp="", ufrag="", pwd="";
-(sdp||"").split("\n").forEach(l=>{
-l=l.trim();
-if(l.startsWith("a=fingerprint")) fp=l.slice(14).trim();
-else if(l.startsWith("a=ice-ufrag")) ufrag=l.slice(12).trim();
-else if(l.startsWith("a=ice-pwd")) pwd=l.slice(10).trim();
-else if(l.startsWith("a=candidate")){
-const m=l.match(/^a=candidate:\S+ \d+ (\w+) \d+ (\S+) (\d+) typ (\w+)/);
-if(m) cands.push({proto:m[1], ip:m[2], port:m[3], type:m[4]});
-}
-});
-return {fp, ufrag, pwd, cands};
-}
-
-function trimSdp(sdp){
-return (sdp||"").split("\n").filter(l=>{
-const m=l.match(/^a=candidate:\S+ \d+ \w+ \d+ (\S+) /);
-return !(m && m[1].indexOf(":")>=0);
-}).join("\n");
-}
-
-function qrRender(payload){
-QR.payload=payload;
-const box=$("scanQr");
-const data=JSON.stringify(payload);
-try{
-if(typeof qrcode!=="undefined"){
-let q=null;
-for(const lv of ["M","L"]){
-try{ const t=qrcode(0,lv); t.addData(data); t.make(); q=t; break; }catch(e){}
-}
-if(q){ box.innerHTML=q.createSvgTag({cellSize:4, margin:2, scalable:true}); }
-else box.innerHTML='<div class="ph">信息太长，请用下方「复制信息」发给对方</div>';
-}else{
-box.innerHTML='<div class="ph">生码库未加载，请用下方「复制信息」发给对方</div>';
-}
-}catch(e){ box.innerHTML='<div class="ph">生码失败，请用文本方式</div>'; }
-
-const inf=sdpInfo(payload.s);
-const typeName = payload.t==="offer" ? "连接码（给对方扫）" : "应答码（回给对方）";
-let txt="【"+typeName+"】\n";
-txt+="类型："+payload.t+"　长度："+data.length+" 字节\n";
-if(inf.cands.length){
-txt+="\n【可用地址 · IP + 端口】\n";
-inf.cands.forEach(c=>{
-const label = c.type==="host" ? "内网" : (c.type==="srflx" ? "公网映射" : c.type);
-txt+="  ["+label+"]  "+c.ip+" : "+c.port+"  ("+c.proto+")\n";
-});
-}
-txt+="\n【认证与加密】\n";
-txt+="  ufrag: "+inf.ufrag+"\n  pwd:   "+inf.pwd+"\n  fingerprint: "+inf.fp+"\n";
-txt+="\n【完整握手数据 SDP】\n"+payload.s;
-$("scanInfo").textContent=txt;
-$("scanText").value="";
-}
-
-function qrMakePC(){
-const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]});
-QR.pc=pc; NET.rtcPC=pc;
-pc.onicecandidate=e=>{ if(!e.candidate) qrFinish(); };
-pc.onconnectionstatechange=()=>{
-if(pc.connectionState==="failed") termLog("直连失败，可重扫一次","bad");
-if(pc.connectionState==="connected") termLog("两台设备已直连 —— 数据不经任何服务器","ok");
-};
-pc.ondatachannel=e=>qrBind(e.channel);
-return pc;
-}
-
-let qrRendered=false;
-function qrFinish(){
-if(qrRendered) return;
-if(!QR.pc||!QR.pc.localDescription) return;
-qrRendered=true;
-const sdp=trimSdp(QR.pc.localDescription.sdp);
-qrRender({v:1, t:QR.myType, s:sdp});
-termLog("连接码已生成（"+sdp.length+" 字节，含 "+
-sdpInfo(sdp).cands.length+" 个候选地址）","ok");
-}
-
-function qrBind(dc){
-QR.dc=dc;
-const c={kind:"rtc", cli:dc, alive:true};
-NET.chans.push(c); NET.direct=c;
-dc.onmessage=ev=>{
-try{ const m=JSON.parse(ev.data); if(m.f!==NET.role) netHandle(m); }catch(e){}
-};
-dc.onclose=()=>{
-c.alive=false;
-if(NET.direct===c){ NET.direct=null; termLog("直连已断开","warn"); }
-};
-if(dc.readyState==="open") qrConnected(); else dc.onopen=qrConnected;
-}
-function qrConnected(){
-termLog("点对点通道已打开 —— 此后每一步棋都在两台设备间直传","ok");
-qrEnterGame();
-}
-
-function qrEnterGame(){
-const asHost = QR.role==="host";
-G.netOn=true; G.netReady=true; G.netRole=QR.role;
-G.netColor = asHost?BLACK:WHITE; G.mode="net";
-$("netVeil").classList.add("hidden");
-newGame();
-netBadge(true, (asHost?"房主 · 执黑":"客机 · 执白")+" · 扫码直连");
-toast(asHost?"已直连 · 你执黑先行":"已直连 · 你执白后行");
-}
-
-function qrMakeOffer(){
-loadQRLibs(ok=>{
-qrRendered=false;
-if(typeof RTCPeerConnection==="undefined"){ toast("本浏览器不支持点对点直连"); return; }
-QR.role="host"; NET.role="host"; QR.myType="offer"; QR.remoteType="answer";
-termHead("扫码直连 · 生成连接码");
-termLog("正在收集本机可连接地址…","warn");
-const pc=qrMakePC();
-const dc=pc.createDataChannel("wq");
-qrBind(dc);                                  // 发起方的通道没有 ondatachannel，需手动接上
-pc.createOffer()
-.then(o=>pc.setLocalDescription(o))
-.then(()=>{
-termLog("已生成，等 ICE 收集中（最多 4 秒）…","warn");
-setTimeout(qrFinish, 4000);      // 兜底：不再等也先出一版
-})
-.catch(e=>termLog("生成失败："+e,"bad"));
-});
-}
-
-function qrReadOffer(text){
-let p=null;
-try{ p=JSON.parse(text); }catch(e){ toast("不是有效的连接信息"); return; }
-if(!p||!p.s){ toast("连接信息不完整"); return; }
-if(p.t!=="offer"){ toast("当前需要对方的「连接码」，这是「应答码」"); return; }
-QR.role="guest"; NET.role="guest"; QR.myType="answer"; QR.remoteType="offer"; qrRendered=false;
-termHead("扫码直连 · 已读到对方连接码");
-termLog("正在生成应答…","warn");
-const pc=qrMakePC();
-pc.setRemoteDescription(new RTCSessionDescription({type:"offer", sdp:p.s}))
-.then(()=>pc.createAnswer())
-.then(a=>pc.setLocalDescription(a))
-.then(()=>{ termLog("已应答，等 ICE 收集中…","warn"); setTimeout(qrFinish,4000); })
-.catch(e=>termLog("应答失败："+e,"bad"));
-}
-
-function qrApplyRemote(text){
-let p=null;
-try{ p=JSON.parse(text); }catch(e){ toast("不是有效的连接信息"); return; }
-if(!p||!p.s){ toast("连接信息不完整"); return; }
-if(QR.myType && p.t!==QR.remoteType){
-toast("顺序不对：你需要的是对方的「"+(QR.remoteType==="offer"?"连接码":"应答码")+"」");
-return;
-}
-const pc=QR.pc;
-if(!pc){ toast("请先生成你自己的连接码"); return; }
-termHead("扫码直连 · 应用对方信息");
-pc.setRemoteDescription(new RTCSessionDescription({type:p.t, sdp:p.s}))
-.then(()=>{ termLog("已应用，正在握手…","ok"); })
-.catch(e=>termLog("应用失败："+e,"bad"));
-}
-
-let camStream=null, camTimer=null;
-function camStop(){
-if(camTimer){ clearInterval(camTimer); camTimer=null; }
-if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
-const v=$("camVideo"); if(v){ v.pause&&v.pause(); v.srcObject=null; }
-$("camVeil").classList.add("hidden");
-}
-function camStart(onRead){
-loadQRLibs(ok=>{
-if(typeof jsQR==="undefined"){ toast("扫码库加载失败，请改用粘贴文本"); return; }
-if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
-toast("本浏览器不支持调用相机"); return;
-}
-$("camVeil").classList.remove("hidden");
-$("camTip").textContent="对准对方的二维码";
-navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}, audio:false})
-.then(st=>{
-camStream=st;
-const v=$("camVideo"); v.srcObject=st;
-v.setAttribute("playsinline",""); v.muted=true;
-v.play().catch(()=>{});
-const cv=document.createElement("canvas"), cx=cv.getContext("2d",{willReadFrequently:true});
-camTimer=setInterval(()=>{
-if(v.readyState!==v.HAVE_ENOUGH_DATA) return;
-const w=v.videoWidth, h=v.videoHeight;
-if(!w||!h) return;
-const s=Math.min(w,h)*0.7, sx=(w-s)/2, sy=(h-s)/2;
-cv.width=Math.round(s); cv.height=Math.round(s);
-cx.drawImage(v, sx, sy, s, s, 0, 0, cv.width, cv.height);
-const img=cx.getImageData(0,0,cv.width,cv.height);
-const r=jsQR(img.data, cv.width, cv.height, {inversionAttempts:"dontInvert"});
-if(r&&r.data){
-camStop();
-$("camTip").textContent="已读到";
-onRead&&onRead(r.data);
-}
-}, 220);
-})
-.catch(e=>{
-$("camVeil").classList.add("hidden");
-toast("无法打开相机"+(e&&e.name?"（"+e.name+"）":"")+"，可改用粘贴文本");
-});
-});
-}
-
-function tryRunEmbeddedRelay(){
-const el=$("relaySrc");
-const src=el ? el.textContent : "";
-if(!src.trim()) return {ok:false, why:"内置脚本缺失"};
-termHead("尝试在浏览器内启动内置中继");
-termLog("本机无法启动联机中继","warn");
-try{
-const fn=new Function("require","module","exports","process","__dirname", src);
-fn(function(name){ throw new Error("浏览器无法加载 Node 模块 '"+name+"'"); },
-{exports:{}}, {}, undefined, "/");
-return {ok:false, why:"脚本执行完毕，但未提供监听端口的能力（浏览器无 net 模块）"};
-}catch(e){
-return {ok:false, why:String(e&&e.message||e)};
-}
-}
-
-function explainNoServer(why, resumeFn){
-termLog("启动失败："+why,"bad");
-termLog("结论：浏览器不提供 Node 运行时，也不允许监听 TCP 端口","bad");
-showDialog("无 法 在 本 机 启 动 中 继",
-"本机无法启动联机服务：<br>"+
-"<span style='color:var(--seal)'>「"+String(why).replace(/</g,"&lt;")+"」</span>"+
-"<div class='dlg-note'>"+
-"原因：这个脚本要用 Node 的 <b>net 模块监听端口</b>，而浏览器出于安全限制"+
-"<b>既没有 Node 运行时、也禁止监听任何端口</b>。这不是代码问题，"+
-"任何纯 HTML 都做不到 —— 硬做一个假装在运行的中继界面只会骗人，所以本作选择如实告知。"+
-"</div>"+
-"<div style='margin-top:8px;'>请选一条真正能联机的路：</div>",
-[
-{label:"① 用公共中继（手机也能用，零安装）", pri:true, cb:()=>{
-G.netMode="public"; syncOpts(); netUpdateHint();
-termHead("已切到公共中继");
-termLog("正在用公共中继开房间…","ok");
-resumeFn&&resumeFn();
-}},
-{label:"② 两人共用这台设备 → 同机双窗", cb:()=>{
-G.netMode="local"; syncOpts(); netUpdateHint();
-termHead("已切到同机双窗");
-termLog("本机再开一个游戏窗口，输入同一房间码即连","ok");
-resumeFn&&resumeFn();
-}},
-{label:"②′ 扫码直连（两部手机，真·零服务器）", cb:()=>{
-G.netMode="scan"; syncOpts(); netUpdateHint();
-termHead("已切到扫码直连");
-termLog("一方点「① 生成我的连接码」，另一方扫它即可","ok");
-}},
-{label:"③ 下载脚本，在电脑上用 Node 跑", cb:()=>{
-const src=$("relaySrc")?$("relaySrc").textContent:"";
-try{
-const blob=new Blob([src],{type:"text/javascript;charset=utf-8"});
-const url=URL.createObjectURL(blob);
-const a=document.createElement("a");
-a.href=url; a.download="联机脚本";
-document.body.appendChild(a); a.click();
-setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },800);
-termHead("已导出脚本");
-}catch(e){ termLog("导出失败，请在电脑浏览器上再试","bad"); }
-}},
-{label:"我知道了，先自己看看", cb:()=>{}}
-]
-);
-}
+function camStop(){}
+function camStart(cb){ cb&&cb(""); }
 
 const SKINS={
 ink:  {name:"水墨", paper:"#efe6d2", line:"#262019", ink2:"#4a4238", seal:"#a8322d", dot:"#262019"},
@@ -2050,241 +1793,120 @@ box.scrollTop=box.scrollHeight;
 function termClear(){ const b=$("netTerm"); if(b){ b.innerHTML=""; termLines=0; } }
 function termHead(t){ termLog("── "+t+" ──","head"); }
 
+/* ============ 联机：HGURelay v1.1 / 全站规范 v1.5 ============
+   · 房间号唯一来源是首页「联机大厅」，游戏只读 ?room=xxxxxx
+   · 绝不生成房间号：不调用任何造号接口，也不自己拼 6 位数字
+   · 没号 / 没 relay.js / 中继连不上 → 纯单机，照常能玩
+   · 消息用自定义 k:"go"，g 里装原来的对局对象（规范允许自定义字段）
+*/
 const NET = {
-chans:[],        // [{kind, cli, alive}] 并行通道
-active:null,     // 牵手成功后固定的通道
-direct:null,     // 点对点直连通道（WebRTC），优先走它
-rtcPC:null,      // RTCPeerConnection
+chans:[], active:null, direct:null, rtcPC:null,
 room:"", role:"", peer:false,
 onMsg:null, onStatus:null,
-BROKERS:[],
-TOPIC:"weiqi-plus-room-",
+_sess:null, _helloDone:false, _herT:null,
+get open(){ return !!(this._sess && this._sess.state()==="online"); },
+
 status(t,s){ termLog(t, s==="ok"?"ok":(s==="bad"?"bad":"warn")); if(this.onStatus) this.onStatus(t,s); },
-get open(){ return this.chans.length>0; },
 
-lock(c){
-if(this.active) return;
-this.active=c; this.peer=true;
-this.chans.forEach(x=>{ if(x!==c) this._close(x); });
-this.chans=[c];
-const name = c.kind==="bc" ? "同机双窗" : (c.kind==="ws" ? "自建中继" : "公共中继");
-this.status("已牵手 · "+name+" · 房间 "+this.room, "ok");
-termLog("对手已连上，通道锁定为 "+name,"ok");
-},
-_close(c){
-try{
-if(c.kind==="bc") c.cli.close();
-else if(c.kind==="ws") c.cli.close();
-else if(c.kind==="rtc") c.cli.close();
-else c.cli.end(true);
-}catch(e){}
-c.alive=false;
-},
-
-openLocal(room, role, cb){
-if(typeof BroadcastChannel==="undefined") return cb&&cb("不支持同机双窗");
-try{
-const ch=new BroadcastChannel(this.TOPIC+room);
-const c={kind:"bc", cli:ch, alive:true};
-ch.onmessage=e=>{ const m=e.data||{}; if(m.f!==this.role){ this.lock(c); this.onMsg&&this.onMsg(m); } };
-cb&&cb(null, c);
-}catch(e){ cb&&cb("同机双窗创建失败"); }
-},
-
-openRemote(room, role, relay, cb){
-const topic=this.TOPIC+room;
-const mk=(kind,cli)=>{
-const c={kind, cli, alive:true};
-if(kind==="ws"){
-cli.onmessage=e=>{ try{ const m=JSON.parse(e.data); if(m.r===room&&m.f!==this.role){ this.lock(c); this.onMsg&&this.onMsg(m); } }catch(err){} };
-cli.onclose=()=>{ c.alive=false; if(this.active===c){ this.active=null; this.status("连接已断开","bad"); if(G.netOn) netBadge(false,"对手离线"); } };
-}else{
-cli.on("message",(tp,buf)=>{
-if(tp!==topic) return;
-try{ const m=JSON.parse(buf.toString()); if(m.f!==this.role){ this.lock(c); this.onMsg&&this.onMsg(m); } }catch(e){}
-});
-cli.on("close",()=>{ c.alive=false; if(this.active===c){ this.active=null; this.status("连接已断开","bad"); if(G.netOn) netBadge(false,"对手离线"); } });
-cli.on("error",()=>{});
-}
-cb&&cb(null, c);
-};
-if(relay){
-let ws;
-try{ ws=new WebSocket(relay.replace(/\/$/,"")); }catch(e){ return cb&&cb("地址无效"); }
-const to=setTimeout(()=>{ try{ws.close();}catch(e){} cb&&cb("连接超时"); cb=null; },8000);
-ws.onopen=()=>{ clearTimeout(to); ws.send(JSON.stringify({r:room,join:1})); mk("ws",ws); };
-ws.onerror=()=>{ clearTimeout(to); if(cb){ cb("无法连接该中继地址"); cb=null; } };
+_deliver(o){
+if(!o || typeof o!=="object") return;
+if(o.t==="hello"){
+if(this._helloDone) return;
+this._helloDone=true; this.peer=true;
+this.onMsg && this.onMsg(o);
 return;
 }
-
-const ensureMqtt=(cb2)=>{
-if(typeof mqtt!=="undefined") return cb2(true);
-termLog("联机模块未就绪，正在后台加载…","warn");
-let waited=0;
-const t=setInterval(()=>{
-if(typeof mqtt!=="undefined"){ clearInterval(t); return cb2(true); }
-waited+=300;
-if(waited>=7000){ clearInterval(t); cb2(false); }
-},300);
-};
-ensureMqtt(ok=>{
-if(!ok) return cb&&cb("联机模块加载失败，请检查网络后重试");
-let settled=false, failed=0;
-const total=this.BROKERS.length;
-const close=(cli)=>{ try{ cli.end(true); }catch(e){} };
-const allDone=()=>{
-failed++;
-if(!settled && failed>=total){
-cb&&cb("公共中继暂不可用"); cb=null;
-termLog("全部公共节点均不可达（可能是网络限制）","bad");
-termLog("办法一：在电脑上跑中继脚本，两台设备都填 ","warn");
-termLog("办法二：两人共用一台设备，改用「同机双窗」","warn");
+if(!this._helloDone){
+this._helloDone=true; this.peer=true;
+this.onMsg && this.onMsg({t:"hello"});
 }
-};
-termLog("并行探测 "+total+" 个公共中继节点…","warn");
-this.BROKERS.forEach((url,idx)=>{
-let cli;
-try{ cli=mqtt.connect(url,{clientId:"wq"+Math.random().toString(36).slice(2,10),connectTimeout:7000,clean:true}); }
-catch(e){ return allDone(); }
-const to=setTimeout(()=>{
-close(cli);
-if(settled) return;
-termLog("节点 "+(idx+1)+"/"+total+" 超时","warn");
-allDone();
-},9000);
-cli.on("connect",()=>{
-clearTimeout(to);
-if(settled){ close(cli); return; }
-settled=true;
-termLog("节点 "+(idx+1)+"/"+total+" 已连上","ok");
-cli.subscribe(topic,err=>{
-if(err){ termLog("订阅失败，换下一个节点","warn"); settled=false; close(cli); allDone(); return; }
-mk("mqtt",cli);
-});
-});
-cli.on("error",e=>{
-clearTimeout(to);
-if(settled){ close(cli); return; }
-termLog("节点 "+(idx+1)+"/"+total+" 不可达","warn");
-close(cli); allDone();
-});
-});
-});
+this.onMsg && this.onMsg(o);
 },
 
-join(room, role, relay, done, mode){
-this.close();
-this.room=room; this.role=role; this.peer=false; this.active=null; this.chans=[];
-mode = mode || "local";
-
-const addChans=[];
-const wantLocal  = !relay && (mode==="local"||mode==="auto");
-const wantRemote = !!relay || mode==="auto" || mode==="public";
-let pending=0, lastErr=null;
-
-const settle=()=>{
-if(!addChans.length){ done&&done(lastErr||"当前方式不可用"); return; }
-if(this.active){ done&&done(null); return; }
-done&&done(null);
-setTimeout(()=>{ this.send({t:"hello", role}); }, 40);
-};
-const one=(err,c)=>{
-if(err){ lastErr=err; }
-else { addChans.push(c); this.chans.push(c); }
-if(--pending<=0) settle();
-else if(this.active) done&&done(null);
-};
-
-if(wantLocal){ pending++; this.openLocal(room, role, one); }
-if(wantRemote){ pending++; this.openRemote(room, role, relay, one); }
-if(!pending) settle();
-},
-
-rtcOK(){ return typeof RTCPeerConnection!=="undefined"; },
-newPC(){
-const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]});
-this.rtcPC=pc;
-pc.onicecandidate=e=>{ if(e.candidate) this.send({t:"rtc",k:"ice",c:e.candidate.toJSON()}); };
-pc.onconnectionstatechange=()=>{
-if(pc.connectionState==="failed") termLog("点对点直连失败，继续用中继转发","warn");
-};
-if(this.role!=="host") pc.ondatachannel=e=>this.bindDC(e.channel);
-return pc;
-},
-bindDC(dc){
-const c={kind:"rtc", cli:dc, alive:true};
-this.chans.push(c); this.direct=c;
-dc.onmessage=ev=>{
-try{ const m=JSON.parse(ev.data); if(m.f!==this.role) this.onMsg&&this.onMsg(m); }catch(e){}
-};
-dc.onclose=()=>{
-c.alive=false;
-if(this.direct===c){ this.direct=null; termLog("点对点直连已断开，回落到中继转发","warn"); }
-};
-if(dc.readyState==="open") this.onDirect(c);
-else dc.onopen=()=>this.onDirect(c);
-},
-onDirect(c){
-termLog("点对点直连已建立 —— 此后每一步棋都不再经过任何服务器","ok");
-this.status("已牵手 · 点对点直连 · 房间 "+this.room,"ok");
-},
-
-startRTC(){
-if(!this.rtcOK()){ termLog("本浏览器不支持点对点直连，继续用中继转发","warn"); return; }
-if(this.rtcPC||this.direct) return;
-termLog("尝试建立点对点直连（不再经过服务器转发）…","warn");
-const pc=this.newPC();
-const dc=pc.createDataChannel("wq");
-this.bindDC(dc);
-pc.createOffer()
-.then(o=>pc.setLocalDescription(o))
-.then(()=>this.send({t:"rtc",k:"offer",s:pc.localDescription}))
-.catch(e=>termLog("直连协商失败："+e,"warn"));
-},
-
-handleRTC(m){
-if(!this.rtcOK()) return;
-const pc=this.rtcPC || this.newPC();
-if(m.k==="offer"){
-pc.setRemoteDescription(new RTCSessionDescription(m.s))
-.then(()=>pc.createAnswer())
-.then(a=>pc.setLocalDescription(a))
-.then(()=>this.send({t:"rtc",k:"answer",s:pc.localDescription}))
-.catch(e=>termLog("直连接收失败："+e,"warn"));
-}else if(m.k==="answer"){
-pc.setRemoteDescription(new RTCSessionDescription(m.s))
-.catch(e=>termLog("直连确认失败："+e,"warn"));
-}else if(m.k==="ice"){
-pc.addIceCandidate(new RTCIceCandidate(m.c)).catch(()=>{});
-}
+/* 角色协商：两边都是同一个邀请链接进来的，没有「开房/加入」之分。
+   用 relay 自动分配的客户端 id 比字典序，小者当房主（执黑先行），两边结论一致。 */
+_negotiate(otherId){
+const myId=this._sess?this._sess.id:"";
+if(!myId || !otherId || myId===otherId) return;
+this.role = (myId < otherId) ? "host" : "guest";
+G.netRole=this.role;
+this._deliver({t:"hello"});
 },
 
 send(o){
-if(!this.chans.length) return;
+if(!o || !this.open) return;
 o.r=this.room; o.f=this.role;
-const s=JSON.stringify(o);
-if(this.direct && this.direct.alive && this.direct.cli.readyState==="open"){
-try{ this.direct.cli.send(s); }catch(e){}
-return;
-}
-for(const c of this.chans){
-if(!c.alive || c.kind==="rtc") continue;
-try{
-if(c.kind==="bc") c.cli.postMessage(o);
-else if(c.kind==="ws") c.cli.send(s);
-else c.cli.publish(this.TOPIC+this.room, s, {qos:0, retain:false});
-}catch(e){}
-}
+try{ this._sess.raw({k:"go", g:o}); }catch(e){}
 },
-close(){
-this.chans.forEach(c=>this._close(c));
-this.chans=[]; this.active=null; this.peer=false;
-this.direct=null;
-try{ if(this.rtcPC){ this.rtcPC.close(); this.rtcPC=null; } }catch(e){}
-}
-};
 
-function makeRoomCode(){ return String(Math.floor(1000+Math.random()*9000)); }
+/* 上线后持续广播 hello，直到双方都开局。
+   公共中继没有 retain，对方晚加载时一次性补发会全部错过 → 永远协商不成角色。 */
+_startHello(){
+this._stopHello();
+const tick=()=>{
+if(!this.open || G.netOn){ this._stopHello(); return; }
+try{ this.send({t:"hello"}); }catch(e){}
+};
+tick();
+this._herT=setInterval(tick, 1200);
+},
+_stopHello(){ if(this._herT){ clearInterval(this._herT); this._herT=null; } },
+
+/* 唯一入口：只读邀请链接里的号，连上公共中继 */
+connect(done){
+this.close();
+this.peer=false; this._helloDone=false;
+const R=(typeof HGURelay!=="undefined")?HGURelay:null;
+this.room = (R && R.roomFromURL) ? R.roomFromURL() : "";   // 只读，不补号
+
+if(!R || !R.joinInvite){
+termLog("未找到 relay.js · 纯单机照常可玩","warn");
+done&&done(null); return;
+}
+if(!/^\d{6}$/.test(this.room)){
+termLog("没有邀请链接（?room=六位数字）· 纯单机照常可玩","warn");
+done&&done(null); return;     // ★ 不造号、不补号
+}
+this.status("正在连接房间 "+this.room+"…","warn");
+R.joinInvite({
+onStatus:(code,text)=>this.status(text, code==="online"?"ok":(code==="bad"?"bad":"warn")),
+onLog:(t)=>termLog(t,"warn"),
+onMessage:(m)=>{
+if(!m) return;
+if(m.k==="hello"){                       // 大厅 / 其他页面进房广播：只提示，不当对手
+termLog("有人进入房间 "+this.room,"warn"); return;
+}
+if(m.k==="go" && m.g){
+if(m.g.t==="hello"){ this._negotiate(m.id); return; }
+this._deliver(m.g); return;
+}
+if(m.k==="say" && m.t){ /* 大厅喊话：不打断对局 */ }
+}
+}).then(sess=>{
+this._sess=sess;
+this.chans=[{kind:"hg",alive:true}]; this.active={kind:"hg"};
+this.status("已连上公共中继 · 房间 "+this.room,"ok");
+this._startHello();
+done&&done(null);
+}).catch(()=>{
+this.status("公共中继暂时连不上 · 纯单机照常可玩","warn");
+done&&done(null);
+});
+},
+
+close(){
+this._stopHello();
+try{ if(this._sess) this._sess.close(); }catch(e){}
+this._sess=null; this._helloDone=false;
+this.chans=[]; this.active=null; this.peer=false;
+this.direct=null; this.rtcPC=null;
+},
+
+/* 兼容旧调用：点对点直连已移除，留空实现避免报错 */
+startRTC(){}, handleRTC(){}, rtcOK(){ return false; },
+newPC(){ return null; }, bindDC(){}, onDirect(){},
+lock(){}, _close(){}, openLocal(){}, openRemote(){}
+};;
 
 const EMPTY=-1, BLACK=0, WHITE=1;
 
@@ -3993,12 +3615,8 @@ if(!moves.length){ closePause(); toast("已无合法落点，请停一手"); ret
 G.hint=pickAI(moves, G.turn);
 closePause(); drawBoard(); toast("虚线圈即推荐落点");
 });
-$("pmLog").addEventListener("click", ()=>{ renderLog(); $("logVeil").classList.remove("hidden"); });
-$("pmDev").addEventListener("click", ()=>{ renderDev(); $("devVeil").classList.remove("hidden"); });
 $("pmRule").addEventListener("click", ()=>{ $("ruleVeil").classList.remove("hidden"); });
 
-$("linkLog").addEventListener("click", ()=>{ renderLog(); $("logVeil").classList.remove("hidden"); });
-$("linkDev").addEventListener("click", ()=>{ renderDev(); $("devVeil").classList.remove("hidden"); });
 $("linkRule").addEventListener("click", ()=>{ $("ruleVeil").classList.remove("hidden"); });
 ["logClose","devClose","ruleClose"].forEach(id=>$(id).addEventListener("click", ()=>{
 $(id.replace("Close","Veil")).classList.add("hidden");
@@ -4006,14 +3624,11 @@ $(id.replace("Close","Veil")).classList.add("hidden");
 
 $("endAgain").addEventListener("click", restart);
 $("endMenu").addEventListener("click", toMenu);
-$("endLog").addEventListener("click", ()=>{ renderLog(); $("logVeil").classList.remove("hidden"); });
 $("endClose").addEventListener("click", ()=>$("endVeil").classList.add("hidden"));
 $("endReview").addEventListener("click", rpOpen);
 $("pmReview").addEventListener("click", ()=>{ $("pauseVeil").classList.add("hidden"); rpOpen(); });
 $("endStat").addEventListener("click", ()=>{ renderStats(); $("stVeil").classList.remove("hidden"); });
 $("pmStat").addEventListener("click", ()=>{ renderStats(); $("stVeil").classList.remove("hidden"); });
-$("mlClose").addEventListener("click", ()=>$("mlVeil").classList.add("hidden"));
-$("mlVeil").addEventListener("click", e=>{ if(e.target===$("mlVeil")) $("mlVeil").classList.add("hidden"); });
 
 function renderSkinsPm(){
 const box=$("pmSkin"); if(!box) return;
@@ -4028,8 +3643,6 @@ box.appendChild(el);
 });
 }
 $("btnPause").addEventListener("click", ()=>{ renderSkinsPm(); });
-$("upClose").addEventListener("click", ()=>$("upVeil").classList.add("hidden"));
-$("upVeil").addEventListener("click", e=>{ if(e.target===$("upVeil")) $("upVeil").classList.add("hidden"); });
 
 $("linkStat").addEventListener("click", ()=>{ renderStats(); $("stVeil").classList.remove("hidden"); });
 
@@ -4045,185 +3658,38 @@ $("askNo").addEventListener("click", ()=>{ $("askVeil").classList.add("hidden");
 $("dlgVeil").addEventListener("click", e=>{ if(e.target===$("dlgVeil")) $("dlgVeil").classList.add("hidden"); });
 
 function netOpenPanel(){
-$("netDot").className="dot"; $("netStateTxt").textContent="未连接";
-$("netCodeWrap").classList.add("hidden");
-$("netCancel").classList.add("hidden");
-$("netCreate").classList.remove("hidden");
-netUpdateHint();
-termHead("联机面板已就绪 · 方式：" + ({local:"同机双窗",auto:"自动",public:"公共中继"}[G.netMode]||G.netMode));
+const room = NET.room || ((typeof HGURelay!=="undefined" && HGURelay.roomFromURL) ? HGURelay.roomFromURL() : "");
+[...$("netCode").children].forEach((b,k)=>{ b.textContent = room[k] || "-"; });
+termHead("联机面板已就绪");
 if(!termInited){
 termInited=true;
-termLog("环境自检：" + (typeof BroadcastChannel!=="undefined" ? "同机双窗可用" : "同机双窗不可用") +
-" · " + (typeof mqtt!=="undefined" ? "联机模块已就绪" : "联机模块加载中") +
-" · " + (window.isSecureContext ? "安全上下文正常" : "非安全上下文"), "head");
-if(G.netMode==="public") termLog("手机上直接用「公共中继」即可联机，无需任何安装","ok");
-else termLog("提示：手机上无法开第二个窗口，跨设备请选「公共中继」","warn");
+termLog("环境自检：" + (typeof HGURelay!=="undefined"
+? "relay.js v"+HGURelay.version+" 已就绪 · 房间号由首页大厅生成"
+: "未找到 relay.js · 纯单机照常可玩"), "head");
 }
 $("netVeil").classList.remove("hidden");
 }
 function netSetState(txt, cls){ $("netStateTxt").textContent=txt; $("netDot").className="dot "+(cls||""); }
-function netUpdateHint(){
-const h=$("netHint"), w=$("netRelayWrap");
-const scan = G.netMode==="scan";
-$("netScanWrap").classList.toggle("hidden", !scan);
-document.querySelectorAll(".pm-cfg").forEach(e=>e.classList.toggle("hidden", scan));
-["netCodeWrap","netJoin","netRelayWrap"].forEach(id=>{
-const e=$(id); if(e) e.classList.toggle("hidden", scan);
+function netUpdateHint(){}   /* 连接方式选择已移除，保留空实现供旧调用 */
+
+/* 只读邀请链接：有号就 joinInvite 连上，没号就纯单机。全程不生成任何房间号。 */
+function connectInvite(){
+NET.onMsg=netHandle;
+NET.onStatus=(t,c)=>netSetState(t,c);
+NET.connect(()=>{
+const room=NET.room;
+G.netRoom=room; G.netRelay="";
+[...$("netCode").children].forEach((b,k)=>{ b.textContent = room[k] || "-"; });
+if(!room){ netSetState("纯单机 · 想联机请回首页拿号",""); return; }
+if(!NET.open){ netSetState("中继未连上 · 纯单机照常可玩","warn"); netOpenPanel(); return; }
+netSetState("已连上 · 房间 "+room+" · 等待对手","ok");
+netOpenPanel();
 });
-const roomBtns=document.querySelectorAll("#netCreate,#netJoinBtn,#netRelayBtn,#netDlRelay");
-roomBtns.forEach(e=>e.parentNode.classList.toggle("hidden", scan));
-$("netRetry").parentNode.classList.toggle("hidden", scan);
-if(scan){
-h.innerHTML="扫码直连：<b>不经过任何服务器、不需要中继、不需要联网</b>。一方点「① 生成我的连接码」，另一方「① 扫码读取对方」，再各自把回传信息填进去即可。";
-w.classList.add("hidden");
-}else if(G.netMode==="local"){
-h.innerHTML="同机双窗：本机再开一个游戏窗口，输入同一房间码即连，<b>全程不经过任何服务器</b>";
-w.classList.add("hidden");
-}else if(G.netMode==="auto"){
-h.innerHTML="自动：先试同机双窗（零服务器），未连上再走公共中继跨设备";
-}else{
-h.innerHTML="公共中继跨设备；同一 WiFi 想更快，可填自建中继地址";
 }
-}
+
 $("netClose").addEventListener("click", ()=>{ $("netVeil").classList.add("hidden"); });
-$("netRelayBtn").addEventListener("click", ()=>{ $("netRelayWrap").classList.toggle("hidden"); });
-
-$("scanMake").addEventListener("click", ()=>{ qrMakeOffer(); });
-$("scanRead").addEventListener("click", ()=>{
-camStart(txt=>{
-$("scanText").value=txt;
-qrReadOffer(txt);
-});
-});
-$("scanCam").addEventListener("click", ()=>{
-camStart(txt=>{
-$("scanText").value=txt;
-if(QR.myType) qrApplyRemote(txt); else qrReadOffer(txt);
-});
-});
-$("scanCopy").addEventListener("click", ()=>{
-if(!QR.payload){ toast("请先生成你的连接码"); return; }
-const data=JSON.stringify(QR.payload);
-const done=()=>toast("已复制连接信息");
-try{
-if(navigator.clipboard&&navigator.clipboard.writeText){
-navigator.clipboard.writeText(data).then(done).catch(()=>fallback());
-}else fallback();
-}catch(e){ fallback(); }
-function fallback(){
-const ta=document.createElement("textarea");
-ta.value=data; ta.style.position="fixed"; ta.style.opacity="0";
-document.body.appendChild(ta); ta.select();
-try{ document.execCommand("copy"); done(); }catch(e){ toast("复制失败，请手动长按选中"); }
-ta.remove();
-}
-});
-$("scanApply").addEventListener("click", ()=>{
-const t=($("scanText").value||"").trim();
-if(!t){ toast("请先粘贴或扫码获取对方信息"); return; }
-if(QR.myType) qrApplyRemote(t); else qrReadOffer(t);
-});
-$("scanSgf").addEventListener("click", ()=>{
-camStart(txt=>{
-let p=null;
-try{ p=JSON.parse(txt); }catch(e){ toast("不是有效的棋谱"); return; }
-if(!p || p.t!=="sgf"){ toast("这是连接码，不是棋谱"); return; }
-importSgf(p);
-});
-});
-$("netPushSave").addEventListener("click", ()=>{
-if(!G.netOn || !NET.chans.length){ toast("请先与对手连上"); return; }
-const code=encodeSave(buildSave());
-NET.send({t:"save", code:code});
-toast("已把存档推给对手（"+(code.length/1024).toFixed(1)+"KB）");
-});
-$("camClose").addEventListener("click", camStop);
-$("camVeil").addEventListener("click", e=>{ if(e.target===$("camVeil")) camStop(); });
-
-$("netDlRelay").addEventListener("click", ()=>{
-const src=$("relaySrc") ? $("relaySrc").textContent : "";
-if(!src.trim()){ toast("未找到内置中继脚本"); return; }
-try{
-const blob=new Blob([src],{type:"text/javascript;charset=utf-8"});
-const url=URL.createObjectURL(blob);
-const a=document.createElement("a");
-a.href=url; a.download="联机脚本";
-document.body.appendChild(a); a.click();
-setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },800);
-toast("已导出 联机脚本");
-}catch(e){ toast("导出失败，请在电脑浏览器上再试"); }
-});
-
-$("netRetry").addEventListener("click", ()=>{
-if(!G.netRoom){ termLog("请先开房间或输入房间码","bad"); return; }
-termHead("重试连接 · 房间 "+G.netRoom);
-const relay=($("netRelay").value||"").trim();
-NET.join(G.netRoom, G.netRole||"host", relay, err=>{
-if(err){ netSetState("连接失败："+err,"bad"); return; }
-netSetState(G.netRole==="host" ? "等待对手输入房间码 "+G.netRoom : "已入房间，等待对手…","wait");
-}, G.netMode);
-});
+$("netRetry").addEventListener("click", ()=>{ termHead("重试连接"); connectInvite(); });
 $("netClear").addEventListener("click", ()=>termClear());
-
-function doCreateRoom(){
-const code=G.netRoom || makeRoomCode();
-G.netRoom=code; G.netRole="host"; G.netRelay=($("netRelay").value||"").trim();
-netSetState("正在开房…","wait");
-NET.onMsg=netHandle;
-NET.onStatus=(t,c)=>netSetState(t,c);
-NET.join(code,"host",G.netRelay,(err)=>{
-if(err){ netSetState("开房失败：" + err,"bad"); termLog("开房失败："+err,"bad"); return; }
-netSetState("等待对手输入房间码 "+code,"wait");
-termLog("房间 "+code+" 已就绪，等待对手输入房间码","ok");
-}, G.netMode);
-}
-
-$("netCreate").addEventListener("click", ()=>{
-const code=makeRoomCode();
-G.netRoom=code; G.netRole="host"; G.netRelay=($("netRelay").value||"").trim();
-[...$("netCode").children].forEach((b,k)=>{ b.textContent=code[k]; });
-$("netCodeWrap").classList.remove("hidden");
-$("netCreate").classList.add("hidden");
-$("netCancel").classList.remove("hidden");
-netSetState("正在开房…","wait");
-if(G.netMode!=="local" && G.netMode!=="scan"){
-const r=tryRunEmbeddedRelay();
-if(!r.ok){ explainNoServer(r.why, doCreateRoom); netSetState("本机无法启动中继，请选一条联机方式","bad"); return; }
-}
-doCreateRoom();
-});
-$("netCancel").addEventListener("click", ()=>{
-netLeave();
-$("netCodeWrap").classList.add("hidden");
-$("netCancel").classList.add("hidden");
-$("netCreate").classList.remove("hidden");
-netSetState("已取消","");
-});
-$("netJoinBtn").addEventListener("click", ()=>{
-const code=[0,1,2,3].map(k=>$("ji"+k).value.trim()).join("");
-if(code.length<4){ netSetState("请输入完整 4 位房间码","bad"); return; }
-G.netRoom=code; G.netRole="guest"; G.netRelay=($("netRelay").value||"").trim();
-netSetState("正在加入 "+code+"…","wait");
-NET.onMsg=netHandle;
-NET.onStatus=(t,c)=>netSetState(t,c);
-NET.join(code,"guest",G.netRelay,(err)=>{
-if(err){ netSetState("加入失败："+err,"bad"); termLog("加入失败："+err,"bad"); return; }
-netSetState("已入房间，等待房主配置…","wait");
-termLog("已进入房间 "+code+"，等待房主开局配置","ok");
-}, G.netMode);
-});
-
-[0,1,2,3].forEach(k=>{
-const el=$("ji"+k);
-el.addEventListener("input", ()=>{
-el.value=el.value.replace(/\D/g,"").slice(-1);
-if(el.value && k<3) $("ji"+(k+1)).focus();
-if(el.value && k===3) $("netJoinBtn").click();
-});
-el.addEventListener("keydown", e=>{
-if(e.key==="Backspace" && !el.value && k>0) $("ji"+(k-1)).focus();
-});
-});
 
 $("btnEvent").addEventListener("click", ()=>{ renderEvents(); $("evVeil").classList.remove("hidden"); evLimStart(); });
 $("evClose").addEventListener("click", ()=>{ $("evVeil").classList.add("hidden"); evLimStop(); });
@@ -4232,21 +3698,15 @@ $("evVeil").addEventListener("click", e=>{ if(e.target===$("evVeil")){ $("evVeil
 const VEIL_CLOSE={
 pauseVeil: ()=>{ try{ closePause(); }catch(e){ $("pauseVeil").classList.add("hidden"); } },
 dlgVeil:   ()=>{ $("dlgVeil").classList.add("hidden"); },
-camVeil:   ()=>{ try{ camStop(); }catch(e){ $("camVeil").classList.add("hidden"); } },
 evVeil:    ()=>{ $("evVeil").classList.add("hidden"); try{ evLimStop(); }catch(e){} },
 
 rpVeil:    ()=>{ try{ rpStop(); }catch(e){} $("rpVeil").classList.add("hidden");
 if(RP && RP.on){ try{ rpClose(); }catch(e){} } },
-shVeil:    ()=>{ $("shVeil").classList.add("hidden"); },
 svVeil:    ()=>{ $("svVeil").classList.add("hidden"); },
 stVeil:    ()=>{ $("stVeil").classList.add("hidden"); },
 netVeil:   ()=>{ $("netVeil").classList.add("hidden"); },
-logVeil:   ()=>{ $("logVeil").classList.add("hidden"); },
-devVeil:   ()=>{ $("devVeil").classList.add("hidden"); },
 ruleVeil:  ()=>{ $("ruleVeil").classList.add("hidden"); },
 askVeil:   ()=>{ $("askVeil").classList.add("hidden"); },
-mlVeil:    ()=>{ $("mlVeil").classList.add("hidden"); },
-upVeil:    ()=>{ $("upVeil").classList.add("hidden"); },
 endVeil:   ()=>{ $("endVeil").classList.add("hidden"); }
 };
 function closeVeil(id){
@@ -4297,28 +3757,6 @@ setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },800);
 toast("棋谱已导出（.sgf）");
 });
 
-$("rpShare").addEventListener("click", ()=>{
-loadQRLibs(ok=>{
-const sgf=rpSgf();
-const payload={v:1, t:"sgf", N:G.N, s:sgf};
-const data=JSON.stringify(payload);
-const box=$("shQr");
-try{
-if(typeof qrcode!=="undefined"){
-let q=null;
-for(const lv of ["L","M"]){ try{ const tt=qrcode(0,lv); tt.addData(data); tt.make(); q=tt; break; }catch(e){} }
-box.innerHTML = q ? q.createSvgTag({cellSize:3, margin:1, scalable:true})
-: '<div class="ph">棋谱太长，请用「复制棋谱」</div>';
-}else box.innerHTML='<div class="ph">生码库未加载，请用「复制棋谱」</div>';
-}catch(e){ box.innerHTML='<div class="ph">生成失败</div>'; }
-$("shInfo").textContent="共 "+(RP.list.length-1)+" 手 · "+G.N+" 路 · "+data.length+" 字节";
-$("shVeil").classList.remove("hidden");
-window.__shareData=data;
-});
-});
-$("shClose").addEventListener("click", ()=>$("shVeil").classList.add("hidden"));
-$("shVeil").addEventListener("click", e=>{ if(e.target===$("shVeil")) $("shVeil").classList.add("hidden"); });
-
 function importSgf(payload){
 try{
 const N=payload.N|0, sgf=payload.s||"";
@@ -4354,27 +3792,10 @@ toast("已载入 "+moves.length+" 手棋谱");
 return true;
 }catch(e){ toast("棋谱解析失败"); return false; }
 }
-$("shCopy").addEventListener("click", ()=>{
-const d=window.__shareData||"";
-if(!d){ toast("暂无棋谱"); return; }
-try{
-if(navigator.clipboard&&navigator.clipboard.writeText){
-navigator.clipboard.writeText(d).then(()=>toast("已复制棋谱")).catch(()=>fb());
-}else fb();
-}catch(e){ fb(); }
-function fb(){
-const ta=document.createElement("textarea");
-ta.value=d; ta.style.position="fixed"; ta.style.opacity="0";
-document.body.appendChild(ta); ta.select();
-try{ document.execCommand("copy"); toast("已复制棋谱"); }catch(e){ toast("复制失败"); }
-ta.remove();
-}
-});
 
 $("svQr").addEventListener("click", ()=>{
 loadQRLibs(ok=>{
 const code=encodeSave(buildSave());
-const box=$("shQr");
 try{
 if(typeof qrcode!=="undefined"){
 let q=null;
@@ -4383,9 +3804,7 @@ box.innerHTML = q ? q.createSvgTag({cellSize:3, margin:1, scalable:true})
 : '<div class="ph">存档太大，请用文本码或导出文件</div>';
 }else box.innerHTML='<div class="ph">生码库未加载，请用文本码</div>';
 }catch(e){ box.innerHTML='<div class="ph">生成失败</div>'; }
-$("shInfo").textContent="共 "+code.length+" 字符（含校验）";
 window.__shareData=code;
-$("shVeil").classList.remove("hidden");
 });
 });
 $("svText").addEventListener("click", ()=>{
@@ -4622,7 +4041,7 @@ fill.style.width="100%";
 setTimeout(()=>{
 const ld=$("loader");
 ld.classList.add("out");
-setTimeout(()=>{ ld.style.display="none"; }, 560);
+setTimeout(()=>{ ld.style.display="none"; try{ connectInvite(); }catch(e){} }, 560);
 }, 260);
 return;
 }

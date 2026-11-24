@@ -96,7 +96,7 @@
 
   .overlay{
     position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
-    background:rgba(7,10,20,.88);backdrop-filter:blur(3px);border-radius:50%;text-align:center;padding:20px;cursor:pointer;
+    background:rgba(7,10,20,.92);border-radius:50%;text-align:center;padding:20px;cursor:pointer;
   }
   .overlay.hide{display:none}
   .overlay h1{margin:0;font-size:20px}
@@ -271,7 +271,7 @@
   <!-- ============ 版本选择 ============ -->
   <div class="page show" id="home">
     <div class="top" style="justify-content:flex-end">
-      <span class="ver" id="verTag">v1.6.2</span>
+      <span class="ver" id="verTag">v1.6.3</span>
     </div>
     <h1 style="margin-top:2px">反应力</h1>
     <p class="sub">选择一个版本开始</p>
@@ -535,7 +535,7 @@
   /* 裸 HTML 约定：本文件只负责游戏本体，不含站点导航、版本检测或外链。
    * 版本号只用于首页显示；列表与说明统一由 index.html / games.json 维护。
    * 发新版：覆盖本文件，顺手改下面 BUILD 的 v 和 date。 */
-  const BUILD = { v:'1.6.2', date:'2026-11-23' };
+  const BUILD = { v:'1.6.3', date:'2026-11-24' };
 
   /* ================= 启动加载屏 ================= */
   let booting = false;

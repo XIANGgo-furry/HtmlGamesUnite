@@ -58,12 +58,12 @@ details li{margin:5px 0}
   <!-- ============ 联机大厅 ============ -->
   <div class="panel">
     <h2>🔌 联机大厅</h2>
-    <p class="note">本站是纯静态页，<b>不会自己启动服务</b>。这里连的是免费公共中继（它一直在线），你只是加入房间。</p>
+    <p class="note">本站是纯静态页，<b>不会自己启动服务</b>。这里连的是免费公共中继（它一直在线），你只是加入房间。<br><b>房间号只在这里生成一次</b>，经邀请链接带进游戏；游戏只读、不会自己再造一个。</p>
 
     <div id="st" class="status"><span class="dot"></span><span id="stTxt">未连接 · 点下面按钮测一下</span></div>
     <button id="btnConn" onclick="Lobby.start()">① 连接中继</button>
 
-    <p class="note" style="margin:14px 0 2px">房间号（两人填一样的）</p>
+    <p class="note" style="margin:14px 0 2px">房间号（这里点「换一个」生成，全站唯一）</p>
     <input id="room" class="room" inputmode="numeric" maxlength="6" value="------" autocomplete="off">
     <div class="row">
       <button class="sec" onclick="Lobby.newRoom()">换一个</button>
@@ -85,8 +85,8 @@ details li{margin:5px 0}
       <ol>
         <li>两人都打开这个主页，或把「邀请链接」发给对方。</li>
         <li>两边都点「连接中继」，等状态变<b>绿</b>；日志出现「对方已进房间 ✓」就说明链路通了。</li>
-        <li>点上面游戏进去了，在<b>游戏里输同一个 6 位房间号</b>。</li>
-        <li>⚠️ 中国象棋还额外需要<b>一台电脑跑它自带的信令服务器</b>；围棋走公共中继，不用电脑。另外本站是 HTTPS 页面，游戏里不能填 <code>http://</code> 开头的地址，会被浏览器拦。</li>
+        <li>点上面游戏进去，邀请链接会<b>自动把房间号带过去</b>；别在游戏里另造号，两边造不一样就连不上。</li>
+        <li>⚠️ 公共中继偶尔被校园网挡，连不上时游戏会退回单机，过会儿重试即可。本站是 HTTPS，游戏里不能填 <code>http://</code> 开头的地址，会被浏览器拦。</li>
       </ol>
     </details>
   </div>
@@ -102,19 +102,19 @@ details li{margin:5px 0}
 /* ↓↓↓ 加测试页面就在这里加一行：名称 | 分类 | 图标 | 文件名（后三项可留空）↓↓↓ */
 const RAW = `
 午夜保安室 | 恐怖 | 🌙 | 午夜保安室.html
-舞立方：秀 | 音游 | 🎵 | 舞立方秀_触屏版.html
+舞立方：秀 | 音游 | 🎵 | 舞立方秀_触屏版.html | 测试中
 中国围棋PLUS | 棋类 | ⚫ | 中国围棋PLUS.html
 中国象棋 | 棋类 | ♟️ | 中国象棋.html
 反应挑战 | 反应 | ⚡ | 反应力.html
-决心弹幕 | 反应 | 💗 | 决心弹幕.html | 测试中
+决心弹幕 | 反应 | 💗 | 节奏与弹幕.html | 测试中
 `;
 /* ↑↑↑ 加完保存并提交，GitHub Pages 会自动更新，别的都不用动 ↑↑↑
    第 5 列可选：填上就显示「🧪 xxx」角标；留空就跟旧行一样，不加角标 */
 
 /* 支持联机的游戏（单独列，不动 RAW 格式） */
 const ONLINE = [
-  {f:'中国围棋PLUS.html', n:'中国围棋PLUS', e:'⚫', tip:'自带公共中继，零服务器；房间号要在游戏里手输'},
-  {f:'中国象棋.html',    n:'中国象棋',    e:'♟️', tip:'房间号自动填，但服务器地址要另填，需一台电脑跑中继'}
+  {f:'中国围棋PLUS.html', n:'中国围棋PLUS', e:'⚫', tip:'已接 relay.js，邀请链接自动带房间号，零服务器'},
+  {f:'中国象棋.html',    n:'中国象棋',    e:'♟️', tip:'已接 relay.js，邀请链接自动带房间号，不用电脑'}
 ];
 
 const $=id=>document.getElementById(id);
@@ -210,13 +210,13 @@ const Lobby=(function(){
     clr($('log'));set('连接中…逐个试公共中继','s-wait');
     tryNext();
   }
+  /* 全站唯一允许「生成」房间号的地方；游戏侧一律只读 ?room= */
   function newRoom(){
-    let n;
-    try{const a=new Uint32Array(1);crypto.getRandomValues(a);n=a[0]%1000000;}
-    catch(e){n=Math.floor(Math.random()*1000000);}
-    $('room').value=String(n).padStart(6,'0');
+    $('room').value = (HGU && HGU.newRoomForLobby)
+      ? HGU.newRoomForLobby()
+      : String(Math.floor(Math.random()*1000000)).padStart(6,'0');
     if(state==='online')start();
-    else log('新房间 '+$('room').value+'，两边都填这个号');
+    else log('新房间 '+$('room').value+'，全站只用这一个号，发给对方即可');
   }
   async function copy(txt,okMsg){
     try{await navigator.clipboard.writeText(txt);}
@@ -251,7 +251,7 @@ const Lobby=(function(){
   }
   function init(){
     const sp=new URLSearchParams(location.search),r=(sp.get('room')||'').replace(/\D/g,'').slice(0,6);
-    $('room').value=r.length===6?r:String(Math.floor(Math.random()*1000000)).padStart(6,'0');
+    $('room').value=r.length===6?r:((HGU&&HGU.newRoomForLobby)?HGU.newRoomForLobby():String(Math.floor(Math.random()*1000000)).padStart(6,'0'));
     $('room').addEventListener('input',()=>{
       const v=$('room').value.replace(/\D/g,'').slice(0,6);$('room').value=v;drawOnline();
     });

@@ -1,8 +1,11 @@
 /* ============================================================
- * HtmlGamesUnite 公共联机接口  HGURelay v1.0
+ * HtmlGamesUnite 公共联机接口  HGURelay v1.1
  * 零依赖 · 不引 CDN · 同源页面均可 <script src="relay.js"></script>
  * 首页 index.html 与各游戏 HTML 共用这一份实现，改中继只改本文件。
  * 用法见《全站规范.md》第 9 节。
+ *
+ * v1.1 唯一变化：房间号只由首页大厅生成（newRoomForLobby），
+ * 游戏一律用 joinInvite() 读邀请链接里的号，绝不自己造。
  * ============================================================ */
 (function (root, factory) {
   var api = factory();
@@ -206,16 +209,30 @@
     });
   }
 
+  /* ============================================================
+   * joinInvite(opts) —— 给「游戏 HTML」用的唯一推荐入口
+   *   只读邀请链接 ?room= 里的 6 位号：有就 join，没有就返回 null。
+   *   ★ 绝不生成房间号 ★（造号只准首页大厅做）
+   *   返回 Promise<session|null>；中继连不上会 reject，游戏自行降级单机。
+   *   opts 与 join() 完全一致：onStatus / onMessage / onLog / timeout
+   * ============================================================ */
+  function joinInvite(opts) {
+    var r = roomFromURL();
+    if (!/^\d{6}$/.test(r)) return Promise.resolve(null);  // 没号 → 纯单机，不补号
+    return join(r, opts);
+  }
+
   return {
-    version: '1.0',
+    version: '1.1',
     MQ: MQ,
     RELAYS: RELAYS,
     TOPIC_PREFIX: TOPIC_PREFIX,
-    join: join,
+    join: join,                    // 底层，需要自己传号时才用
+    joinInvite: joinInvite,        // ★ 游戏用这个 ★
     topicOf: topicOf,
     normalizeRoom: normalizeRoom,
-    randomRoom: randomRoom,
-    roomFromURL: roomFromURL,
-    inviteURL: inviteURL
+    roomFromURL: roomFromURL,      // 只读，不生成
+    inviteURL: inviteURL,
+    newRoomForLobby: randomRoom    // 仅 index.html 大厅调用；游戏别碰
   };
 });
