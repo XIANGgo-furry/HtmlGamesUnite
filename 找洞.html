@@ -17,14 +17,17 @@ color:#333;font-size:13px;letter-spacing:.5px;line-height:1.65;text-align:right}
 #hud b{font-size:16px;color:#d9483b}
 #pace{font-size:11px;color:#2b6cb0;transition:color .25s}
 #pace.hot{color:#d9483b;font-weight:700}
-#ctrl{position:fixed;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom,0px));
-z-index:20;display:flex;justify-content:space-between;padding:0 18px;pointer-events:none}
-#ctrl button{pointer-events:auto;touch-action:none;width:78px;height:66px;border:0;border-radius:16px;
-background:rgba(30,36,44,.52);color:#fff;font-size:26px;line-height:66px;text-align:center;
--webkit-user-select:none;user-select:none}
-#ctrl button:active{background:rgba(30,36,44,.8)}
-#hint{position:fixed;left:0;right:0;bottom:calc(160px + env(safe-area-inset-bottom,0px));
-z-index:20;text-align:center;font-size:12px;color:#7b8490;pointer-events:none}
+/* 底部滑动轨道：纯视觉指示，不拦截指针 */
+#track{position:fixed;left:18px;right:18px;height:46px;z-index:20;pointer-events:none;
+border-radius:16px;background:rgba(30,36,44,.045);border:1.5px dashed rgba(43,108,176,.28)}
+#knob{position:absolute;top:6px;left:0;width:30px;height:34px;border-radius:10px;
+background:rgba(43,108,176,.82);border:1.5px solid rgba(255,255,255,.8);
+box-shadow:0 2px 10px rgba(20,50,90,.35);
+will-change:transform;transform:translateX(0)}
+#tlabel{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+font-size:11px;color:#7b8490;letter-spacing:1px;pointer-events:none}
+#hint{position:fixed;left:0;right:0;z-index:20;text-align:center;font-size:12px;
+color:#7b8490;pointer-events:none}
 .wrap{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;
 padding:20px;background:rgba(247,244,234,.9)}
 .card{width:min(340px,100%);max-height:100%;overflow:auto;padding:26px 22px 22px;
@@ -54,8 +57,8 @@ font-size:17px;font-weight:700;font-family:inherit;cursor:pointer}
 <noscript>请用浏览器打开，并启用 JavaScript。</noscript>
 <canvas id="c"></canvas>
 <div id="hud" hidden>分数 <b id="sc">0</b> · 最高 <b id="hi">0</b><br><span id="pace">速度 ×1.0</span></div>
-<div id="ctrl" hidden><button id="L" aria-label="向左">◀</button><button id="R" aria-label="向右">▶</button></div>
-<div id="hint" hidden>找虚线漏下去 · 别碰上下红刀</div>
+<div id="track" hidden><div id="knob"></div><div id="tlabel">← 拖我到缺口下方 →</div></div>
+<div id="hint" hidden>底部滑条拖动对准缺口 · 上半屏按住左右 · 键盘 ← →</div>
 
 <div id="screen" class="wrap">
   <div class="card">
@@ -67,7 +70,7 @@ font-size:17px;font-weight:700;font-family:inherit;cursor:pointer}
       <div><svg viewBox="0 0 36 16" aria-hidden="true"><path d="M0 1 L5 15 L10 1 L15 15 L20 1 L25 15 L30 1 L35 15" fill="none" stroke="#d9483b" stroke-width="2"/></svg><span>红刀 · 斩线</span></div>
       <div><i class="dot"></i><span>蓝点 · 你</span></div>
     </div>
-    <div class="keys">← → 或左右半屏移动 · 没有跳跃键<br>越往后卷得越快，最高约 3 倍</div>
+    <div class="keys">底部滑条拖动，人跟着指尖走 · 键盘 ← →<br>越往后卷得越快，最高约 4.5 倍</div>
     <button id="start" class="big primary">开始游戏</button>
     <div class="best">最高分 <b id="hi2">0</b></div>
   </div>
@@ -88,22 +91,25 @@ font-size:17px;font-weight:700;font-family:inherit;cursor:pointer}
 'use strict';
 var cv=document.getElementById('c'),ctx=cv.getContext('2d');
 var $=function(id){return document.getElementById(id);};
-var elHud=$('hud'),elCtrl=$('ctrl'),elHint=$('hint'),elScreen=$('screen'),elOver=$('over');
+var elHud=$('hud'),elTrack=$('track'),elKnob=$('knob'),elHint=$('hint');
+var elScreen=$('screen'),elOver=$('over');
 var elSc=$('sc'),elHi=$('hi'),elHi2=$('hi2'),elRs=$('rs'),elRh=$('rh');
 var elPace=$('pace'),elRpace=$('rpace');
 
 /* ---- 物理常量：全部使用绝对坐标，y 向下为正 ---- */
 var STEP=1/120,MAX_STEPS=8;          // 固定步长 + 追帧上限
-var SPEED0=46,SPEED_MAX=138,RAMP=45; // 起始 / 封顶卷速 / 爬坡长度
-var MOVE=300,AX=5200,G=1400;
+var SPEED0=46,SPEED_MAX=207,RAMP=45; // 起始 / 封顶卷速 / 爬坡长度（约 ×4.5）
+var MOVE=300,AX=5200,G=1400,TAU=.03; // 滑动跟随时间常数（≈30ms 基本贴合）
 var PW=26,PH=26,R=PW/2;
-var W=0,H=0,DPR=1,KILL=70,BKILL=0,FLOOR=0,GAP=110,GRID=34;
+var W=0,H=0,DPR=1,KILL=70,BKILL=0,FLOOR=0,GAP=110,GRID=34,SLIDE_FROM=0;
 
 var layers=[],pool=[],player=null,scroll=0,pscroll=0,acc=0;
 var score=0,shown=-1,hi=0,hiDirty=false;
 var sp=SPEED0,elapsed=0,paceShown=-1,peakMul=1;
 var state='READY',running=false,last=0,alpha=0;
-var keyDir=0,touchDir=0,dir=0;
+/* 输入状态：键盘两个独立布尔 + 多指映射 + 滑块目标，互不覆盖 */
+var keyL=false,keyR=false,lastKeyDir=0;
+var touchMap=new Map(),slideId=null,aimX=null,knobPx=-1;
 var gridPat=null,topImg=null,botImg=null;
 
 try{hi=parseInt(localStorage.getItem('zhaodong_hi')||'0',10)||0;}catch(e){}
@@ -130,7 +136,7 @@ function updatePace(){
   elPace.className=q>=2?'hot':'';
 }
 
-/* ---- 静态装饰预渲染：网格纹理 + 上下锯齿，每帧只做 3 次贴图 ---- */
+/* ---- 静态装饰预渲染 ---- */
 function buildDecor(){
   var tile=document.createElement('canvas'),s=Math.round(GRID*DPR);
   tile.width=tile.height=s;
@@ -174,6 +180,10 @@ function resize(){
   GAP=Math.max(88,Math.min(128,H/6.5));
   KILL=Math.max(64,Math.min(84,H*0.11));
   BKILL=H-KILL;FLOOR=BKILL-14;
+  SLIDE_FROM=BKILL-56;                 // 感应区从刀口上方起，覆盖整条下移后的滑条
+  var tb=30;                            // 轨道底边距屏幕底（含安全区）
+  elTrack.style.bottom='calc('+tb+'px + env(safe-area-inset-bottom,0px))';
+  elHint.style.bottom='calc('+(tb+46+20)+'px + env(safe-area-inset-bottom,0px))';
   buildDecor();
   if(layers.length){
     while(layers.length>1&&layers[layers.length-1].y>FLOOR)recycle(layers.pop());
@@ -182,9 +192,10 @@ function resize(){
     }
     if(state!=='PLAY')draw(0);
   }
+  updateKnob();
 }
 
-/* ---- 层对象池：回收复用，避免长时间游玩产生 GC 抖动 ---- */
+/* ---- 层对象池 ---- */
 function rand(a,b){return a+Math.random()*(b-a);}
 function recycle(L){if(pool.length<24)pool.push(L);}
 function makeLayer(y,safeX){
@@ -209,19 +220,20 @@ function makeLayer(y,safeX){
   L.y=y;L.py=y;
   return L;
 }
-/* 身子完全落进缺口才穿得过去，半搭在边上算踩住 */
 function canPass(L,x){
   var g=L.g;
   for(var i=0;i<g.length;i+=2)if(x-R>=g[i]&&x+R<=g[i+1])return true;
   return false;
 }
+function clampX(x){return Math.max(R+6,Math.min(W-R-6,x));}
 function reset(){
   var i;
   for(i=0;i<layers.length;i++)recycle(layers[i]);
   layers.length=0;
   score=0;shown=-1;scroll=pscroll=0;acc=0;
   sp=SPEED0;elapsed=0;paceShown=-1;peakMul=1;
-  keyDir=touchDir=dir=0;
+  /* 键盘按下状态故意保留：用方向键开局，那一下立刻生效 */
+  touchMap.clear();slideId=null;aimX=null;knobPx=-1;
   elSc.textContent='0';
   elPace.textContent='速度 ×1.0';elPace.className='';
   var base=Math.round(Math.min(H*.62,FLOOR-GAP));
@@ -233,11 +245,20 @@ function reset(){
     layers.unshift(makeLayer(layers[0].y-GAP));
   player={x:W/2,px:W/2,y:start.y-PH,py:start.y-PH,
           vx:0,vy:-sp,stand:start,squash:0};
+  updateKnob();
+}
+/* 滑块位置：有目标指目标，没目标跟着玩家，变化才写 DOM */
+function updateKnob(){
+  var tx=(aimX!=null)?aimX:(player?player.x:W/2);
+  var v=Math.max(0,Math.min(W-66,tx-33));
+  if(v===knobPx)return;
+  knobPx=v;
+  elKnob.style.transform='translateX('+v+'px)';
 }
 
 /* ---- 状态机 ---- */
 function chrome(play){
-  elHud.hidden=!play;elCtrl.hidden=!play;elHint.hidden=!play;
+  elHud.hidden=!play;elTrack.hidden=!play;elHint.hidden=!play;
 }
 function startLoop(){
   if(running)return;
@@ -251,12 +272,13 @@ function startGame(){
 }
 function toTitle(){
   state='READY';running=false;
+  keyL=keyR=false;lastKeyDir=0;
   elOver.hidden=true;elScreen.hidden=false;chrome(false);
   elHi2.textContent=hi;
   reset();draw(0);
 }
 function onDie(){
-  state='OVER';acc=0;keyDir=touchDir=dir=0;
+  state='OVER';acc=0;touchMap.clear();slideId=null;
   peakMul=Math.max(peakMul,sp/SPEED0);
   elRpace.textContent='达到速度 ×'+peakMul.toFixed(1);
   flushHi();
@@ -264,7 +286,20 @@ function onDie(){
   chrome(false);elOver.hidden=false;
 }
 
-/* ---- 物理：半隐式欧拉 + 跨步碰撞 + 渲染插值快照 ---- */
+/* ---- 输入合成：左右同按取最后按下的；多指取最后落下的 ---- */
+function keyDirNow(){
+  if(keyL&&keyR)return lastKeyDir;
+  if(keyL)return -1;
+  if(keyR)return 1;
+  return 0;
+}
+function touchDirNow(){
+  var d=0;
+  touchMap.forEach(function(v){d=v;});
+  return d;
+}
+
+/* ---- 物理 ---- */
 function snapshot(){
   var i;
   pscroll=scroll;
@@ -274,22 +309,32 @@ function snapshot(){
 function step(dt){
   var i,L;
   elapsed+=dt;
-  sp=pace();                       /* 卷速随进度平滑抬高，本步全程用同一个值 */
+  sp=pace();
   scroll+=sp*dt;
   for(i=0;i<layers.length;i++)layers[i].y-=sp*dt;
 
-  /* 水平：朝目标速度加速，松手短惯性，不再瞬移 */
-  var target=dir*MOVE;
-  if(player.vx<target)player.vx=Math.min(target,player.vx+AX*dt);
-  else if(player.vx>target)player.vx=Math.max(target,player.vx-AX*dt);
-  player.x+=player.vx*dt;
-  if(player.x<R+6){player.x=R+6;player.vx=0;}
-  if(player.x>W-R-6){player.x=W-R-6;player.vx=0;}
+  /* 底部滑动=一阶位置跟随（≈50ms 贴合，保留极轻柔和）；其余=方向加减速 */
+  if(aimX!=null){
+    if(Math.abs(aimX-player.x)<.5){player.x=aimX;player.vx=0;}
+    else{
+      var nx=clampX(player.x+(aimX-player.x)*(1-Math.exp(-dt/TAU)));
+      var raw=(nx-player.x)/dt;
+      player.vx=Math.max(-900,Math.min(900,raw)); /* 受限读数，仅作记录，不参与积分 */
+      player.x=nx;
+    }
+  }else{
+    var target=(keyDirNow()||touchDirNow())*MOVE;
+    if(player.vx<target)player.vx=Math.min(target,player.vx+AX*dt);
+    else if(player.vx>target)player.vx=Math.max(target,player.vx-AX*dt);
+    player.x+=player.vx*dt;
+    if(player.x<R+6){player.x=R+6;player.vx=0;}
+    if(player.x>W-R-6){player.x=W-R-6;player.vx=0;}
+  }
   if(player.squash>0)player.squash=Math.max(0,player.squash-dt*1.2);
 
   if(player.stand){
     if(canPass(player.stand,player.x)){
-      player.stand=null;player.vy=-sp;  /* 继承当前平台速度，先微升再加速坠落 */
+      player.stand=null;player.vy=-sp;
     }else{
       player.y=player.stand.y-PH;player.vy=-sp;
     }
@@ -299,7 +344,7 @@ function step(dt){
     var vy=player.vy+G*dt,ny=player.y+vy*dt,foot=ny+PH,land=null;
     for(i=0;i<layers.length;i++){
       L=layers[i];
-      if(prevFoot<=L.y+1&&foot>=L.y){       /* 线段相交，固定步长下不穿透 */
+      if(prevFoot<=L.y+1&&foot>=L.y){
         score++;
         if(!canPass(L,player.x)&&(!land||L.y<land.y))land=L;
       }
@@ -322,12 +367,10 @@ function step(dt){
   if(player.y<=KILL||player.y+PH>=BKILL)onDie();
 }
 
-/* ---- 渲染：批量路径 + 离屏贴图 + 插值 ---- */
+/* ---- 渲染 ---- */
 function draw(a){
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle='#f7f4ea';ctx.fillRect(0,0,W,H);
-
-  /* 网格：identity 变换下用 pattern 平移，一次 fillRect；转速跟着 sp 变 */
   var sv=pscroll+(scroll-pscroll)*a;
   var go=((-sv%GRID)+GRID)%GRID;
   ctx.save();
@@ -338,7 +381,6 @@ function draw(a){
   ctx.restore();
 
   var k,j,L,ly,p,g;
-  /* 实线：所有层合成一条 path，一次 stroke */
   ctx.strokeStyle='#252a30';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();
   for(k=0;k<layers.length;k++){
     L=layers[k];ly=L.py+(L.y-L.py)*a;
@@ -351,7 +393,6 @@ function draw(a){
     if(W-p>2){ctx.moveTo(p+3,ly);ctx.lineTo(W-3,ly);}
   }
   ctx.stroke();
-  /* 虚线：同样合成一条 path，setLineDash 只切一次 */
   ctx.strokeStyle='#8a94a0';ctx.lineWidth=2;ctx.setLineDash([7,9]);ctx.beginPath();
   for(k=0;k<layers.length;k++){
     L=layers[k];ly=L.py+(L.y-L.py)*a;
@@ -386,40 +427,63 @@ function loop(t){
   }
   if(n>=MAX_STEPS)acc=0;
   alpha=(state==='PLAY')?acc/STEP:0;
-  if(state==='PLAY')updatePace();
+  if(state==='PLAY'){updatePace();updateKnob();}
   draw(alpha);
-  if(state!=='PLAY'){running=false;return;}   /* 定格并停帧，标题/结算页零开销 */
+  if(state!=='PLAY'){running=false;return;}
   requestAnimationFrame(loop);
 }
 
-/* ---- 输入 ---- */
-function syncDir(){dir=keyDir||touchDir;}
+/* ---- 键盘 ---- */
 function key(e,down){
   var k=e.key;
+  if(k==='ArrowLeft'||k==='a'||k==='A'||k==='ArrowRight'||k==='d'||k==='D'){
+    if(state==='OVER')return;
+    var left=(k==='ArrowLeft'||k==='a'||k==='A');
+    if(down){
+      if(left){keyL=true;lastKeyDir=-1;}else{keyR=true;lastKeyDir=1;}
+      if(state==='READY')startGame();         /* 开局那一下方向立刻生效 */
+    }else{
+      if(left)keyL=false;else keyR=false;
+    }
+    return;
+  }
   if(state==='READY'){
-    if(down&&(k===' '||k==='Enter'||k==='ArrowLeft'||k==='ArrowRight'||k==='a'||k==='d'))startGame();
+    if(down&&(k===' '||k==='Enter'))startGame();
     return;
   }
   if(state==='OVER'){
     if(down&&(k===' '||k==='Enter'))startGame();
     else if(down&&k==='Escape')toTitle();
-    return;
   }
-  if(k==='ArrowLeft'||k==='a'||k==='A'){keyDir=down?-1:0;syncDir();}
-  else if(k==='ArrowRight'||k==='d'||k==='D'){keyDir=down?1:0;syncDir();}
 }
 window.addEventListener('keydown',function(e){key(e,true);});
 window.addEventListener('keyup',function(e){key(e,false);});
-function hold(v){return function(e){if(e.cancelable)e.preventDefault();touchDir=v;syncDir();};}
-$('L').addEventListener('pointerdown',hold(-1));
-$('R').addEventListener('pointerdown',hold(1));
+
+/* ---- 指针：底部滑动伺服 / 上半屏按住左右，按 pointerId 互不覆盖 ---- */
+function pid(e){return e.pointerId==null?1:e.pointerId;}
 cv.addEventListener('pointerdown',function(e){
   if(state!=='PLAY')return;
-  touchDir=e.clientX<W/2?-1:1;syncDir();
+  var id=pid(e);
+  if(e.clientY>=SLIDE_FROM){                 /* 底部滑动区 */
+    slideId=id;aimX=clampX(e.clientX);updateKnob();
+    try{cv.setPointerCapture(id);}catch(err){}
+  }else{
+    aimX=null;updateKnob();                  /* 老方式接管，滑块让位 */
+    touchMap.set(id,e.clientX<W/2?-1:1);
+  }
 });
-function release(){touchDir=0;syncDir();}
-window.addEventListener('pointerup',release);
-window.addEventListener('pointercancel',release);
+cv.addEventListener('pointermove',function(e){
+  if(slideId!==null&&pid(e)===slideId){aimX=clampX(e.clientX);updateKnob();}
+});
+function onUp(e){
+  var id=pid(e);
+  if(slideId===id)slideId=null;              /* aimX 保留：滑块停哪，人走到哪 */
+  touchMap.delete(id);
+}
+cv.addEventListener('pointerup',onUp);
+cv.addEventListener('pointercancel',onUp);
+cv.addEventListener('lostpointercapture',onUp);
+
 $('start').addEventListener('click',startGame);
 $('again').addEventListener('click',startGame);
 $('totitle').addEventListener('click',toTitle);
