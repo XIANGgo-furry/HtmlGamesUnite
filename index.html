@@ -176,18 +176,6 @@ a.card:active{transform:scale(.99)}
 a.card:hover .arrow{transform:translateX(3px);color:var(--primary)}
 .empty{text-align:center;color:var(--text-3);padding:38px 0;font-size:14px}
 
-/* --- 制作中预告：淡虚线玻璃框，保持「点不动」--- */
-.soon{margin-top:26px;border:1.5px dashed var(--line);border-radius:var(--r);
-  padding:16px 18px;box-shadow:none;background:var(--surface-2)}
-.soon h2{font-size:15px;margin:0 0 5px;color:var(--text-2);font-weight:650}
-.soon .hint{font-size:12px;color:var(--text-3);margin:0 0 10px;line-height:1.6}
-.soon-item{display:flex;align-items:center;gap:10px;padding:9px 0;
-  border-top:1px solid var(--line);font-size:14px;color:var(--text-2)}
-.soon-item:first-of-type{border-top:0}
-.soon-item .ic{flex:0 0 26px;text-align:center;font-size:19px}
-.soon-item .nm{flex:1;min-width:0;font-weight:550;font-size:14px}
-.soon-item .st{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--amber-fg);
-  background:var(--amber-bg);border:1px solid var(--amber-line);padding:2px 9px;border-radius:99px}
 @media (max-width:380px){body{padding-left:12px;padding-right:12px}#bar{margin:0 -12px;padding-left:12px;padding-right:12px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
@@ -218,6 +206,16 @@ color:var(--on-primary);box-shadow:0 6px 18px rgba(79,70,229,.26)}
 .notice-card button:active{transform:scale(.98)}
 .notice-card .fine{display:block;margin-top:12px;font-size:11px;color:var(--text-3)}
 @media (prefers-reduced-motion:reduce){.notice-card{animation:none}}
+
+/* ===== 未上架：并入正式列表的灰色卡片（不是链接，不会 404）===== */
+.card.soon-card{background:var(--surface-2);border:1.5px dashed var(--line);
+box-shadow:none;opacity:.74}
+.card.soon-card .cover{filter:grayscale(1);opacity:.5;box-shadow:none}
+.card.soon-card .nm{color:var(--text-3);font-weight:600}
+.soon-badge{display:inline-block;margin-top:5px;margin-left:6px;font-size:11px;font-weight:600;
+color:var(--text-3);background:var(--surface-2);border:1px solid var(--line);
+padding:2px 8px;border-radius:7px}
+.card.soon-card .lock{flex:0 0 auto;font-size:12px;color:var(--text-3);font-weight:600}
 </style>
 <div id="app">
   <span class="tag">🧪 测试中 · 可能有 bug</span>
@@ -265,15 +263,6 @@ color:var(--on-primary);box-shadow:0 6px 18px rgba(79,70,229,.26)}
   <div class="meta"><span id="count"></span><button id="sort" onclick="toggleSort()">按名称</button></div>
   <div id="list"></div>
 
-  <!-- ============ 制作中预告（纯文字，不是链接） ============
-       项目做好后：把下面那几行删掉，改成 RAW 里加一行即可 -->
-  <div class="soon">
-    <h2>🛠 制作中 · 还没上传</h2>
-    <p class="hint">这几个还在坑里，下面的名字点不动是正常的（故意不放链接，免得点了 404）。</p>
-    <div class="soon-item"><span class="ic">🍉</span><span class="nm">水果忍者</span><span class="st">制作中</span></div>
-    <div class="soon-item"><span class="ic">🤖</span><span class="nm">RoboMaster</span><span class="st">制作中</span></div>
-    <div class="soon-item"><span class="ic">🎯</span><span class="nm">俯视角 CQB · 小队指挥</span><span class="st">制作中</span></div>
-  </div>
 </div>
 <div id="notice" role="dialog" aria-labelledby="noticeTitle" onclick="if(event.target===this)this.hidden=true">
   <div class="notice-card">
@@ -316,6 +305,12 @@ const ONLINE = [
   {f:'中国象棋.html',    n:'中国象棋',    e:'♟️', tip:'已接 relay.js，邀请链接自动带房间号，不用电脑'}
 ];
 
+/* 筹备中：只进列表、灰色不可点；转正时从这里删一行、RAW 加一行即可 */
+const SOON = [
+  {name:'水果忍者', cat:'筹备中', emoji:'🍉', tip:'制作中'},
+  {name:'RoboMaster', cat:'筹备中', emoji:'🤖', tip:'制作中'},
+  {name:'俯视角 CQB · 小队指挥', cat:'筹备中', emoji:'🎯', tip:'制作中'}
+];
 const $=id=>document.getElementById(id);
 const clr=el=>{while(el.firstChild)el.removeChild(el.firstChild)};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -484,30 +479,40 @@ function coverOf(g){
 function draw(){
   const kw=($('q').value||'').trim().toLowerCase();
   let arr=items.filter(g=>(!curCat||g.cat===curCat)&&
-    (g.name+' '+g.cat+' '+g.tag).toLowerCase().includes(kw));
-  arr=arr.slice().sort((a,b)=>sortMode==='cat'
-    ? a.cat.localeCompare(b.cat,'zh')||a.name.localeCompare(b.name,'en',{sensitivity:'base',numeric:true})
-    : a.name.localeCompare(b.name,'en',{sensitivity:'base',numeric:true}));
-  $('count').textContent=`共 ${arr.length} 个`;
+    (g.name+' '+g.cat+' '+g.tag+' '+(g.tip||'')).toLowerCase().includes(kw));
+  arr=arr.slice().sort((a,b)=>
+    (a.soon?1:0)-(b.soon?1:0) ||
+    (sortMode==='cat'
+      ? a.cat.localeCompare(b.cat,'zh')||a.name.localeCompare(b.name,'en',{sensitivity:'base',numeric:true})
+      : a.name.localeCompare(b.name,'en',{sensitivity:'base',numeric:true})));
+  const live=arr.filter(g=>!g.soon).length, draft=arr.filter(g=>g.soon).length;
+  $('count').textContent='共 '+live+' 个'+(draft?' · '+draft+' 个筹备中':'');
   $('sort').textContent=sortMode==='name'?'按名称':'按分类';
   const list=$('list');clr(list);
   if(!arr.length){const e=document.createElement('div');e.className='empty';e.textContent='没找到匹配的页面';list.appendChild(e);return}
   arr.forEach(g=>{
-    const card=document.createElement(g.url?'a':'div');card.className='card';
+    const card=document.createElement(g.url?'a':'div');
+    card.className='card'+(g.soon?' soon-card':'');
     if(g.url){card.href=g.url;card.rel='noopener'}
     card.appendChild(coverOf(g));
     const info=document.createElement('div');info.className='info';
     const nm=document.createElement('div');nm.className='nm';nm.textContent=g.name;
     const cat=document.createElement('span');cat.className='cat';cat.textContent=g.cat;
     info.append(nm,cat);
-    if(g.tag){const bd=document.createElement('span');bd.className='badge';bd.textContent='🧪 '+g.tag;info.appendChild(bd)}
+    if(g.soon){
+      const bd=document.createElement('span');bd.className='soon-badge';bd.textContent=g.tip;
+      info.appendChild(bd);
+    }else if(g.tag){
+      const bd=document.createElement('span');bd.className='badge';bd.textContent='🧪 '+g.tag;info.appendChild(bd);
+    }
     card.appendChild(info);
     if(g.url){const ar=document.createElement('span');ar.className='arrow';ar.textContent='›';card.appendChild(ar)}
+    else if(g.soon){const lk=document.createElement('span');lk.className='lock';lk.textContent='未上架';card.appendChild(lk)}
     list.appendChild(card);
   });
 }
 function toggleSort(){sortMode=sortMode==='name'?'cat':'name';draw()}
-items=parse(RAW);
+items=parse(RAW).concat(SOON.map(g=>({name:g.name,cat:g.cat,emoji:g.emoji,url:'',tag:'',soon:true,tip:g.tip})));
 const chips=$('chips');clr(chips);
 ['全部',...new Set(items.map(g=>g.cat))].forEach(c=>{
   const b=document.createElement('button');
