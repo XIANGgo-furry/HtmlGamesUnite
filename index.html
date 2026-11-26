@@ -190,6 +190,34 @@ a.card:hover .arrow{transform:translateX(3px);color:var(--primary)}
   background:var(--amber-bg);border:1px solid var(--amber-line);padding:2px 9px;border-radius:99px}
 @media (max-width:380px){body{padding-left:12px;padding-right:12px}#bar{margin:0 -12px;padding-left:12px;padding-right:12px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===== 进站公告：沿用全站 M3 token + iOS 玻璃 ===== */
+#notice{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+padding:22px;overscroll-behavior:contain;
+background:rgba(16,18,32,.42);
+-webkit-backdrop-filter:blur(10px) saturate(140%);
+backdrop-filter:blur(10px) saturate(140%)}
+#notice[hidden]{display:none!important}
+.notice-card{width:min(360px,100%);max-height:100%;overflow:auto;
+padding:24px 22px 20px;border-radius:var(--r);text-align:center;
+background:var(--surface-solid);border:1px solid var(--line);
+box-shadow:0 24px 70px rgba(12,16,40,.34);
+animation:noticeIn .28s var(--ease) both}
+@keyframes noticeIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+.notice-card .ic{font-size:30px;line-height:1;margin-bottom:10px}
+.notice-card h2{font-size:19px;font-weight:750;letter-spacing:-.3px;margin:0 0 10px;color:var(--text)}
+.notice-card p{font-size:13.5px;line-height:1.75;color:var(--text-2);margin:0 0 14px;text-align:left}
+.notice-card p b{color:var(--text);font-weight:650}
+.notice-card .soon-line{font-size:12px;color:var(--text-3);line-height:1.7;
+background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-sm);
+padding:9px 11px;margin:0 0 18px;text-align:left}
+.notice-card button{width:100%;min-height:50px;margin:0;font-size:15px;font-weight:700;
+border:0;border-radius:var(--r-sm);
+background:linear-gradient(135deg,var(--primary),var(--primary-2));
+color:var(--on-primary);box-shadow:0 6px 18px rgba(79,70,229,.26)}
+.notice-card button:active{transform:scale(.98)}
+.notice-card .fine{display:block;margin-top:12px;font-size:11px;color:var(--text-3)}
+@media (prefers-reduced-motion:reduce){.notice-card{animation:none}}
 </style>
 <div id="app">
   <span class="tag">🧪 测试中 · 可能有 bug</span>
@@ -245,6 +273,16 @@ a.card:hover .arrow{transform:translateX(3px);color:var(--primary)}
     <div class="soon-item"><span class="ic">🍉</span><span class="nm">水果忍者</span><span class="st">制作中</span></div>
     <div class="soon-item"><span class="ic">🤖</span><span class="nm">RoboMaster</span><span class="st">制作中</span></div>
     <div class="soon-item"><span class="ic">🎯</span><span class="nm">俯视角 CQB · 小队指挥</span><span class="st">制作中</span></div>
+  </div>
+</div>
+<div id="notice" role="dialog" aria-labelledby="noticeTitle" onclick="if(event.target===this)this.hidden=true">
+  <div class="notice-card">
+    <div class="ic">📡</div>
+    <h2 id="noticeTitle">正在筹备上架 Bing</h2>
+    <p>站点最近在走必应收录流程，这段时间<b>只更新站上现有的 7 个游戏</b>，暂时不会上架新游戏。</p>
+    <div class="soon-line">🍉 水果忍者 · 🤖 RoboMaster · 🎯 俯视角 CQB · 小队指挥<br>这几个先按兵不动，等收录稳了再放。</div>
+    <button type="button" onclick="document.getElementById('notice').hidden=true">知道了，去玩 →</button>
+    <span class="fine">纯公告 · 不写任何本地数据，不影响游戏进度</span>
   </div>
 </div>
 <!-- 联机能力统一由 relay.js 提供；首页与所有游戏共用同一份实现 -->
