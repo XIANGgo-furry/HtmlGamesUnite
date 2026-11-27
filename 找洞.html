@@ -6,19 +6,25 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
 html,body{margin:0;height:100%;overflow:hidden;touch-action:manipulation}
-body{font-family:system-ui,-apple-system,"PingFang SC",sans-serif;background:#f7f4ea;color:#252a30}
-#c{position:fixed;inset:0;display:block;touch-action:none}
+body{font-family:system-ui,-apple-system,"PingFang SC",sans-serif;background:#e7e3d8;color:#252a30;
+display:flex;align-items:center;justify-content:center;
+padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+/* 逻辑游玩区：无论屏幕多大，都收成一条 ≤420×780 的竖带，居中显示 */
+#stage{position:relative;flex:none;width:min(420px,100%);height:min(780px,100%);
+overflow:hidden;border-radius:14px;background:#f7f4ea;
+box-shadow:0 10px 44px rgba(37,42,48,.16),0 0 0 1px rgba(37,42,48,.06)}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #back{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:8px;z-index:99;
 min-width:44px;min-height:44px;padding:10px 14px;border:0;border-radius:10px;
 background:rgba(0,0,0,.55);color:#fff;font-size:15px;text-decoration:none}
-#hud{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:10px;z-index:20;
+#hud{position:absolute;top:10px;right:10px;z-index:20;
 padding:7px 12px;border-radius:10px;background:rgba(255,255,255,.78);
 color:#333;font-size:13px;letter-spacing:.5px;line-height:1.65;text-align:right}
 #hud b{font-size:16px;color:#d9483b}
 #pace{font-size:11px;color:#2b6cb0;transition:color .25s}
 #pace.hot{color:#d9483b;font-weight:700}
 /* 底部滑动轨道：纯视觉指示，不拦截指针 */
-#track{position:fixed;left:18px;right:18px;height:46px;z-index:20;pointer-events:none;
+#track{position:absolute;left:18px;right:18px;bottom:30px;height:46px;z-index:20;pointer-events:none;
 border-radius:16px;background:rgba(30,36,44,.045);border:1.5px dashed rgba(43,108,176,.28)}
 #knob{position:absolute;top:6px;left:0;width:30px;height:34px;border-radius:10px;
 background:rgba(43,108,176,.82);border:1.5px solid rgba(255,255,255,.8);
@@ -26,7 +32,7 @@ box-shadow:0 2px 10px rgba(20,50,90,.35);
 will-change:transform;transform:translateX(0)}
 #tlabel{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
 font-size:11px;color:#7b8490;letter-spacing:1px;pointer-events:none}
-#hint{position:fixed;left:0;right:0;z-index:20;text-align:center;font-size:12px;
+#hint{position:absolute;left:0;right:0;bottom:96px;z-index:20;text-align:center;font-size:12px;
 color:#7b8490;pointer-events:none}
 .wrap{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;
 padding:20px;background:rgba(247,244,234,.9)}
@@ -55,10 +61,12 @@ font-size:17px;font-weight:700;font-family:inherit;cursor:pointer}
 </style></head><body>
 <a id="back" href="index.html">← 返回</a>
 <noscript>请用浏览器打开，并启用 JavaScript。</noscript>
-<canvas id="c"></canvas>
-<div id="hud" hidden>分数 <b id="sc">0</b> · 最高 <b id="hi">0</b><br><span id="pace">速度 ×1.0</span></div>
-<div id="track" hidden><div id="knob"></div><div id="tlabel">← 拖我到缺口下方 →</div></div>
-<div id="hint" hidden>底部滑条拖动对准缺口 · 上半屏按住左右 · 键盘 ← →</div>
+<div id="stage">
+  <canvas id="c"></canvas>
+  <div id="hud" hidden>分数 <b id="sc">0</b> · 最高 <b id="hi">0</b><br><span id="pace">速度 ×1.0</span></div>
+  <div id="track" hidden><div id="knob"></div><div id="tlabel">← 拖我到缺口下方 →</div></div>
+  <div id="hint" hidden>底部滑条拖动对准缺口 · 上半屏按住左右 · 键盘 ← →</div>
+</div>
 
 <div id="screen" class="wrap">
   <div class="card">
@@ -70,7 +78,7 @@ font-size:17px;font-weight:700;font-family:inherit;cursor:pointer}
       <div><svg viewBox="0 0 36 16" aria-hidden="true"><path d="M0 1 L5 15 L10 1 L15 15 L20 1 L25 15 L30 1 L35 15" fill="none" stroke="#d9483b" stroke-width="2"/></svg><span>红刀 · 斩线</span></div>
       <div><i class="dot"></i><span>蓝点 · 你</span></div>
     </div>
-    <div class="keys">底部滑条拖动，人跟着指尖走 · 键盘 ← →<br>越往后卷得越快，最高约 4.5 倍</div>
+    <div class="keys">底部滑条拖动，人跟着指尖走 · 键盘 ← →<br>大屏自动收成竖屏带 · 最高约 4.5 倍</div>
     <button id="start" class="big primary">开始游戏</button>
     <div class="best">最高分 <b id="hi2">0</b></div>
   </div>
@@ -110,6 +118,7 @@ var state='READY',running=false,last=0,alpha=0;
 /* 输入状态：键盘两个独立布尔 + 多指映射 + 滑块目标，互不覆盖 */
 var keyL=false,keyR=false,lastKeyDir=0;
 var touchMap=new Map(),slideId=null,aimX=null,knobPx=-1;
+var cvRect=null;                         // 逻辑区在屏幕中的位置，用于指针坐标换算
 var gridPat=null,topImg=null,botImg=null;
 
 try{hi=parseInt(localStorage.getItem('zhaodong_hi')||'0',10)||0;}catch(e){}
@@ -173,17 +182,16 @@ function buildDecor(){
 }
 function resize(){
   DPR=Math.min(window.devicePixelRatio||1,2);
-  W=window.innerWidth;H=window.innerHeight;
+  /* W/H 取自逻辑区，不再跟随窗口铺满：大屏也只是一条 ≤420×780 的竖带 */
+  W=cv.clientWidth||Math.min(window.innerWidth,420);
+  H=cv.clientHeight||Math.min(window.innerHeight,780);
   cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
-  cv.style.width=W+'px';cv.style.height=H+'px';
   ctx.setTransform(DPR,0,0,DPR,0,0);
+  cvRect=cv.getBoundingClientRect();
   GAP=Math.max(88,Math.min(128,H/6.5));
   KILL=Math.max(64,Math.min(84,H*0.11));
   BKILL=H-KILL;FLOOR=BKILL-14;
-  SLIDE_FROM=BKILL-56;                 // 感应区从刀口上方起，覆盖整条下移后的滑条
-  var tb=30;                            // 轨道底边距屏幕底（含安全区）
-  elTrack.style.bottom='calc('+tb+'px + env(safe-area-inset-bottom,0px))';
-  elHint.style.bottom='calc('+(tb+46+20)+'px + env(safe-area-inset-bottom,0px))';
+  SLIDE_FROM=BKILL-56;                 // 感应区从刀口上方起，覆盖轨道
   buildDecor();
   if(layers.length){
     while(layers.length>1&&layers[layers.length-1].y>FLOOR)recycle(layers.pop());
@@ -461,19 +469,23 @@ window.addEventListener('keyup',function(e){key(e,false);});
 
 /* ---- 指针：底部滑动伺服 / 上半屏按住左右，按 pointerId 互不覆盖 ---- */
 function pid(e){return e.pointerId==null?1:e.pointerId;}
+function localX(e){return e.clientX-(cvRect?cvRect.left:0);}
+function localY(e){return e.clientY-(cvRect?cvRect.top:0);}
 cv.addEventListener('pointerdown',function(e){
   if(state!=='PLAY')return;
   var id=pid(e);
-  if(e.clientY>=SLIDE_FROM){                 /* 底部滑动区 */
-    slideId=id;aimX=clampX(e.clientX);updateKnob();
+  cvRect=cv.getBoundingClientRect();        /* 每次按下刷新一次，防布局变化 */
+  var lx=localX(e),ly=localY(e);
+  if(ly>=SLIDE_FROM){                      /* 底部滑动区 */
+    slideId=id;aimX=clampX(lx);updateKnob();
     try{cv.setPointerCapture(id);}catch(err){}
   }else{
-    aimX=null;updateKnob();                  /* 老方式接管，滑块让位 */
-    touchMap.set(id,e.clientX<W/2?-1:1);
+    aimX=null;updateKnob();                /* 老方式接管，滑块让位 */
+    touchMap.set(id,lx<W/2?-1:1);
   }
 });
 cv.addEventListener('pointermove',function(e){
-  if(slideId!==null&&pid(e)===slideId){aimX=clampX(e.clientX);updateKnob();}
+  if(slideId!==null&&pid(e)===slideId){aimX=clampX(localX(e));updateKnob();}
 });
 function onUp(e){
   var id=pid(e);
