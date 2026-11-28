@@ -221,7 +221,6 @@ padding:2px 8px;border-radius:7px}
   background:linear-gradient(to top,var(--bg) 0%,var(--bg) 10%,transparent 100%);
   opacity:1;transition:opacity .32s var(--ease)}
 #veil.gone{opacity:0}
-#endSentinel{height:1px}
 @media (prefers-reduced-motion:reduce){#veil{transition:none}}
 
 </style>
@@ -270,7 +269,6 @@ padding:2px 8px;border-radius:7px}
   <div id="chips"></div>
   <div class="meta"><span id="count"></span><button id="sort" onclick="toggleSort()">按名称</button></div>
   <div id="list"></div>
-<div id="endSentinel" aria-hidden="true"></div>
 
 </div>
 <div id="veil" aria-hidden="true"></div>
@@ -535,21 +533,23 @@ const chips=$('chips');clr(chips);
 $('q').oninput=draw;draw();
 try{Lobby.init();}catch(e){}
 
-/* 底部渐隐层：哨兵进视口 = 已到底 = 收起；内容不满一屏时首次回调即收起 */
+/* 底部渐隐层：只有真正滚到底才收起；顶部 / 中间 / 任何未到底位置一律显示，
+   从底往回拉立即恢复。用 scrollY+innerHeight 精确判定，不用哨兵 —— body 的
+   padding-bottom 会让哨兵提前进视口，雾会在「还差一截」时提前散掉。 */
 (function(){
-  var veil=document.getElementById('veil'),sent=document.getElementById('endSentinel');
-  if(!veil||!sent)return;
-  var bottom=false;
-  function set(v){if(bottom===v)return;bottom=v;veil.classList.toggle('gone',v)}
-  if('IntersectionObserver' in window){
-    new IntersectionObserver(function(es){set(es[0].isIntersecting)},{threshold:0}).observe(sent);
-  }else{
-    var chk=function(){set(window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2)};
-    window.addEventListener('scroll',chk,{passive:true});
-    window.addEventListener('resize',chk);chk();
+  var veil=document.getElementById('veil');
+  if(!veil)return;
+  var ticking=false,atBottom=false;
+  function check(){
+    ticking=false;
+    var v=window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2;
+    if(v===atBottom)return;
+    atBottom=v;veil.classList.toggle('gone',v);
   }
-  window.addEventListener('load',function(){
-    if(document.documentElement.scrollHeight<=window.innerHeight+2)set(true);
-  });
+  function onScroll(){if(!ticking){ticking=true;requestAnimationFrame(check)}}
+  window.addEventListener('scroll',onScroll,{passive:true});
+  window.addEventListener('resize',onScroll);
+  window.addEventListener('load',check);
+  check();
 })();
 </script>
