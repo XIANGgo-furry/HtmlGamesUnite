@@ -216,6 +216,14 @@ box-shadow:none;opacity:.74}
 color:var(--text-3);background:var(--surface-2);border:1px solid var(--line);
 padding:2px 8px;border-radius:7px}
 .card.soon-card .lock{flex:0 0 auto;font-size:12px;color:var(--text-3);font-weight:600}
+/* --- 未到底提示：底部渐隐层，滚到底自动散去（纯视觉 · 不拦点击 · 不写本地数据） --- */
+#veil{position:fixed;left:0;right:0;bottom:0;height:84px;z-index:8;pointer-events:none;
+  background:linear-gradient(to top,var(--bg) 0%,var(--bg) 10%,transparent 100%);
+  opacity:1;transition:opacity .32s var(--ease)}
+#veil.gone{opacity:0}
+#endSentinel{height:1px}
+@media (prefers-reduced-motion:reduce){#veil{transition:none}}
+
 </style>
 <div id="app">
   <span class="tag">🧪 测试中 · 可能有 bug</span>
@@ -262,8 +270,10 @@ padding:2px 8px;border-radius:7px}
   <div id="chips"></div>
   <div class="meta"><span id="count"></span><button id="sort" onclick="toggleSort()">按名称</button></div>
   <div id="list"></div>
+<div id="endSentinel" aria-hidden="true"></div>
 
 </div>
+<div id="veil" aria-hidden="true"></div>
 <div id="notice" role="dialog" aria-labelledby="noticeTitle" onclick="if(event.target===this)this.hidden=true">
   <div class="notice-card">
     <div class="ic">📡</div>
@@ -524,4 +534,22 @@ const chips=$('chips');clr(chips);
 });
 $('q').oninput=draw;draw();
 try{Lobby.init();}catch(e){}
+
+/* 底部渐隐层：哨兵进视口 = 已到底 = 收起；内容不满一屏时首次回调即收起 */
+(function(){
+  var veil=document.getElementById('veil'),sent=document.getElementById('endSentinel');
+  if(!veil||!sent)return;
+  var bottom=false;
+  function set(v){if(bottom===v)return;bottom=v;veil.classList.toggle('gone',v)}
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(es){set(es[0].isIntersecting)},{threshold:0}).observe(sent);
+  }else{
+    var chk=function(){set(window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2)};
+    window.addEventListener('scroll',chk,{passive:true});
+    window.addEventListener('resize',chk);chk();
+  }
+  window.addEventListener('load',function(){
+    if(document.documentElement.scrollHeight<=window.innerHeight+2)set(true);
+  });
+})();
 </script>
